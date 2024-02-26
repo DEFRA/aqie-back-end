@@ -17,7 +17,7 @@ const config = convict({
   serviceName: {
     doc: 'Api Service Name',
     format: String,
-    default: 'CDP Node.js Backend Template'
+    default: 'aqie-back-end'
   },
   root: {
     doc: 'Project root',
@@ -27,7 +27,7 @@ const config = convict({
   appPathPrefix: {
     doc: 'Application url path prefix',
     format: String,
-    default: '/cdp-node-backend-template'
+    default: '/aqie-back-end'
   },
   isProduction: {
     doc: 'If this application running in the production environment',
@@ -59,7 +59,7 @@ const config = convict({
   mongoDatabase: {
     doc: 'database for mongodb',
     format: String,
-    default: 'cdp-node-backend-template',
+    default: 'aqie-back-end',
     env: 'MONGO_DATABASE'
   },
   httpProxy: {
