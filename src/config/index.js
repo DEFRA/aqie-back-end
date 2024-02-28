@@ -75,6 +75,18 @@ const config = convict({
     nullable: true,
     default: null,
     env: 'CDP_HTTPS_PROXY'
+  },
+  forecastUrl: {
+    doc: 'URL to the forecast data service',
+    format: String,
+    default: 'https://uk-air.defra.gov.uk/assets/rss/forecast.xml',
+    env: 'FORECAST_URL'
+  },
+  forecastSchedule: {
+    doc: 'How often to poll the forecast data (cron format)',
+    format: String, // TODO: maybe custom validate this
+    default: '0 * * * *',
+    env: 'FORECAST_SCHEDULE'
   }
 })
 
