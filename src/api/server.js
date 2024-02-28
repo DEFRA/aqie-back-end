@@ -8,6 +8,7 @@ import { mongoPlugin } from '~/src/helpers/mongodb'
 import { failAction } from '~/src/helpers/fail-action'
 import { populateDb } from '~/src/helpers/db/populate-db'
 import { secureContext } from '~/src/helpers/secure-context'
+import { forecastScheduler } from '~/src/helpers/forecast/forecast-scheduler'
 
 const isProduction = config.get('isProduction')
 
@@ -53,6 +54,8 @@ async function createServer() {
   })
 
   await server.register(populateDb)
+
+  await server.register(forecastScheduler)
 
   return server
 }
