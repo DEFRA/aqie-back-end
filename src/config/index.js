@@ -85,7 +85,19 @@ const config = convict({
   forecastSchedule: {
     doc: 'How often to poll the forecast data (cron format)',
     format: String, // TODO: maybe custom validate this
-    default: '0 * * * *',
+    default: '5 * * * * *',
+    env: 'FORECAST_SCHEDULE'
+  },
+  pollutantstUrl: {
+    doc: 'URL to the forecast data service',
+    format: String,
+    default: 'https://uk-air.defra.gov.uk/assets/rss/forecast.xml',
+    env: 'FORECAST_URL'
+  },
+  pollutantsSchedule: {
+    doc: 'How often to poll the forecast data (cron format)',
+    format: String, // TODO: maybe custom validate this
+    default: '5 * * * * *',
     env: 'FORECAST_SCHEDULE'
   }
 })

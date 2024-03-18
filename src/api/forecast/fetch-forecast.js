@@ -2,7 +2,7 @@ import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import { XMLParser } from 'fast-xml-parser'
 import { createLogger } from '~/src/helpers/logging/logger'
 import { config } from '~/src/config'
-import { parseForecast } from '~/src/helpers/forecast/parse-forecast'
+import { parseForecast } from '~/src/api/forecast/parse-forecast'
 
 const logger = createLogger()
 
