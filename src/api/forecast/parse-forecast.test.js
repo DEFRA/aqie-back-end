@@ -1,4 +1,4 @@
-import { parseForecast } from '~/src/helpers/forecast/parse-forecast'
+import { parseForecast } from '~/src/api/forecast/parse-forecast'
 
 describe('parseForecast', () => {
   test('Should parse a valid row', () => {
