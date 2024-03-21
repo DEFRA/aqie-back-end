@@ -11,7 +11,7 @@ const logger = createLogger()
 // This is an example to show developers an API with a DB, with data in it and endpoints that query the db.
 const pollutantsScheduler = {
   plugin: {
-    name: 'Forecast Scheduler',
+    name: 'Pollutants Scheduler',
     register: async (server) => {
       // Pre-populate the data so we dont have to wait an hour
       await fetchAndSavePollutants(server)
