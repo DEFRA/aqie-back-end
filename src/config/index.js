@@ -80,20 +80,28 @@ const config = convict({
   forecastSchedule: {
     doc: 'How often to poll the forecast data (cron format)',
     format: String, // TODO: maybe custom validate this
-    default: '5 * * * * *',
+    default: '0 0 6 * * *',
     env: 'FORECAST_SCHEDULE'
   },
   pollutantstUrl: {
-    doc: 'URL to the forecast data service',
+    doc: 'URL to the pollutants data service',
     format: String,
-    default: 'https://uk-air.defra.gov.uk/assets/rss/forecast.xml',
-    env: 'FORECAST_URL'
+    default:
+      'https://uk-air.defra.gov.uk/data/API/site-process-featureofinterest-by-region?group_id=4&closed=false&region_id=',
+    env: 'POLLUTANTS_URL'
+  },
+  pollutantstUrlExtra: {
+    doc: 'URL to the pollutants data service',
+    format: String,
+    default:
+      'https://uk-air.defra.gov.uk/sos-ukair/service?service=AQD&version=1.0.0&request=GetObservation&temporalFilter=om:phenomenonTime,',
+    env: 'POLLUTANTS_URL_EXTRA'
   },
   pollutantsSchedule: {
-    doc: 'How often to poll the forecast data (cron format)',
+    doc: 'How often to poll the pollutants data (cron format)',
     format: String, // TODO: maybe custom validate this
-    default: '5 * * * * *',
-    env: 'FORECAST_SCHEDULE'
+    default: '0 0 * * * *',
+    env: 'POLLUTANTS_SCHEDULE'
   }
 })
 
