@@ -1,5 +1,6 @@
 const healthController = {
-  handler: (request, h) => h.response({ message: 'success' }).code(200)
+  handler: (request, h) =>
+    h.response({ message: 'success', text: 'missingFOI' }).code(200)
 }
 
 export { healthController }

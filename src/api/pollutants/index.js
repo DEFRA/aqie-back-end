@@ -1,14 +1,14 @@
 /* eslint-disable prettier/prettier */
 import { pollutantsController } from '~/src/api/pollutants/controllers'
 
-const pollutants = {
+const measurements = {
   plugin: {
-    name: 'pollutants',
+    name: 'measurements',
     register: async (server) => {
       server.route([
         {
           method: 'GET',
-          path: '/pollutants',
+          path: '/measurements',
           ...pollutantsController
         }
       ])
@@ -16,4 +16,4 @@ const pollutants = {
   }
 }
 
-export { pollutants }
+export { measurements }

@@ -8,15 +8,15 @@ async function populatePollutantsApi(mongo, db) {
   const pollutantsCollection = db.collection('measurements')
 
   try {
-    const pollutants = await fetchPollutants()
+    const measurements = await fetchPollutants()
 
     const session = mongo.startSession()
     session.startTransaction()
 
-    if (pollutants.length) {
+    if (measurements.length) {
       await pollutantsCollection.deleteMany({})
-      await pollutantsCollection.insertMany(pollutants)
-      logger.info(`Updated ${pollutants.length} pollutants`)
+      await pollutantsCollection.insertMany(measurements)
+      logger.info(`Updated ${measurements.length} measurements`)
     }
 
     await session.commitTransaction()

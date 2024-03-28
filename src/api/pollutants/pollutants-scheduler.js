@@ -27,8 +27,8 @@ const pollutantsScheduler = {
 }
 
 async function fetchAndSavePollutants(server) {
-  const pollutants = await fetchPollutants()
-  await savePollutants(server, pollutants)
+  const measurements = await fetchPollutants()
+  await savePollutants(server, measurements)
 }
 
 export { pollutantsScheduler }
