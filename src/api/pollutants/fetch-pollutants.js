@@ -6,7 +6,7 @@ import { createLogger } from '~/src/helpers/logging/logger'
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
 import moment from 'moment'
-process.setMaxListeners(300)
+process.setMaxListeners(500)
 
 const logger = createLogger()
 
@@ -432,13 +432,13 @@ const fetchPollutants = async () => {
   })
 
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 3)
+    const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const easternObjSplit = easternObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 3)
+    const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
@@ -515,6 +515,13 @@ const fetchPollutants = async () => {
     return all
   }, [])
 
+  const highlandObjSplit = highlandObj.reduce((all, one, i) => {
+    const ch = Math.floor(i % 4)
+    all[ch] = [].concat(all[ch] || [], one)
+    return all
+  }, [])
+  
+
   const NorthEastScotlandResults = await pollutantUpdater(northEastScotlandObj)
   const northWalesResults = await pollutantUpdater(northWalesObj)
   const highlandResults = await pollutantUpdater(highlandObj)
@@ -528,10 +535,47 @@ const fetchPollutants = async () => {
   const centralScotlandResults3 = await pollutantUpdater(
     centralScotlandObjSplit[2]
   )
+
+  const centralScotlandResults4 = await pollutantUpdater(
+    centralScotlandObjSplit[3]
+  )
+  const centralScotlandResults5 = await pollutantUpdater(
+    centralScotlandObjSplit[4]
+  )
+  const centralScotlandResults6 = await pollutantUpdater(
+    centralScotlandObjSplit[5]
+  )
+  const centralScotlandResults7 = await pollutantUpdater(
+    centralScotlandObjSplit[6]
+  )
+  const centralScotlandResults8 = await pollutantUpdater(
+    centralScotlandObjSplit[7]
+  )
+  const centralScotlandResults9 = await pollutantUpdater(
+    centralScotlandObjSplit[8]
+  )
+  const centralScotlandResults10 = await pollutantUpdater(
+    centralScotlandObjSplit[9]
+  )
+  const centralScotlandResults11 = await pollutantUpdater(
+    centralScotlandObjSplit[10]
+  )
+  const centralScotlandResults12 = await pollutantUpdater(
+    centralScotlandObjSplit[11]
+  )
   //
   const easternResults1 = await pollutantUpdater(easternObjSplit[0])
   const easternResults2 = await pollutantUpdater(easternObjSplit[1])
   const easternResults3 = await pollutantUpdater(easternObjSplit[2])
+  const easternResults4 = await pollutantUpdater(easternObjSplit[3])
+  const easternResults5 = await pollutantUpdater(easternObjSplit[4])
+  const easternResults6 = await pollutantUpdater(easternObjSplit[5])
+  const easternResults7 = await pollutantUpdater(easternObjSplit[6])
+  const easternResults8 = await pollutantUpdater(easternObjSplit[7])
+  const easternResults9 = await pollutantUpdater(easternObjSplit[8])
+  const easternResults10 = await pollutantUpdater(easternObjSplit[9])
+  const easternResults11 = await pollutantUpdater(easternObjSplit[10])
+  const easternResults12 = await pollutantUpdater(easternObjSplit[11])
   //
   const southEastResults1 = await pollutantUpdater(southEastObjSplit[0])
   const southEastResults2 = await pollutantUpdater(southEastObjSplit[1])
@@ -857,6 +901,12 @@ const fetchPollutants = async () => {
   const isleofManObjSplitResults5 = await pollutantUpdater(isleofManObjSplit[4])
   const isleofManObjSplitResults6 = await pollutantUpdater(isleofManObjSplit[5])
   const isleofManObjSplitResults7 = await pollutantUpdater(isleofManObjSplit[6])
+  //
+  const highlandObjSplitResults1 = await pollutantUpdater(highlandObjSplit[0])
+  const highlandObjSplitResults2 = await pollutantUpdater(highlandObjSplit[1])
+  const highlandObjSplitResults3 = await pollutantUpdater(highlandObjSplit[2])
+  const highlandObjSplitResults4 = await pollutantUpdater(highlandObjSplit[3])
+  
 
   const measurements = [
     ...NorthEastScotlandResults,
@@ -865,9 +915,27 @@ const fetchPollutants = async () => {
     ...centralScotlandResults1,
     ...centralScotlandResults2,
     ...centralScotlandResults3,
+    ...centralScotlandResults4,
+    ...centralScotlandResults5,
+    ...centralScotlandResults6,
+    ...centralScotlandResults7,
+    ...centralScotlandResults8,
+    ...centralScotlandResults9,
+    ...centralScotlandResults10,
+    ...centralScotlandResults11,
+    ...centralScotlandResults12,
     ...easternResults1,
     ...easternResults2,
     ...easternResults3,
+    ...easternResults4,
+    ...easternResults5,
+    ...easternResults6,
+    ...easternResults7,
+    ...easternResults8,
+    ...easternResults9,
+    ...easternResults10,
+    ...easternResults11,
+    ...easternResults12,
     ...southEastResults1,
     ...southEastResults2,
     ...southEastResults3,
@@ -1007,7 +1075,11 @@ const fetchPollutants = async () => {
     ...isleofManObjSplitResults4,
     ...isleofManObjSplitResults5,
     ...isleofManObjSplitResults6,
-    ...isleofManObjSplitResults7
+    ...isleofManObjSplitResults7,
+    ...highlandObjSplitResults1,
+    ...highlandObjSplitResults2,
+    ...highlandObjSplitResults3,
+    ...highlandObjSplitResults4
   ]
   return measurements
 }

@@ -53,11 +53,7 @@ async function createServer() {
 
   await server.register(router)
 
-  await server.register(populateDb)
-
   await server.register(forecastScheduler)
-
-  await server.register(populatePollutantsDb)
 
   await server.register(pollutantsScheduler)
 

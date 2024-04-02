@@ -7,8 +7,10 @@ import xmlToJs from 'xml-js'
 import { config } from '~/src/config'
 import { XMLParser, XMLBuilder } from 'fast-xml-parser'
 import moment from 'moment'
-process.setMaxListeners(300)
+import { createLogger } from '~/src/helpers/logging/logger'
 
+process.setMaxListeners(500)
+const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
 const startTimeStamp = moment()
   .add(-1, 'days')
@@ -23,6 +25,7 @@ const timestamp = `${startTimeStamp}/${endTimeStamp}`
 const parser = new XMLParser()
 const builder = new XMLBuilder()
 export async function pollutantUpdater(data) {
+  logger.info(`pollutants updater running... ${data[0].name} max ${data.length}`)
   let promises = []
   data.forEach((site, index) => {
     try {
