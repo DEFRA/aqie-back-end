@@ -9,7 +9,8 @@ import { failAction } from '~/src/helpers/fail-action'
 import { populateDb } from '~/src/helpers/db/populate-db'
 import { secureContext } from '~/src/helpers/secure-context'
 import { forecastScheduler } from '~/src/api/forecast/forecast-scheduler'
-// import { pollutantsScheduler } from '~/src/helpers/pollutants/pollutants-scheduler'
+import { populatePollutantsDb } from '~/src/api/pollutants/db/populate-pollutants-db'
+import { pollutantsScheduler } from '~/src/api/pollutants/pollutants-scheduler'
 
 const isProduction = config.get('isProduction')
 
@@ -56,7 +57,9 @@ async function createServer() {
 
   await server.register(forecastScheduler)
 
-  // await server.register(pollutantsScheduler)
+  await server.register(populatePollutantsDb)
+
+  await server.register(pollutantsScheduler)
 
   return server
 }
