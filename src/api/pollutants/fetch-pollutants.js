@@ -5,7 +5,7 @@ import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import { createLogger } from '~/src/helpers/logging/logger'
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
-import moment from 'moment';
+import moment from 'moment'
 process.setMaxListeners(300)
 
 const logger = createLogger()
@@ -13,50 +13,56 @@ const logger = createLogger()
 const fetchPollutants = async () => {
   const url = config.get('pollutantstUrl')
 
-  const res3 = await proxyFetch(url + 3);
-  const northEastScotlandJSON = await res3.json();
-  const res4 = await proxyFetch(url + 4);
-  const northWalesJSON = await res4.json();
-  const res5 = await proxyFetch(url + 5);
-  const highlandJSON = await res5.json();
-  const res6 = await proxyFetch(url + 6);
-  const centralScotlandJSON = await res6.json();
-  const res7 = await proxyFetch(url + 7);
-  const easternJSON = await res7.json();
-  const res8 = await proxyFetch(url + 8);
-  const southEastJSON = await res8.json();
-  const res9 = await proxyFetch(url + 9);
-  const southWalesJSON = await res9.json();
-  const res10 = await proxyFetch(url + 10);
-  const northWestAndMerseysideJSON = await res10.json();
-  const res11 = await proxyFetch(url + 11);
-  const southWestJSON = await res11.json();
-  const res12 = await proxyFetch(url + 12);
-  const eastMidlandsJSON = await res12.json();
-  const res13 = await proxyFetch(url + 13);
-  const scottishBordersJSON = await res13.json();
-  const res14 = await proxyFetch(url + 14);
-  const northEastJSON = await res14.json();
-  const res15 = await proxyFetch(url + 15);
-  const greaterLondonJSON = await res15.json();
-  const res16 = await proxyFetch(url + 16);
-  const westMidlandsJSON = await res16.json();
-  const res17 = await proxyFetch(url + 17);
-  const yorkshireAndHumbersideJSON = await res17.json();
-  const res18 = await proxyFetch(url + 18);
-  const isleofManJSON = await res18.json();
+  const res3 = await proxyFetch(url + 3)
+  const northEastScotlandJSON = await res3.json()
+  const res4 = await proxyFetch(url + 4)
+  const northWalesJSON = await res4.json()
+  const res5 = await proxyFetch(url + 5)
+  const highlandJSON = await res5.json()
+  const res6 = await proxyFetch(url + 6)
+  const centralScotlandJSON = await res6.json()
+  const res7 = await proxyFetch(url + 7)
+  const easternJSON = await res7.json()
+  const res8 = await proxyFetch(url + 8)
+  const southEastJSON = await res8.json()
+  const res9 = await proxyFetch(url + 9)
+  const southWalesJSON = await res9.json()
+  const res10 = await proxyFetch(url + 10)
+  const northWestAndMerseysideJSON = await res10.json()
+  const res11 = await proxyFetch(url + 11)
+  const southWestJSON = await res11.json()
+  const res12 = await proxyFetch(url + 12)
+  const eastMidlandsJSON = await res12.json()
+  const res13 = await proxyFetch(url + 13)
+  const scottishBordersJSON = await res13.json()
+  const res14 = await proxyFetch(url + 14)
+  const northEastJSON = await res14.json()
+  const res15 = await proxyFetch(url + 15)
+  const greaterLondonJSON = await res15.json()
+  const res16 = await proxyFetch(url + 16)
+  const westMidlandsJSON = await res16.json()
+  const res17 = await proxyFetch(url + 17)
+  const yorkshireAndHumbersideJSON = await res17.json()
+  const res18 = await proxyFetch(url + 18)
+  const isleofManJSON = await res18.json()
   console.log(moment().toISOString())
 
-  const northEastScotlandObj = northEastScotlandJSON.map(item => {
+  const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "North East Scotland",
+      area: 'North East Scotland',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -65,16 +71,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const northWalesObj = northWalesJSON.map(item => {
+  const northWalesObj = northWalesJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "North wales",
+      area: 'North wales',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -83,16 +95,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const highlandObj = highlandJSON.map(item => {
+  const highlandObj = highlandJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Highland",
+      area: 'Highland',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -101,16 +119,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const centralScotlandObj = centralScotlandJSON.map(item => {
+  const centralScotlandObj = centralScotlandJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Central Scotland",
+      area: 'Central Scotland',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -119,16 +143,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const easternObj = easternJSON.map(item => {
+  const easternObj = easternJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Eastern",
+      area: 'Eastern',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -137,16 +167,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const southEastObj = southEastJSON.map(item => {
+  const southEastObj = southEastJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "South East",
+      area: 'South East',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -155,16 +191,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const southWalesObj = southWalesJSON.map(item => {
+  const southWalesObj = southWalesJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "South Wales",
+      area: 'South Wales',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -173,16 +215,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const northWestAndMerseysideObj = northWestAndMerseysideJSON.map(item => {
+  const northWestAndMerseysideObj = northWestAndMerseysideJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "NorthWest & Merseyside",
+      area: 'NorthWest & Merseyside',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -191,16 +239,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const southWestObj = southWestJSON.map(item => {
+  const southWestObj = southWestJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "South West",
+      area: 'South West',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -209,16 +263,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const eastMidlandsObj = eastMidlandsJSON.map(item => {
+  const eastMidlandsObj = eastMidlandsJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "East Midlands",
+      area: 'East Midlands',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -227,16 +287,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const scottishBordersObj = scottishBordersJSON.map(item => {
+  const scottishBordersObj = scottishBordersJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Scottish Borders",
+      area: 'Scottish Borders',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -245,16 +311,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const northEastObj = northEastJSON.map(item => {
+  const northEastObj = northEastJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "North East",
+      area: 'North East',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -263,16 +335,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const greaterLondonObj = greaterLondonJSON.map(item => {
+  const greaterLondonObj = greaterLondonJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Greater London",
+      area: 'Greater London',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -281,16 +359,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const westMidlandsObj = westMidlandsJSON.map(item => {
+  const westMidlandsObj = westMidlandsJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "West Midlands",
+      area: 'West Midlands',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -299,16 +383,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const yorkshireAndHumbersideObj = yorkshireAndHumbersideJSON.map(item => {
+  const yorkshireAndHumbersideObj = yorkshireAndHumbersideJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Yorkshire & Humberside",
+      area: 'Yorkshire & Humberside',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -317,16 +407,22 @@ const fetchPollutants = async () => {
     }
   })
 
-  const isleofManObj = isleofManJSON.map(item => {
+  const isleofManObj = isleofManJSON.map((item) => {
     let newObj = {}
-    item.parameter_ids.forEach(el => {
+    item.parameter_ids.forEach((el) => {
       if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
-        newObj = Object.assign({}, newObj, { [el.parameter_id]: { featureOfInterest: el.feature_of_interest[0].featureOfInterset, time: { date: "" }, exception: "" } })
+        newObj = Object.assign({}, newObj, {
+          [el.parameter_id]: {
+            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            time: { date: '' },
+            exception: ''
+          }
+        })
       }
     })
     return {
       name: item.site_name,
-      area: "Yorkshire & Humberside",
+      area: 'Yorkshire & Humberside',
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -336,93 +432,102 @@ const fetchPollutants = async () => {
   })
 
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 3);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 3)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const easternObjSplit = easternObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 3);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 3)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const southEastObjSplit = southEastObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 19);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 19)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const southWalesObjSplit = southWalesObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 9);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 9)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
-  const northWestAndMerseysideObjSplit = northWestAndMerseysideObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 19);
-    all[ch] = [].concat((all[ch] || []), one);
-    return all
-  }, [])
+  const northWestAndMerseysideObjSplit = northWestAndMerseysideObj.reduce(
+    (all, one, i) => {
+      const ch = Math.floor(i % 19)
+      all[ch] = [].concat(all[ch] || [], one)
+      return all
+    },
+    []
+  )
 
   const southWestObjSplit = southWestObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 14);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 14)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const eastMidlandsObjSplit = eastMidlandsObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 14);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 14)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const scottishBordersObjSplit = scottishBordersObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 3);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 3)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const northEastObjSplit = northEastObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 9);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 9)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const greaterLondonObjSplit = greaterLondonObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 16);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 16)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
   const westMidlandsObjSplit = westMidlandsObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 15);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 15)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
 
-  const yorkshireAndHumbersideObjSplit = yorkshireAndHumbersideObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 16);
-    all[ch] = [].concat((all[ch] || []), one);
-    return all
-  }, [])
-  
+  const yorkshireAndHumbersideObjSplit = yorkshireAndHumbersideObj.reduce(
+    (all, one, i) => {
+      const ch = Math.floor(i % 16)
+      all[ch] = [].concat(all[ch] || [], one)
+      return all
+    },
+    []
+  )
+
   const isleofManObjSplit = isleofManObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 7);
-    all[ch] = [].concat((all[ch] || []), one);
+    const ch = Math.floor(i % 7)
+    all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
-  
-  
 
-  const NorthEastScotlandResults = await
-    pollutantUpdater(northEastScotlandObj)
+  const NorthEastScotlandResults = await pollutantUpdater(northEastScotlandObj)
   const northWalesResults = await pollutantUpdater(northWalesObj)
   const highlandResults = await pollutantUpdater(highlandObj)
-  //                                     
-  const centralScotlandResults1 = await pollutantUpdater(centralScotlandObjSplit[0])
-  const centralScotlandResults2 = await pollutantUpdater(centralScotlandObjSplit[1])
-  const centralScotlandResults3 = await pollutantUpdater(centralScotlandObjSplit[2])
+  //
+  const centralScotlandResults1 = await pollutantUpdater(
+    centralScotlandObjSplit[0]
+  )
+  const centralScotlandResults2 = await pollutantUpdater(
+    centralScotlandObjSplit[1]
+  )
+  const centralScotlandResults3 = await pollutantUpdater(
+    centralScotlandObjSplit[2]
+  )
   //
   const easternResults1 = await pollutantUpdater(easternObjSplit[0])
   const easternResults2 = await pollutantUpdater(easternObjSplit[1])
@@ -447,7 +552,7 @@ const fetchPollutants = async () => {
   const southEastResults17 = await pollutantUpdater(southEastObjSplit[16])
   const southEastResults18 = await pollutantUpdater(southEastObjSplit[17])
   const southEastResults19 = await pollutantUpdater(southEastObjSplit[18])
-  
+
   const southWalesObjResults1 = await pollutantUpdater(southWalesObjSplit[0])
   const southWalesObjResults2 = await pollutantUpdater(southWalesObjSplit[1])
   const southWalesObjResults3 = await pollutantUpdater(southWalesObjSplit[2])
@@ -458,25 +563,63 @@ const fetchPollutants = async () => {
   const southWalesObjResults8 = await pollutantUpdater(southWalesObjSplit[7])
   const southWalesObjResults9 = await pollutantUpdater(southWalesObjSplit[8])
   //
-  const northWestAndMerseysideResults1 = await pollutantUpdater(northWestAndMerseysideObjSplit[0])
-  const northWestAndMerseysideResults2 = await pollutantUpdater(northWestAndMerseysideObjSplit[1])
-  const northWestAndMerseysideResults3 = await pollutantUpdater(northWestAndMerseysideObjSplit[2])
-  const northWestAndMerseysideResults4 = await pollutantUpdater(northWestAndMerseysideObjSplit[3])
-  const northWestAndMerseysideResults5 = await pollutantUpdater(northWestAndMerseysideObjSplit[4])
-  const northWestAndMerseysideResults6 = await pollutantUpdater(northWestAndMerseysideObjSplit[5])
-  const northWestAndMerseysideResults7 = await pollutantUpdater(northWestAndMerseysideObjSplit[6])
-  const northWestAndMerseysideResults8 = await pollutantUpdater(northWestAndMerseysideObjSplit[7])
-  const northWestAndMerseysideResults9 = await pollutantUpdater(northWestAndMerseysideObjSplit[8])
-  const northWestAndMerseysideResults10 = await pollutantUpdater(northWestAndMerseysideObjSplit[9])
-  const northWestAndMerseysideResults11 = await pollutantUpdater(northWestAndMerseysideObjSplit[10])
-  const northWestAndMerseysideResults12 = await pollutantUpdater(northWestAndMerseysideObjSplit[11])
-  const northWestAndMerseysideResults13 = await pollutantUpdater(northWestAndMerseysideObjSplit[12])
-  const northWestAndMerseysideResults14 = await pollutantUpdater(northWestAndMerseysideObjSplit[13])
-  const northWestAndMerseysideResults15 = await pollutantUpdater(northWestAndMerseysideObjSplit[14])
-  const northWestAndMerseysideResults16 = await pollutantUpdater(northWestAndMerseysideObjSplit[15])
-  const northWestAndMerseysideResults17 = await pollutantUpdater(northWestAndMerseysideObjSplit[16])
-  const northWestAndMerseysideResults18 = await pollutantUpdater(northWestAndMerseysideObjSplit[17])
-  const northWestAndMerseysideResults19 = await pollutantUpdater(northWestAndMerseysideObjSplit[18])
+  const northWestAndMerseysideResults1 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[0]
+  )
+  const northWestAndMerseysideResults2 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[1]
+  )
+  const northWestAndMerseysideResults3 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[2]
+  )
+  const northWestAndMerseysideResults4 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[3]
+  )
+  const northWestAndMerseysideResults5 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[4]
+  )
+  const northWestAndMerseysideResults6 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[5]
+  )
+  const northWestAndMerseysideResults7 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[6]
+  )
+  const northWestAndMerseysideResults8 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[7]
+  )
+  const northWestAndMerseysideResults9 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[8]
+  )
+  const northWestAndMerseysideResults10 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[9]
+  )
+  const northWestAndMerseysideResults11 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[10]
+  )
+  const northWestAndMerseysideResults12 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[11]
+  )
+  const northWestAndMerseysideResults13 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[12]
+  )
+  const northWestAndMerseysideResults14 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[13]
+  )
+  const northWestAndMerseysideResults15 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[14]
+  )
+  const northWestAndMerseysideResults16 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[15]
+  )
+  const northWestAndMerseysideResults17 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[16]
+  )
+  const northWestAndMerseysideResults18 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[17]
+  )
+  const northWestAndMerseysideResults19 = await pollutantUpdater(
+    northWestAndMerseysideObjSplit[18]
+  )
   //
   const southWestObjSplitResults1 = await pollutantUpdater(southWestObjSplit[0])
   const southWestObjSplitResults2 = await pollutantUpdater(southWestObjSplit[1])
@@ -487,29 +630,71 @@ const fetchPollutants = async () => {
   const southWestObjSplitResults7 = await pollutantUpdater(southWestObjSplit[6])
   const southWestObjSplitResults8 = await pollutantUpdater(southWestObjSplit[7])
   const southWestObjSplitResults9 = await pollutantUpdater(southWestObjSplit[8])
-  const southWestObjSplitResults10 = await pollutantUpdater(southWestObjSplit[9])
-  const southWestObjSplitResults11 = await pollutantUpdater(southWestObjSplit[10])
-  const southWestObjSplitResults12 = await pollutantUpdater(southWestObjSplit[11])
-  const southWestObjSplitResults13 = await pollutantUpdater(southWestObjSplit[12])
-  const southWestObjSplitResults14 = await pollutantUpdater(southWestObjSplit[13])
+  const southWestObjSplitResults10 = await pollutantUpdater(
+    southWestObjSplit[9]
+  )
+  const southWestObjSplitResults11 = await pollutantUpdater(
+    southWestObjSplit[10]
+  )
+  const southWestObjSplitResults12 = await pollutantUpdater(
+    southWestObjSplit[11]
+  )
+  const southWestObjSplitResults13 = await pollutantUpdater(
+    southWestObjSplit[12]
+  )
+  const southWestObjSplitResults14 = await pollutantUpdater(
+    southWestObjSplit[13]
+  )
   //
-  const eastMidlandsObjSplitResults1 = await pollutantUpdater(eastMidlandsObjSplit[0])
-  const eastMidlandsObjSplitResults2 = await pollutantUpdater(eastMidlandsObjSplit[1])
-  const eastMidlandsObjSplitResults3 = await pollutantUpdater(eastMidlandsObjSplit[2])
-  const eastMidlandsObjSplitResults4 = await pollutantUpdater(eastMidlandsObjSplit[3])
-  const eastMidlandsObjSplitResults5 = await pollutantUpdater(eastMidlandsObjSplit[4])
-  const eastMidlandsObjSplitResults6 = await pollutantUpdater(eastMidlandsObjSplit[5])
-  const eastMidlandsObjSplitResults7 = await pollutantUpdater(eastMidlandsObjSplit[6])
-  const eastMidlandsObjSplitResults8 = await pollutantUpdater(eastMidlandsObjSplit[7])
-  const eastMidlandsObjSplitResults9 = await pollutantUpdater(eastMidlandsObjSplit[8])
-  const eastMidlandsObjSplitResults10 = await pollutantUpdater(eastMidlandsObjSplit[9])
-  const eastMidlandsObjSplitResults11 = await pollutantUpdater(eastMidlandsObjSplit[10])
-  const eastMidlandsObjSplitResults12 = await pollutantUpdater(eastMidlandsObjSplit[11])
-  const eastMidlandsObjSplitResults13 = await pollutantUpdater(eastMidlandsObjSplit[12])
+  const eastMidlandsObjSplitResults1 = await pollutantUpdater(
+    eastMidlandsObjSplit[0]
+  )
+  const eastMidlandsObjSplitResults2 = await pollutantUpdater(
+    eastMidlandsObjSplit[1]
+  )
+  const eastMidlandsObjSplitResults3 = await pollutantUpdater(
+    eastMidlandsObjSplit[2]
+  )
+  const eastMidlandsObjSplitResults4 = await pollutantUpdater(
+    eastMidlandsObjSplit[3]
+  )
+  const eastMidlandsObjSplitResults5 = await pollutantUpdater(
+    eastMidlandsObjSplit[4]
+  )
+  const eastMidlandsObjSplitResults6 = await pollutantUpdater(
+    eastMidlandsObjSplit[5]
+  )
+  const eastMidlandsObjSplitResults7 = await pollutantUpdater(
+    eastMidlandsObjSplit[6]
+  )
+  const eastMidlandsObjSplitResults8 = await pollutantUpdater(
+    eastMidlandsObjSplit[7]
+  )
+  const eastMidlandsObjSplitResults9 = await pollutantUpdater(
+    eastMidlandsObjSplit[8]
+  )
+  const eastMidlandsObjSplitResults10 = await pollutantUpdater(
+    eastMidlandsObjSplit[9]
+  )
+  const eastMidlandsObjSplitResults11 = await pollutantUpdater(
+    eastMidlandsObjSplit[10]
+  )
+  const eastMidlandsObjSplitResults12 = await pollutantUpdater(
+    eastMidlandsObjSplit[11]
+  )
+  const eastMidlandsObjSplitResults13 = await pollutantUpdater(
+    eastMidlandsObjSplit[12]
+  )
   //
-  const scottishBordersObjSplitResults1 = await pollutantUpdater(scottishBordersObjSplit[0])
-  const scottishBordersObjSplitResults2 = await pollutantUpdater(scottishBordersObjSplit[1])
-  const scottishBordersObjSplitResults3 = await pollutantUpdater(scottishBordersObjSplit[2])
+  const scottishBordersObjSplitResults1 = await pollutantUpdater(
+    scottishBordersObjSplit[0]
+  )
+  const scottishBordersObjSplitResults2 = await pollutantUpdater(
+    scottishBordersObjSplit[1]
+  )
+  const scottishBordersObjSplitResults3 = await pollutantUpdater(
+    scottishBordersObjSplit[2]
+  )
   //
   const northEastObjSplitResults1 = await pollutantUpdater(northEastObjSplit[0])
   const northEastObjSplitResults2 = await pollutantUpdater(northEastObjSplit[1])
@@ -521,55 +706,149 @@ const fetchPollutants = async () => {
   const northEastObjSplitResults8 = await pollutantUpdater(northEastObjSplit[7])
   const northEastObjSplitResults9 = await pollutantUpdater(northEastObjSplit[8])
   //
-  const greaterLondonObjSplitResults1 = await pollutantUpdater(greaterLondonObjSplit[0])
-  const greaterLondonObjSplitResults2 = await pollutantUpdater(greaterLondonObjSplit[1])
-  const greaterLondonObjSplitResults3 = await pollutantUpdater(greaterLondonObjSplit[2])
-  const greaterLondonObjSplitResults4 = await pollutantUpdater(greaterLondonObjSplit[3])
-  const greaterLondonObjSplitResults5 = await pollutantUpdater(greaterLondonObjSplit[4])
-  const greaterLondonObjSplitResults6 = await pollutantUpdater(greaterLondonObjSplit[5])
-  const greaterLondonObjSplitResults7 = await pollutantUpdater(greaterLondonObjSplit[6])
-  const greaterLondonObjSplitResults8 = await pollutantUpdater(greaterLondonObjSplit[7])
-  const greaterLondonObjSplitResults9 = await pollutantUpdater(greaterLondonObjSplit[8])
-  const greaterLondonObjSplitResults10 = await pollutantUpdater(greaterLondonObjSplit[9])
-  const greaterLondonObjSplitResults11 = await pollutantUpdater(greaterLondonObjSplit[10])
-  const greaterLondonObjSplitResults12 = await pollutantUpdater(greaterLondonObjSplit[11])
-  const greaterLondonObjSplitResults13 = await pollutantUpdater(greaterLondonObjSplit[12])
-  const greaterLondonObjSplitResults14 = await pollutantUpdater(greaterLondonObjSplit[13])
-  const greaterLondonObjSplitResults15 = await pollutantUpdater(greaterLondonObjSplit[14])
-  const greaterLondonObjSplitResults16 = await pollutantUpdater(greaterLondonObjSplit[15])
+  const greaterLondonObjSplitResults1 = await pollutantUpdater(
+    greaterLondonObjSplit[0]
+  )
+  const greaterLondonObjSplitResults2 = await pollutantUpdater(
+    greaterLondonObjSplit[1]
+  )
+  const greaterLondonObjSplitResults3 = await pollutantUpdater(
+    greaterLondonObjSplit[2]
+  )
+  const greaterLondonObjSplitResults4 = await pollutantUpdater(
+    greaterLondonObjSplit[3]
+  )
+  const greaterLondonObjSplitResults5 = await pollutantUpdater(
+    greaterLondonObjSplit[4]
+  )
+  const greaterLondonObjSplitResults6 = await pollutantUpdater(
+    greaterLondonObjSplit[5]
+  )
+  const greaterLondonObjSplitResults7 = await pollutantUpdater(
+    greaterLondonObjSplit[6]
+  )
+  const greaterLondonObjSplitResults8 = await pollutantUpdater(
+    greaterLondonObjSplit[7]
+  )
+  const greaterLondonObjSplitResults9 = await pollutantUpdater(
+    greaterLondonObjSplit[8]
+  )
+  const greaterLondonObjSplitResults10 = await pollutantUpdater(
+    greaterLondonObjSplit[9]
+  )
+  const greaterLondonObjSplitResults11 = await pollutantUpdater(
+    greaterLondonObjSplit[10]
+  )
+  const greaterLondonObjSplitResults12 = await pollutantUpdater(
+    greaterLondonObjSplit[11]
+  )
+  const greaterLondonObjSplitResults13 = await pollutantUpdater(
+    greaterLondonObjSplit[12]
+  )
+  const greaterLondonObjSplitResults14 = await pollutantUpdater(
+    greaterLondonObjSplit[13]
+  )
+  const greaterLondonObjSplitResults15 = await pollutantUpdater(
+    greaterLondonObjSplit[14]
+  )
+  const greaterLondonObjSplitResults16 = await pollutantUpdater(
+    greaterLondonObjSplit[15]
+  )
   //
-  const westMidlandsObjSplitResults1 = await pollutantUpdater(westMidlandsObjSplit[0])
-  const westMidlandsObjSplitResults2 = await pollutantUpdater(westMidlandsObjSplit[1])
-  const westMidlandsObjSplitResults3 = await pollutantUpdater(westMidlandsObjSplit[2])
-  const westMidlandsObjSplitResults4 = await pollutantUpdater(westMidlandsObjSplit[3])
-  const westMidlandsObjSplitResults5 = await pollutantUpdater(westMidlandsObjSplit[4])
-  const westMidlandsObjSplitResults6 = await pollutantUpdater(westMidlandsObjSplit[5])
-  const westMidlandsObjSplitResults7 = await pollutantUpdater(westMidlandsObjSplit[6])
-  const westMidlandsObjSplitResults8 = await pollutantUpdater(westMidlandsObjSplit[7])
-  const westMidlandsObjSplitResults9 = await pollutantUpdater(westMidlandsObjSplit[8])
-  const westMidlandsObjSplitResults10 = await pollutantUpdater(westMidlandsObjSplit[9])
-  const westMidlandsObjSplitResults11 = await pollutantUpdater(westMidlandsObjSplit[10])
-  const westMidlandsObjSplitResults12 = await pollutantUpdater(westMidlandsObjSplit[11])
-  const westMidlandsObjSplitResults13 = await pollutantUpdater(westMidlandsObjSplit[12])
-  const westMidlandsObjSplitResults14 = await pollutantUpdater(westMidlandsObjSplit[13])
-  const westMidlandsObjSplitResults15 = await pollutantUpdater(westMidlandsObjSplit[14])
+  const westMidlandsObjSplitResults1 = await pollutantUpdater(
+    westMidlandsObjSplit[0]
+  )
+  const westMidlandsObjSplitResults2 = await pollutantUpdater(
+    westMidlandsObjSplit[1]
+  )
+  const westMidlandsObjSplitResults3 = await pollutantUpdater(
+    westMidlandsObjSplit[2]
+  )
+  const westMidlandsObjSplitResults4 = await pollutantUpdater(
+    westMidlandsObjSplit[3]
+  )
+  const westMidlandsObjSplitResults5 = await pollutantUpdater(
+    westMidlandsObjSplit[4]
+  )
+  const westMidlandsObjSplitResults6 = await pollutantUpdater(
+    westMidlandsObjSplit[5]
+  )
+  const westMidlandsObjSplitResults7 = await pollutantUpdater(
+    westMidlandsObjSplit[6]
+  )
+  const westMidlandsObjSplitResults8 = await pollutantUpdater(
+    westMidlandsObjSplit[7]
+  )
+  const westMidlandsObjSplitResults9 = await pollutantUpdater(
+    westMidlandsObjSplit[8]
+  )
+  const westMidlandsObjSplitResults10 = await pollutantUpdater(
+    westMidlandsObjSplit[9]
+  )
+  const westMidlandsObjSplitResults11 = await pollutantUpdater(
+    westMidlandsObjSplit[10]
+  )
+  const westMidlandsObjSplitResults12 = await pollutantUpdater(
+    westMidlandsObjSplit[11]
+  )
+  const westMidlandsObjSplitResults13 = await pollutantUpdater(
+    westMidlandsObjSplit[12]
+  )
+  const westMidlandsObjSplitResults14 = await pollutantUpdater(
+    westMidlandsObjSplit[13]
+  )
+  const westMidlandsObjSplitResults15 = await pollutantUpdater(
+    westMidlandsObjSplit[14]
+  )
   //
-  const yorkshireAndHumbersideObjSplitResults1 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[0])
-  const yorkshireAndHumbersideObjSplitResults2 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[1])
-  const yorkshireAndHumbersideObjSplitResults3 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[2])
-  const yorkshireAndHumbersideObjSplitResults4 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[3])
-  const yorkshireAndHumbersideObjSplitResults5 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[4])
-  const yorkshireAndHumbersideObjSplitResults6 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[5])
-  const yorkshireAndHumbersideObjSplitResults7 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[6])
-  const yorkshireAndHumbersideObjSplitResults8 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[7])
-  const yorkshireAndHumbersideObjSplitResults9 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[8])
-  const yorkshireAndHumbersideObjSplitResults10 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[9])
-  const yorkshireAndHumbersideObjSplitResults11 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[10])
-  const yorkshireAndHumbersideObjSplitResults12 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[11])
-  const yorkshireAndHumbersideObjSplitResults13 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[12])
-  const yorkshireAndHumbersideObjSplitResults14 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[13])
-  const yorkshireAndHumbersideObjSplitResults15 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[14])
-  const yorkshireAndHumbersideObjSplitResults16 = await pollutantUpdater(yorkshireAndHumbersideObjSplit[15])
+  const yorkshireAndHumbersideObjSplitResults1 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[0]
+  )
+  const yorkshireAndHumbersideObjSplitResults2 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[1]
+  )
+  const yorkshireAndHumbersideObjSplitResults3 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[2]
+  )
+  const yorkshireAndHumbersideObjSplitResults4 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[3]
+  )
+  const yorkshireAndHumbersideObjSplitResults5 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[4]
+  )
+  const yorkshireAndHumbersideObjSplitResults6 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[5]
+  )
+  const yorkshireAndHumbersideObjSplitResults7 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[6]
+  )
+  const yorkshireAndHumbersideObjSplitResults8 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[7]
+  )
+  const yorkshireAndHumbersideObjSplitResults9 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[8]
+  )
+  const yorkshireAndHumbersideObjSplitResults10 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[9]
+  )
+  const yorkshireAndHumbersideObjSplitResults11 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[10]
+  )
+  const yorkshireAndHumbersideObjSplitResults12 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[11]
+  )
+  const yorkshireAndHumbersideObjSplitResults13 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[12]
+  )
+  const yorkshireAndHumbersideObjSplitResults14 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[13]
+  )
+  const yorkshireAndHumbersideObjSplitResults15 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[14]
+  )
+  const yorkshireAndHumbersideObjSplitResults16 = await pollutantUpdater(
+    yorkshireAndHumbersideObjSplit[15]
+  )
   //
   const isleofManObjSplitResults1 = await pollutantUpdater(isleofManObjSplit[0])
   const isleofManObjSplitResults2 = await pollutantUpdater(isleofManObjSplit[1])
@@ -578,8 +857,6 @@ const fetchPollutants = async () => {
   const isleofManObjSplitResults5 = await pollutantUpdater(isleofManObjSplit[4])
   const isleofManObjSplitResults6 = await pollutantUpdater(isleofManObjSplit[5])
   const isleofManObjSplitResults7 = await pollutantUpdater(isleofManObjSplit[6])
-  
-  
 
   const measurements = [
     ...NorthEastScotlandResults,
@@ -733,7 +1010,6 @@ const fetchPollutants = async () => {
     ...isleofManObjSplitResults7
   ]
   return measurements
-
 }
 
 const savePollutants = async (server, pollutants) => {
