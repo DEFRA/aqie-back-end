@@ -20,7 +20,7 @@ async function populatePollutantsApi(mongo, db) {
     }
 
     await session.commitTransaction()
-    logger.info('Completed data population')
+    logger.info('Completed pollutants data population')
   } catch (error) {
     logger.error(error)
   }

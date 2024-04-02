@@ -16,8 +16,8 @@ const proxyFetch = (url, opts) => {
       ...opts,
       dispatcher: new ProxyAgent({
         uri: httpsProxy,
-        keepAliveTimeout: 100,
-        keepAliveMaxTimeout: 100
+        keepAliveTimeout: 1000,
+        keepAliveMaxTimeout: 1000
       })
     })
   }
