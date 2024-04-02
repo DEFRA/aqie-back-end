@@ -25,7 +25,9 @@ const timestamp = `${startTimeStamp}/${endTimeStamp}`
 const parser = new XMLParser()
 const builder = new XMLBuilder()
 export async function pollutantUpdater(data) {
-  logger.info(`pollutants updater running... ${data[0].name} max ${data.length}`)
+  logger.info(
+    `pollutants updater running... ${data[0].name} max ${data.length}`
+  )
   let promises = []
   data.forEach((site, index) => {
     try {

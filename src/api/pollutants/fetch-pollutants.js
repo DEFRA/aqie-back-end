@@ -520,7 +520,6 @@ const fetchPollutants = async () => {
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
-  
 
   const NorthEastScotlandResults = await pollutantUpdater(northEastScotlandObj)
   const northWalesResults = await pollutantUpdater(northWalesObj)
@@ -906,7 +905,6 @@ const fetchPollutants = async () => {
   const highlandObjSplitResults2 = await pollutantUpdater(highlandObjSplit[1])
   const highlandObjSplitResults3 = await pollutantUpdater(highlandObjSplit[2])
   const highlandObjSplitResults4 = await pollutantUpdater(highlandObjSplit[3])
-  
 
   const measurements = [
     ...NorthEastScotlandResults,
