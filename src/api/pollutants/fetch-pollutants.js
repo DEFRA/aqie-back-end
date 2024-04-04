@@ -45,7 +45,7 @@ const fetchPollutants = async () => {
   const yorkshireAndHumbersideJSON = await res17.json()
   const res18 = await proxyFetch(url + 18)
   const isleofManJSON = await res18.json()
-  console.log(moment().toISOString())
+  console.log(new Date(moment().toISOString()))
 
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
@@ -66,7 +66,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -90,7 +90,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -114,7 +114,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -138,7 +138,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -162,7 +162,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -186,7 +186,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -210,7 +210,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -234,7 +234,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -258,7 +258,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -282,7 +282,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -306,7 +306,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -330,7 +330,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -354,7 +354,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -378,7 +378,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -402,7 +402,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -426,7 +426,7 @@ const fetchPollutants = async () => {
       areaType: item.location_type,
       latitude: item.latitude,
       longitude: item.longitude,
-      updated: moment().toISOString(),
+      updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -1087,6 +1087,7 @@ const savePollutants = async (server, pollutants) => {
   await server.db
     .collection('measurements')
     .bulkWrite(pollutants.map(toBulkReplace))
+  await server.db.collection('historicalMeasurements').insertMany(pollutants)
   logger.info('pollutants update done')
 }
 

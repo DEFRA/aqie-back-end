@@ -13,9 +13,6 @@ const pollutantsScheduler = {
   plugin: {
     name: 'Pollutants Scheduler',
     register: async (server) => {
-      // Pre-populate the data so we dont have to wait an hour
-      await fetchAndSavePollutants(server)
-
       // Start the scheduler
       logger.info('starting pollutants Scheduler')
       schedule(config.get('pollutantsSchedule'), async () => {
