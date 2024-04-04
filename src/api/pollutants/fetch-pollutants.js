@@ -50,7 +50,7 @@ const fetchPollutants = async () => {
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -74,7 +74,7 @@ const fetchPollutants = async () => {
   const northWalesObj = northWalesJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -98,7 +98,7 @@ const fetchPollutants = async () => {
   const highlandObj = highlandJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -122,7 +122,7 @@ const fetchPollutants = async () => {
   const centralScotlandObj = centralScotlandJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -146,7 +146,7 @@ const fetchPollutants = async () => {
   const easternObj = easternJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -170,7 +170,7 @@ const fetchPollutants = async () => {
   const southEastObj = southEastJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -194,7 +194,7 @@ const fetchPollutants = async () => {
   const southWalesObj = southWalesJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -218,7 +218,7 @@ const fetchPollutants = async () => {
   const northWestAndMerseysideObj = northWestAndMerseysideJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -242,7 +242,7 @@ const fetchPollutants = async () => {
   const southWestObj = southWestJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -266,7 +266,7 @@ const fetchPollutants = async () => {
   const eastMidlandsObj = eastMidlandsJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -290,7 +290,7 @@ const fetchPollutants = async () => {
   const scottishBordersObj = scottishBordersJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -314,7 +314,7 @@ const fetchPollutants = async () => {
   const northEastObj = northEastJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -338,7 +338,7 @@ const fetchPollutants = async () => {
   const greaterLondonObj = greaterLondonJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -362,7 +362,7 @@ const fetchPollutants = async () => {
   const westMidlandsObj = westMidlandsJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -386,7 +386,7 @@ const fetchPollutants = async () => {
   const yorkshireAndHumbersideObj = yorkshireAndHumbersideJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
@@ -410,7 +410,7 @@ const fetchPollutants = async () => {
   const isleofManObj = isleofManJSON.map((item) => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
-      if (['O3', 'NO2', 'GE10', 'PM25', 'SO2'].includes(el.parameter_id)) {
+      if (['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(el.parameter_id)) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
