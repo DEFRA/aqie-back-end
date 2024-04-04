@@ -16,4 +16,19 @@ const measurements = {
   }
 }
 
-export { measurements }
+const historicalMeasurements = {
+  plugin: {
+    name: 'historicalMeasurements',
+    register: async (server) => {
+      server.route([
+        {
+          method: 'GET',
+          path: '/historicalMeasurements',
+          ...pollutantsController
+        }
+      ])
+    }
+  }
+}
+
+export { measurements, historicalMeasurements }

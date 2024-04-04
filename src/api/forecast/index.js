@@ -15,4 +15,19 @@ const forecast = {
   }
 }
 
-export { forecast }
+const historicalForecasts = {
+  plugin: {
+    name: 'historicalForecasts',
+    register: async (server) => {
+      server.route([
+        {
+          method: 'GET',
+          path: '/historicalForecasts',
+          ...forecastsController
+        }
+      ])
+    }
+  }
+}
+
+export { forecast, historicalForecasts }
