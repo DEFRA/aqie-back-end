@@ -11,9 +11,6 @@ const forecastScheduler = {
   plugin: {
     name: 'Forecast Scheduler',
     register: async (server) => {
-      // Pre-populate the data so we dont have to wait an hour
-      await fetchAndSaveForecasts(server)
-
       // Start the scheduler
       logger.info('starting forecast Scheduler')
       schedule(config.get('forecastSchedule'), async () => {

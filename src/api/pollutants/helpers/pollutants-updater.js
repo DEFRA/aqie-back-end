@@ -75,8 +75,9 @@ export async function pollutantUpdater(data) {
       }
       try {
         if (response === 'missingFOI') {
-          valueMeasured = 0
-          dateMeasured = ''
+          valueMeasured = 'N/A'
+          exceptionReport = 'N/A'
+          dateMeasured = new Date('0000-00-00T00:00:00.00')
         } else {
           const body = parser.parse(await response.text())
           const xmlContent = builder.build(body)
@@ -105,42 +106,39 @@ export async function pollutantUpdater(data) {
               ]?.['om:result']?.['swe:DataArray']?.['swe:values']._text.split(
                 ','
               )
-            dateMeasured = tempDate
-              ? tempDate[tempDate?.length - 4]
-              : jsonResult?.['gml:FeatureCollection']?.['gml:featureMember']?.[
-                  'aqd:AQD_ReportingHeader'
-                ]?.['aqd:changeDescription']._text
+            dateMeasured = new Date(
+              tempDate
+                ? tempDate[tempDate?.length - 4]
+                : jsonResult?.['gml:FeatureCollection']?.[
+                    'gml:featureMember'
+                  ]?.['aqd:AQD_ReportingHeader']?.['aqd:changeDescription']
+                    ._text
+            )
 
             exceptionReport = ''
           }
           if (jsonResult?.['ows:ExceptionReport']) {
-            valueMeasured = 'Error while querying observation data!'
-            exceptionReport = 'Error while querying observation data!'
-            dateMeasured = 0
+            valueMeasured = 'N/M'
+            exceptionReport = 'N/M'
+            dateMeasured = new Date('0000-00-00T00:00:00.00')
           }
           if (
             jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
               'ows:ExceptionText'
             ]
           ) {
-            valueMeasured =
-              jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
-                'ows:ExceptionText'
-              ]
-            exceptionReport =
-              jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
-                'ows:ExceptionText'
-              ]
-            dateMeasured = 0
+            valueMeasured = 'N/M'
+            exceptionReport = 'N/M'
+            dateMeasured = new Date('0000-00-00T00:00:00.00')
           }
           if (
             ['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
             ]?.['aqd:reportingPeriod']
           ) {
-            valueMeasured = 'Data is missing for this pollutant station!'
-            exceptionReport = 'Data is missing for this pollutant station!'
-            dateMeasured = 0
+            valueMeasured = 'N/M'
+            exceptionReport = 'N/M'
+            dateMeasured = new Date('0000-00-00T00:00:00.00')
           }
         }
       } catch (error) {
