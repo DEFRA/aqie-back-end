@@ -77,7 +77,7 @@ export async function pollutantUpdater(data) {
         if (response === 'missingFOI') {
           valueMeasured = 'N/A'
           exceptionReport = 'N/A'
-          dateMeasured = new Date('0000-00-00T00:00:00.00')
+          dateMeasured = null
         } else {
           const body = parser.parse(await response.text())
           const xmlContent = builder.build(body)
@@ -120,7 +120,7 @@ export async function pollutantUpdater(data) {
           if (jsonResult?.['ows:ExceptionReport']) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
-            dateMeasured = new Date('0000-00-00T00:00:00.00')
+            dateMeasured = null
           }
           if (
             jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
@@ -129,7 +129,7 @@ export async function pollutantUpdater(data) {
           ) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
-            dateMeasured = new Date('0000-00-00T00:00:00.00')
+            dateMeasured = null
           }
           if (
             ['gml:FeatureCollection']?.['gml:featureMember']?.[
@@ -138,7 +138,7 @@ export async function pollutantUpdater(data) {
           ) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
-            dateMeasured = new Date('0000-00-00T00:00:00.00')
+            dateMeasured = null
           }
         }
       } catch (error) {

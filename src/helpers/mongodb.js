@@ -30,9 +30,8 @@ const mongoPlugin = {
 }
 
 async function createIndexes(db) {
-  await db.collection('entities').createIndex({ id: 1 })
-  await db.collection('forecast').createIndex({ name: 1 })
-  await db.collection('forecast').createIndex({ location: '2dsphere' })
+  await db.collection('forecasts').createIndex({ name: 1 })
+  await db.collection('forecasts').createIndex({ location: '2dsphere' })
 }
 
 export { mongoPlugin }

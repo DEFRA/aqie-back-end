@@ -68,8 +68,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'North East Scotland',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -96,8 +98,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'North wales',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -124,8 +128,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Highland',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -152,8 +158,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Central Scotland',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -180,8 +188,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Eastern',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -208,8 +218,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'South East',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -236,8 +248,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'South Wales',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -264,8 +278,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'NorthWest & Merseyside',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -292,8 +308,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'South West',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -320,8 +338,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'East Midlands',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -348,8 +368,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Scottish Borders',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -376,8 +398,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'North East',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -404,8 +428,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Greater London',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -432,8 +458,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'West Midlands',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -460,8 +488,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Yorkshire & Humberside',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }
@@ -488,8 +518,10 @@ const fetchPollutants = async () => {
       name: item.site_name,
       area: 'Yorkshire & Humberside',
       areaType: item.location_type,
-      latitude: item.latitude,
-      longitude: item.longitude,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+      },
       updated: new Date(moment().toISOString()),
       pollutants: { ...newObj }
     }

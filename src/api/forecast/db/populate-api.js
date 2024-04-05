@@ -4,7 +4,7 @@ import { fetchForecasts } from '~/src/api/forecast/fetch-forecast'
 const logger = createLogger()
 
 async function populateApi(mongo, db) {
-  const forecastsCollection = db.collection('forecast')
+  const forecastsCollection = db.collection('forecasts')
 
   try {
     const forecasts = await fetchForecasts()

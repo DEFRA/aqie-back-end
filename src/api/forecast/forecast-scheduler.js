@@ -12,11 +12,11 @@ const forecastScheduler = {
     name: 'Forecast Scheduler',
     register: async (server) => {
       // Start the scheduler
-      logger.info('starting forecast Scheduler')
+      logger.info('starting forecasts Scheduler')
       schedule(config.get('forecastSchedule'), async () => {
         await fetchAndSaveForecasts(server)
       })
-      logger.info('forecast Scheduler done! Running every day at 5:00am')
+      logger.info('forecasts Scheduler done! Running every day at 5:00am')
     }
   }
 }
