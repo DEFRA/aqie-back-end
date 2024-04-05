@@ -18,7 +18,9 @@ const pollutantsScheduler = {
       schedule(config.get('pollutantsSchedule'), async () => {
         await fetchAndSavePollutants(server)
       })
-      logger.info('pollutants Scheduler done!')
+      logger.info(
+        'pollutants Scheduler done! Running every hour between 6:00am to 23:00pm'
+      )
     }
   }
 }

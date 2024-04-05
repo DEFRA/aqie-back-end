@@ -16,7 +16,7 @@ const forecastScheduler = {
       schedule(config.get('forecastSchedule'), async () => {
         await fetchAndSaveForecasts(server)
       })
-      logger.info('forecast Scheduler done! Running every minute')
+      logger.info('forecast Scheduler done! Running every day at 5:00am')
     }
   }
 }
