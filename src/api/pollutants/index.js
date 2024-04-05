@@ -1,5 +1,8 @@
 /* eslint-disable prettier/prettier */
-import { pollutantsController } from '~/src/api/pollutants/controllers'
+import {
+  pollutantsController,
+  historicalPollutantsController
+} from '~/src/api/pollutants/controllers'
 
 const measurements = {
   plugin: {
@@ -24,7 +27,7 @@ const historicalMeasurements = {
         {
           method: 'GET',
           path: '/historicalMeasurements',
-          ...pollutantsController
+          ...historicalPollutantsController
         }
       ])
     }

@@ -1,4 +1,7 @@
-import { forecastsController } from '~/src/api/forecast/controllers'
+import {
+  forecastsController,
+  historicalForecastsController
+} from '~/src/api/forecast/controllers'
 
 const forecast = {
   plugin: {
@@ -23,7 +26,7 @@ const historicalForecasts = {
         {
           method: 'GET',
           path: '/historicalForecasts',
-          ...forecastsController
+          ...historicalForecastsController
         }
       ])
     }

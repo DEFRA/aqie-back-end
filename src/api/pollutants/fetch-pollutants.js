@@ -51,7 +51,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -79,7 +79,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -107,7 +107,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -135,7 +135,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -163,7 +163,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -191,7 +191,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -219,7 +219,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -247,7 +247,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -275,7 +275,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -303,7 +303,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -331,7 +331,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -359,7 +359,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -387,7 +387,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -415,7 +415,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -443,7 +443,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
@@ -471,7 +471,7 @@ const fetchPollutants = async () => {
     let newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
-        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'SO2'].includes(
+        ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
