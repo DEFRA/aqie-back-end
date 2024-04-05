@@ -1,4 +1,4 @@
-import { forecast, historicalForecasts } from '~/src/api/forecast'
+import { forecasts, historicalForecasts } from '~/src/api/forecast'
 import { measurements, historicalMeasurements } from '~/src/api/pollutants'
 
 const router = {
@@ -6,7 +6,7 @@ const router = {
     name: 'Router',
     register: async (server) => {
       await server.register([
-        forecast,
+        forecasts,
         historicalForecasts,
         measurements,
         historicalMeasurements

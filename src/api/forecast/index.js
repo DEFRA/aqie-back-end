@@ -3,7 +3,7 @@ import {
   historicalForecastsController
 } from '~/src/api/forecast/controllers'
 
-const forecast = {
+const forecasts = {
   plugin: {
     name: 'forecasts',
     register: async (server) => {
@@ -33,4 +33,4 @@ const historicalForecasts = {
   }
 }
 
-export { forecast, historicalForecasts }
+export { forecasts, historicalForecasts }

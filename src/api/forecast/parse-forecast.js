@@ -15,9 +15,9 @@ function parseForecast(item) {
 
   const location = {
     type: 'Point',
-    coordinates: coordinates
-      .slice(0, 2)
-      .map((c) => dmsToDecimal(c[1], c[2], c[3]))
+    coordinates: coordinates.slice(0, 2).map((c) => {
+      return dmsToDecimal(c[1], c[2], c[3], c[4])
+    })
   }
 
   // Extract the day text and the corresponding values from the last section
