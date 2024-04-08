@@ -63,13 +63,14 @@ export async function pollutantUpdater(data) {
   const promisesOnly = promises.map((item) => {
     return Object.entries(item)[0][1]
   })
-  let valueMeasured = ''
-  let dateMeasured = ''
-  let tempDate = []
-  let exceptionReport = ''
+
   const results = await reduce(
     promisesOnly,
     async (accumulator, response, index, array) => {
+      let valueMeasured = ''
+      let dateMeasured = ''
+      let tempDate = []
+      let exceptionReport = ''
       if (!response.ok && response !== 'missingFOI') {
         return accumulator
       }
