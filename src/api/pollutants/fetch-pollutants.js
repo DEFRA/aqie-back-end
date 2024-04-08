@@ -46,8 +46,8 @@ const fetchPollutants = async () => {
   const res18 = await proxyFetch(url + 18)
   const isleofManJSON = await res18.json()
 
-  const momentDate = moment();
-  const momentDateWithHourPlus = momentDate.add(1, 'hour');
+  const momentDate = moment()
+  const momentDateWithHourPlus = momentDate.add(1, 'hour')
 
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
