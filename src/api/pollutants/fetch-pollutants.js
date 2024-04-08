@@ -45,7 +45,9 @@ const fetchPollutants = async () => {
   const yorkshireAndHumbersideJSON = await res17.json()
   const res18 = await proxyFetch(url + 18)
   const isleofManJSON = await res18.json()
-  console.log(new Date(moment().toISOString()))
+
+  const momentDate = moment()
+  const momentDateWithHourPlus = momentDate.add(1, 'hour')
 
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
@@ -72,7 +74,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -102,7 +104,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -132,7 +134,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -162,7 +164,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -192,7 +194,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -222,7 +224,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -252,7 +254,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -282,7 +284,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -312,7 +314,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -342,7 +344,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -372,7 +374,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -402,7 +404,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -432,7 +434,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -462,7 +464,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -492,7 +494,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -522,7 +524,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(moment().toISOString()),
+      updated: new Date(momentDateWithHourPlus.toISOString()),
       pollutants: { ...newObj }
     }
   })
@@ -1183,8 +1185,9 @@ const savePollutants = async (server, pollutants) => {
   await server.db
     .collection('measurements')
     .bulkWrite(pollutants.map(toBulkReplace))
+  logger.info('pollutants measurements update done')
   await server.db.collection('historicalMeasurements').insertMany(pollutants)
-  logger.info('pollutants update done')
+  logger.info('pollutants historical measurements update done')
 }
 
 /**

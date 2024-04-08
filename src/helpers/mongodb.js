@@ -32,6 +32,16 @@ const mongoPlugin = {
 async function createIndexes(db) {
   await db.collection('forecasts').createIndex({ name: 1 })
   await db.collection('forecasts').createIndex({ location: '2dsphere' })
+  await db.collection('historicalForecasts').createIndex({ name: 1 })
+  await db
+    .collection('historicalForecasts')
+    .createIndex({ location: '2dsphere' })
+  await db.collection('measurements').createIndex({ name: 1 })
+  await db.collection('measurements').createIndex({ location: '2dsphere' })
+  await db.collection('historicalMeasurements').createIndex({ name: 1 })
+  await db
+    .collection('historicalMeasurements')
+    .createIndex({ location: '2dsphere' })
 }
 
 export { mongoPlugin }

@@ -33,8 +33,9 @@ const saveForecasts = async (server, forecasts) => {
   await server.db
     .collection('forecasts')
     .bulkWrite(forecasts.map(toBulkReplace))
-  await server.db.collection('historicalForecasts').insertMany(forecasts)
   logger.info('forecasts update done')
+  await server.db.collection('historicalForecasts').insertMany(forecasts)
+  logger.info('historical forecasts update done')
 }
 
 /**
