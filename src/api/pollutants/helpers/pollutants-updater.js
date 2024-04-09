@@ -24,6 +24,7 @@ const timestamp = `${startTimeStamp}/${endTimeStamp}`
 //
 const parser = new XMLParser()
 const builder = new XMLBuilder()
+
 export async function pollutantUpdater(data) {
   logger.info(
     `pollutants updater running... ${data[0].name} max ${data.length}`
@@ -64,7 +65,31 @@ export async function pollutantUpdater(data) {
     return Object.entries(item)[0][1]
   })
 
-  const results = await reduce(
+  
+  const insertPollutantsValues = (res) => {
+    data.forEach((site, index) => {
+      try {
+        const { pollutants } = site
+        let measuredIndex = 0
+        // eslint-disable-next-line prefer-const
+        Object.entries(pollutants).forEach(([k, v], i) => {
+          pollutants[k].value = res[measuredIndex]?.value && !isNaN(Math.round(res[measuredIndex]?.value))
+            ? Math.round(res[measuredIndex]?.value)
+            : null
+          pollutants[k].time.date = res[measuredIndex]?.value && res[measuredIndex]?.time.date
+            ? new Date(moment(res[measuredIndex]?.time.date).toISOString())
+            : null
+
+          pollutants[k].exception = res[measuredIndex]?.exception
+          measuredIndex++
+        })
+      } catch (error) {
+        console.log(error)
+      }
+    })
+  }
+
+  await reduce(
     promisesOnly,
     async (accumulator, response, index, array) => {
       let valueMeasured = ''
@@ -107,14 +132,12 @@ export async function pollutantUpdater(data) {
               ]?.['om:result']?.['swe:DataArray']?.['swe:values']._text.split(
                 ','
               )
-            dateMeasured = new Date(
-              tempDate
-                ? tempDate[tempDate?.length - 4]
+            dateMeasured = tempDate
+              ? tempDate[tempDate?.length - 4]
                 : jsonResult?.['gml:FeatureCollection']?.[
                     'gml:featureMember'
                   ]?.['aqd:AQD_ReportingHeader']?.['aqd:changeDescription']
                     ._text
-            )
 
             exceptionReport = ''
           }
@@ -145,8 +168,7 @@ export async function pollutantUpdater(data) {
       } catch (error) {
         console.log(error)
       }
-
-      return [
+      const result = [
         ...accumulator,
         {
           exception: exceptionReport,
@@ -154,30 +176,11 @@ export async function pollutantUpdater(data) {
           time: { date: dateMeasured }
         }
       ]
+      await insertPollutantsValues(result)
+      return result
     },
     []
   )
-  let measuredIndex = 0
-  const insertPollutantsValues = (results) => {
-    data.forEach((site, index) => {
-      try {
-        const { pollutants } = site
-        // eslint-disable-next-line prefer-const
-        Object.entries(pollutants).forEach(([k, v], i) => {
-          pollutants[k].value = results[measuredIndex]?.value
-            ? Math.round(results[measuredIndex]?.value)
-            : 0
-          pollutants[k].time.date = results[measuredIndex]?.value
-            ? results[measuredIndex]?.time.date
-            : 0
-          pollutants[k].exception = results[measuredIndex]?.exception
-          measuredIndex++
-        })
-      } catch (error) {
-        console.log(error)
-      }
-    })
-  }
-  insertPollutantsValues(results)
+ 
   return data
 }

@@ -14,6 +14,7 @@ const pollutantsScheduler = {
     name: 'Pollutants Scheduler',
     register: async (server) => {
       // Start the scheduler
+      await fetchAndSavePollutants(server)
       logger.info('starting pollutants Scheduler')
       schedule(config.get('pollutantsSchedule'), async () => {
         await fetchAndSavePollutants(server)
@@ -27,7 +28,12 @@ const pollutantsScheduler = {
 
 async function fetchAndSavePollutants(server) {
   const measurements = await fetchPollutants()
-  await savePollutants(server, measurements)
+  logger.info(`updating ${measurements.length} measurements`)
+  const result = measurements.filter(function ({ name }) {
+    return !this.has(name) && this.add(name)
+  }, new Set())
+  logger.info(`updating ${result.length} result`)
+  await savePollutants(server, result)
 }
 
 export { pollutantsScheduler }
