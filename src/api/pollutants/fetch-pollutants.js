@@ -2,13 +2,10 @@
 /* eslint-disable no-console */
 /* eslint-disable prettier/prettier */
 import { proxyFetch } from '~/src/helpers/proxy-fetch'
-import { createLogger } from '~/src/helpers/logging/logger'
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
 import moment from 'moment'
 process.setMaxListeners(500)
-
-const logger = createLogger()
 
 const fetchPollutants = async () => {
   const url = config.get('pollutantstUrl')
@@ -1221,26 +1218,28 @@ const fetchPollutants = async () => {
 }
 
 const savePollutants = async (server, pollutants) => {
-  logger.info(`updating ${pollutants.length} pollutants`)
-  await server.db
-    .collection('measurements')
-    .bulkWrite(pollutants.map(toBulkReplace))
-  logger.info('pollutants measurements update done')
-  await server.db.collection('historicalMeasurements').insertMany(pollutants)
-  logger.info('pollutants historical measurements update done')
+  await server.db.collection('measurements').deleteMany({})
+  await server.db.collection('historicalMeasurements').deleteMany({})
+  // logger.info(`updating ${pollutants.length} pollutants`)
+  // await server.db
+  //   .collection('measurements')
+  //   .bulkWrite(pollutants.map(toBulkReplace))
+  // logger.info('pollutants measurements update done')
+  // await server.db.collection('historicalMeasurements').insertMany(pollutants)
+  // logger.info('pollutants historical measurements update done')
 }
 
 /**
  * Wrap the item we want to update in a MongoDB replace command
  */
-function toBulkReplace(item) {
-  return {
-    replaceOne: {
-      filter: { name: item.name },
-      replacement: item,
-      upsert: true
-    }
-  }
-}
+// function toBulkReplace(item) {
+//   return {
+//     replaceOne: {
+//       filter: { name: item.name },
+//       replacement: item,
+//       upsert: true
+//     }
+//   }
+// }
 
 export { fetchPollutants, savePollutants }
