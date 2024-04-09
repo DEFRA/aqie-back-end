@@ -48,6 +48,7 @@ const fetchPollutants = async () => {
 
   const momentDate = moment()
   const momentDateWithHourPlus = momentDate.add(1, 'hour')
+  const currentTime = new Date(momentDateWithHourPlus.toISOString())
 
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
@@ -74,7 +75,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -104,7 +105,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -134,7 +135,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -164,7 +165,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -194,7 +195,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -224,7 +225,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -254,7 +255,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -284,7 +285,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -314,7 +315,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -344,7 +345,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -374,7 +375,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -404,7 +405,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -434,7 +435,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -464,7 +465,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -494,7 +495,7 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
@@ -524,11 +525,11 @@ const fetchPollutants = async () => {
         type: 'Point',
         coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
       },
-      updated: new Date(momentDateWithHourPlus.toISOString()),
+      updated: currentTime,
       pollutants: { ...newObj }
     }
   })
-
+  console.log('Current DATE ', currentTime)
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
     const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)
@@ -619,9 +620,41 @@ const fetchPollutants = async () => {
     return all
   }, [])
 
-  const NorthEastScotlandResults = await pollutantUpdater(northEastScotlandObj)
-  const northWalesResults = await pollutantUpdater(northWalesObj)
-  const highlandResults = await pollutantUpdater(highlandObj)
+  const northEastScotlandObjSplit = northEastScotlandObj.reduce(
+    (all, one, i) => {
+      const ch = Math.floor(i % 4)
+      all[ch] = [].concat(all[ch] || [], one)
+      return all
+    },
+    []
+  )
+
+  const northWalesObjSplit = northWalesObj.reduce((all, one, i) => {
+    const ch = Math.floor(i % 2)
+    all[ch] = [].concat(all[ch] || [], one)
+    return all
+  }, [])
+
+  const northWalesResults1 = await pollutantUpdater(northWalesObjSplit[0])
+  const northWalesResults2 = await pollutantUpdater(northWalesObjSplit[1])
+
+  const NorthEastScotlandResults1 = await pollutantUpdater(
+    northEastScotlandObjSplit[0]
+  )
+  const NorthEastScotlandResults2 = await pollutantUpdater(
+    northEastScotlandObjSplit[1]
+  )
+  const NorthEastScotlandResults3 = await pollutantUpdater(
+    northEastScotlandObjSplit[[2]]
+  )
+  const NorthEastScotlandResults4 = await pollutantUpdater(
+    northEastScotlandObjSplit[3]
+  )
+
+  const highlandResults1 = await pollutantUpdater(highlandObjSplit[0])
+  const highlandResults2 = await pollutantUpdater(highlandObjSplit[1])
+  const highlandResults3 = await pollutantUpdater(highlandObjSplit[2])
+  const highlandResults4 = await pollutantUpdater(highlandObjSplit[3])
   //
   const centralScotlandResults1 = await pollutantUpdater(
     centralScotlandObjSplit[0]
@@ -1005,9 +1038,16 @@ const fetchPollutants = async () => {
   const highlandObjSplitResults4 = await pollutantUpdater(highlandObjSplit[3])
 
   const measurements = [
-    ...NorthEastScotlandResults,
-    ...northWalesResults,
-    ...highlandResults,
+    ...NorthEastScotlandResults1,
+    ...NorthEastScotlandResults2,
+    ...NorthEastScotlandResults3,
+    ...NorthEastScotlandResults4,
+    ...northWalesResults1,
+    ...northWalesResults2,
+    ...highlandResults1,
+    ...highlandResults2,
+    ...highlandResults3,
+    ...highlandResults4,
     ...centralScotlandResults1,
     ...centralScotlandResults2,
     ...centralScotlandResults3,
