@@ -65,7 +65,6 @@ export async function pollutantUpdater(data) {
     return Object.entries(item)[0][1]
   })
 
-  
   const insertPollutantsValues = (res) => {
     data.forEach((site, index) => {
       try {
@@ -73,12 +72,15 @@ export async function pollutantUpdater(data) {
         let measuredIndex = 0
         // eslint-disable-next-line prefer-const
         Object.entries(pollutants).forEach(([k, v], i) => {
-          pollutants[k].value = res[measuredIndex]?.value && !isNaN(Math.round(res[measuredIndex]?.value))
-            ? Math.round(res[measuredIndex]?.value)
-            : null
-          pollutants[k].time.date = res[measuredIndex]?.value && res[measuredIndex]?.time.date
-            ? new Date(moment(res[measuredIndex]?.time.date).toISOString())
-            : null
+          pollutants[k].value =
+            res[measuredIndex]?.value &&
+            !isNaN(Math.round(res[measuredIndex]?.value))
+              ? Math.round(res[measuredIndex]?.value)
+              : null
+          pollutants[k].time.date =
+            res[measuredIndex]?.value && res[measuredIndex]?.time.date
+              ? new Date(moment(res[measuredIndex]?.time.date).toISOString())
+              : null
 
           pollutants[k].exception = res[measuredIndex]?.exception
           measuredIndex++
@@ -134,10 +136,9 @@ export async function pollutantUpdater(data) {
               )
             dateMeasured = tempDate
               ? tempDate[tempDate?.length - 4]
-                : jsonResult?.['gml:FeatureCollection']?.[
-                    'gml:featureMember'
-                  ]?.['aqd:AQD_ReportingHeader']?.['aqd:changeDescription']
-                    ._text
+              : jsonResult?.['gml:FeatureCollection']?.['gml:featureMember']?.[
+                  'aqd:AQD_ReportingHeader'
+                ]?.['aqd:changeDescription']._text
 
             exceptionReport = ''
           }
@@ -181,6 +182,6 @@ export async function pollutantUpdater(data) {
     },
     []
   )
- 
+
   return data
 }

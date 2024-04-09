@@ -529,7 +529,7 @@ const fetchPollutants = async () => {
       pollutants: { ...newObj }
     }
   })
-  console.log("Current DATE ", currentTime)
+  console.log('Current DATE ', currentTime)
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
     const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)
@@ -620,25 +620,36 @@ const fetchPollutants = async () => {
     return all
   }, [])
 
-  const northEastScotlandObjSplit = northEastScotlandObj.reduce((all, one, i) => {
-    const ch = Math.floor(i % 4)
-    all[ch] = [].concat(all[ch] || [], one)
-    return all
-  }, [])
+  const northEastScotlandObjSplit = northEastScotlandObj.reduce(
+    (all, one, i) => {
+      const ch = Math.floor(i % 4)
+      all[ch] = [].concat(all[ch] || [], one)
+      return all
+    },
+    []
+  )
 
   const northWalesObjSplit = northWalesObj.reduce((all, one, i) => {
     const ch = Math.floor(i % 2)
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
-  
+
   const northWalesResults1 = await pollutantUpdater(northWalesObjSplit[0])
   const northWalesResults2 = await pollutantUpdater(northWalesObjSplit[1])
 
-  const NorthEastScotlandResults1 = await pollutantUpdater(northEastScotlandObjSplit[0])
-  const NorthEastScotlandResults2 = await pollutantUpdater(northEastScotlandObjSplit[1])
-  const NorthEastScotlandResults3 = await pollutantUpdater(northEastScotlandObjSplit[[2]])
-  const NorthEastScotlandResults4 = await pollutantUpdater(northEastScotlandObjSplit[3])
+  const NorthEastScotlandResults1 = await pollutantUpdater(
+    northEastScotlandObjSplit[0]
+  )
+  const NorthEastScotlandResults2 = await pollutantUpdater(
+    northEastScotlandObjSplit[1]
+  )
+  const NorthEastScotlandResults3 = await pollutantUpdater(
+    northEastScotlandObjSplit[[2]]
+  )
+  const NorthEastScotlandResults4 = await pollutantUpdater(
+    northEastScotlandObjSplit[3]
+  )
 
   const highlandResults1 = await pollutantUpdater(highlandObjSplit[0])
   const highlandResults2 = await pollutantUpdater(highlandObjSplit[1])
