@@ -29,28 +29,28 @@ const fetchForecast = async () => {
 }
 
 const saveForecasts = async (server, forecasts) => {
-  // await server.db.collection('historicalForecasts').deleteMany({})
-  // await server.db.collection('forecasts').deleteMany({})
+  await server.db.collection('historicalForecasts').deleteMany({})
+  await server.db.collection('forecasts').deleteMany({})
   logger.info(`updating ${forecasts.length} forecasts`)
-  await server.db
-    .collection('forecasts')
-    .bulkWrite(forecasts.map(toBulkReplace))
-  logger.info('forecasts update done')
-  await server.db.collection('historicalForecasts').insertMany(forecasts)
-  logger.info('historical forecasts update done')
+  // await server.db
+  //   .collection('forecasts')
+  //   .bulkWrite(forecasts.map(toBulkReplace))
+  // logger.info('forecasts update done')
+  // await server.db.collection('historicalForecasts').insertMany(forecasts)
+  // logger.info('historical forecasts update done')
 }
 
 /**
  * Wrap the item we want to update in a MongoDB replace command
  */
-function toBulkReplace(item) {
-  return {
-    replaceOne: {
-      filter: { name: item.name },
-      replacement: item,
-      upsert: true
-    }
-  }
-}
+// function toBulkReplace(item) {
+//   return {
+//     replaceOne: {
+//       filter: { name: item.name },
+//       replacement: item,
+//       upsert: true
+//     }
+//   }
+// }
 
 export { fetchForecast, saveForecasts }
