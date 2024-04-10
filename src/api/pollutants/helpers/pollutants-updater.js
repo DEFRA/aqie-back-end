@@ -75,7 +75,9 @@ export async function pollutantUpdater(data) {
           pollutants[k].value =
             res[measuredIndex]?.value &&
             !isNaN(Math.round(res[measuredIndex]?.value))
-              ? Math.round(res[measuredIndex]?.value)
+              ? res[measuredIndex]?.value < 1 && res[measuredIndex]?.value > 0
+                ? parseFloat(res[measuredIndex]?.value).toFixed(2)
+                : Math.round(res[measuredIndex]?.value)
               : null
           pollutants[k].time.date =
             res[measuredIndex]?.value && res[measuredIndex]?.time.date

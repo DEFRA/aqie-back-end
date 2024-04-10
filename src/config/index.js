@@ -100,7 +100,7 @@ const config = convict({
   pollutantsSchedule: {
     doc: 'How often to poll the pollutants data (cron format)',
     format: String, // TODO: maybe custom validate this
-    default: '0 */1 * * *',
+    default: '0 5-23/1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
   }
 })
