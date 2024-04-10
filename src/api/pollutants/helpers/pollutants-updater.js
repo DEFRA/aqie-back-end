@@ -144,24 +144,14 @@ export async function pollutantUpdater(data) {
 
             exceptionReport = ''
           }
-          if (jsonResult?.['ows:ExceptionReport']) {
-            valueMeasured = 'N/M'
-            exceptionReport = 'N/M'
-            dateMeasured = null
-          }
-          if (
-            jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
-              'ows:ExceptionText'
-            ]
-          ) {
-            valueMeasured = 'N/M'
-            exceptionReport = 'N/M'
-            dateMeasured = null
-          }
           if (
             ['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
-            ]?.['aqd:reportingPeriod']
+            ]?.['aqd:reportingPeriod'] ||
+            jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
+              'ows:ExceptionText'
+            ] ||
+            jsonResult?.['ows:ExceptionReport']
           ) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
