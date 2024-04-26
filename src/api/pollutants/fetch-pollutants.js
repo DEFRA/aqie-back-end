@@ -634,7 +634,7 @@ const fetchPollutants = async () => {
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
-
+  logger.info('North Wales object: ', northWalesObjSplit[0])
   const northWalesResults1 = await pollutantUpdater(northWalesObjSplit[0])
   const northWalesResults2 = await pollutantUpdater(northWalesObjSplit[1])
 
