@@ -14,7 +14,7 @@ const pollutantsScheduler = {
     name: 'Pollutants Scheduler',
     register: async (server) => {
       // Start the scheduler
-      await fetchAndSavePollutants(server)
+      // await fetchAndSavePollutants(server)
       logger.info('starting pollutants Scheduler')
       schedule(config.get('pollutantsSchedule'), async () => {
         await fetchAndSavePollutants(server)
