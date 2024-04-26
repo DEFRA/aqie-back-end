@@ -85,8 +85,8 @@ export async function pollutantUpdater(data) {
               : null
 
           pollutants[k].exception = res[measuredIndex]?.exception
+          console.log('date moment: ', pollutants[k].time.date)
           measuredIndex++
-          logger.info('date moment: ', pollutants[k].time.date)
         })
       } catch (error) {
         console.log(error)
@@ -170,7 +170,7 @@ export async function pollutantUpdater(data) {
           time: { date: dateMeasured }
         }
       ]
-      logger.info('Ricardo date dateMeasured :', dateMeasured)
+      console.log('Ricardo date dateMeasured :', dateMeasured)
       await insertPollutantsValues(result)
       return result
     },
