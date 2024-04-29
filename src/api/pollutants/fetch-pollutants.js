@@ -1235,18 +1235,6 @@ const savePollutants = async (server, pollutants) => {
             console.log(
               `name log: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
             )
-            logger.trace(
-              `name trace: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
-            )
-            logger.debug(
-              `name debug: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
-            )
-            logger.silent(
-              `name silent: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
-            )
-            logger.error(
-              `name error: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
-            )
           }
         }
       }
