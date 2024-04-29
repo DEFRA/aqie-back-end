@@ -1228,19 +1228,9 @@ const savePollutants = async (server, pollutants) => {
     await server.db
       .collection('measurements')
       .bulkWrite(pollutants.map(toBulkReplace))
-    pollutants.forEach((pollutant) => {
-      for (const [key, value] of Object.entries(pollutant)) {
-        if (key === 'pollutants') {
-          for (const [key2, value2] of Object.entries(value)) {
-            console.log(
-              `name log: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
-            )
-          }
-        }
-      }
-    })
   } catch (error) {
     logger.info('pollutants measurements error: ', error)
+    console.log('pollutants measurements console error: ', error)
   }
   await server.db.collection('historicalMeasurements').insertMany(pollutants)
   logger.info('pollutants historical measurements update done')
