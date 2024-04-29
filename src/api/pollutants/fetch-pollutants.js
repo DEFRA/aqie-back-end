@@ -1224,10 +1224,14 @@ const savePollutants = async (server, pollutants) => {
   // await server.db.collection('measurements').deleteMany({})
   // await server.db.collection('historicalMeasurements').deleteMany({})
   logger.info(`updating ${pollutants.length} pollutants`)
-  await server.db
-    .collection('measurements')
-    .bulkWrite(pollutants.map(toBulkReplace))
-  logger.info('pollutants measurements update done')
+  try {
+    await server.db
+      .collection('measurements')
+      .bulkWrite(pollutants.map(toBulkReplace))
+    logger.info('pollutants measurements update done: ', pollutants)
+  } catch (error) {
+    logger.info('pollutants measurements error: ', error)
+  }
   await server.db.collection('historicalMeasurements').insertMany(pollutants)
   logger.info('pollutants historical measurements update done')
 }
