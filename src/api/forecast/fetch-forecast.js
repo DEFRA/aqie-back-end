@@ -32,10 +32,14 @@ const saveForecasts = async (server, forecasts) => {
   // await server.db.collection('historicalForecasts').deleteMany({})
   // await server.db.collection('forecasts').deleteMany({})
   logger.info(`updating ${forecasts.length} forecasts`)
-  await server.db
-    .collection('forecasts')
-    .bulkWrite(forecasts.map(toBulkReplace))
-  logger.info('forecasts update done')
+  try {
+    await server.db
+      .collection('forecasts')
+      .bulkWrite(forecasts.map(toBulkReplace))
+    logger.info('forecasts update done: ', forecasts)
+  } catch (error) {
+    logger.info('forecasts update error: ', error)
+  }
   await server.db.collection('historicalForecasts').insertMany(forecasts)
   logger.info('historical forecasts update done')
 }
