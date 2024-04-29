@@ -1228,11 +1228,14 @@ const savePollutants = async (server, pollutants) => {
     await server.db
       .collection('measurements')
       .bulkWrite(pollutants.map(toBulkReplace))
-    logger.trace('pollutants measurements update trace: ', pollutants)
-    logger.debug('pollutants measurements update debug: ', pollutants)
-    logger.silent('pollutants measurements update silent: ', pollutants)
-    console.log('pollutants measurements update console.log: ', pollutants)
-    logger.error('pollutants measurements update error: ', pollutants)
+    pollutants.forEach((pollutant) => {
+      logger.trace('pollutants measurements update trace: ', pollutant.time.date, "name: ", pollutant.name)
+      logger.debug('pollutant.time.date measurements update debug: ', pollutant.time.date, "name: ", pollutant.name)
+      logger.silent('pollutant.time.date, "name: "update silent: ', pollutant.time.date, "name: ", pollutant.name)
+      console.log('pollutant.time.date, "name: "update console.log: ', pollutant.time.date, "name: ", pollutant.name)
+      logger.error('pollutant.time.date, "name: "update error: ', pollutant.time.date, "name: ", pollutant.name)
+    })
+
   } catch (error) {
     logger.info('pollutants measurements error: ', error)
   }
