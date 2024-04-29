@@ -1228,7 +1228,11 @@ const savePollutants = async (server, pollutants) => {
     await server.db
       .collection('measurements')
       .bulkWrite(pollutants.map(toBulkReplace))
-    logger.info('pollutants measurements update done: ', pollutants)
+    logger.trace('pollutants measurements update trace: ', pollutants)
+    logger.debug('pollutants measurements update debug: ', pollutants)
+    logger.silent('pollutants measurements update silent: ', pollutants)
+    console.log('pollutants measurements update console.log: ', pollutants)
+    logger.error('pollutants measurements update error: ', pollutants)
   } catch (error) {
     logger.info('pollutants measurements error: ', error)
   }
