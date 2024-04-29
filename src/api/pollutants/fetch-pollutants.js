@@ -1229,13 +1229,28 @@ const savePollutants = async (server, pollutants) => {
       .collection('measurements')
       .bulkWrite(pollutants.map(toBulkReplace))
     pollutants.forEach((pollutant) => {
-      logger.trace('pollutants measurements update trace: ', pollutant.time.date, "name: ", pollutant.name)
-      logger.debug('pollutant.time.date measurements update debug: ', pollutant.time.date, "name: ", pollutant.name)
-      logger.silent('pollutant.time.date, "name: "update silent: ', pollutant.time.date, "name: ", pollutant.name)
-      console.log('pollutant.time.date, "name: "update console.log: ', pollutant.time.date, "name: ", pollutant.name)
-      logger.error('pollutant.time.date, "name: "update error: ', pollutant.time.date, "name: ", pollutant.name)
+      for (const [key, value] of Object.entries(pollutant)) {
+        if (key === 'pollutants') {
+          for (const [key2, value2] of Object.entries(value)) {
+            console.log(
+              `name log: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
+            )
+            logger.trace(
+              `name trace: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
+            )
+            logger.debug(
+              `name debug: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
+            )
+            logger.silent(
+              `name silent: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
+            )
+            logger.error(
+              `name error: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date}`
+            )
+          }
+        }
+      }
     })
-
   } catch (error) {
     logger.info('pollutants measurements error: ', error)
   }
