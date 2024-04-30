@@ -26,17 +26,6 @@ const parser = new XMLParser()
 const builder = new XMLBuilder()
 
 export async function pollutantUpdater(data) {
-  data.forEach((pollutant) => {
-    for (const [key, value] of Object.entries(pollutant)) {
-      if (key === 'pollutants') {
-        for (const [key2, value2] of Object.entries(value)) {
-          logger.info(
-            `name log: ${pollutant.name} pollutant: ${key2} date: ${value2.time.date} value: ${value2.value}`
-          )
-        }
-      }
-    }
-  })
   logger.info(
     `pollutants updater running... ${data[0].name} max ${data.length}`
   )
@@ -95,8 +84,10 @@ export async function pollutantUpdater(data) {
             res[measuredIndex]?.value && res[measuredIndex]?.time.date
               ? new Date(moment(res[measuredIndex]?.time.date).toISOString())
               : null
-
           pollutants[k].exception = res[measuredIndex]?.exception
+          logger.info(
+            `name log: ${site.name} pollutant: ${k} date: ${pollutants[k].time.date} value: ${pollutants[k].value}`
+          )
           measuredIndex++
         })
       } catch (error) {
