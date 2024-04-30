@@ -62,6 +62,7 @@ export async function pollutantUpdater(data) {
       console.log(error)
     }
   })
+
   const promisesOnly = promises.map((item) => {
     return Object.entries(item)[0][1]
   })
