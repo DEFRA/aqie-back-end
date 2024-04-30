@@ -1230,7 +1230,6 @@ const savePollutants = async (server, pollutants) => {
       .bulkWrite(pollutants.map(toBulkReplace))
   } catch (error) {
     logger.info('pollutants measurements error: ', error)
-    console.log('pollutants measurements console error: ', error)
   }
   await server.db.collection('historicalMeasurements').insertMany(pollutants)
   logger.info('pollutants historical measurements update done')
