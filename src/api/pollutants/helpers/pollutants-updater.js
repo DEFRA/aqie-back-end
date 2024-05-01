@@ -17,7 +17,7 @@ const startTimeStamp = moment()
   .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const endTimeStamp = moment()
-  .add(1, 'days')
+  .add(2, 'days')
   .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
