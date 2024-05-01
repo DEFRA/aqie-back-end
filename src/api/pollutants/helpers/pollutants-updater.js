@@ -24,6 +24,11 @@ const timestamp = `${startTimeStamp}/${endTimeStamp}`
 //
 const parser = new XMLParser()
 const builder = new XMLBuilder()
+const options = {
+  headers: {
+    'Cache-Control': 'no-cache'
+  }
+}
 
 export async function pollutantUpdater(data) {
   logger.info(
@@ -42,7 +47,8 @@ export async function pollutantUpdater(data) {
               ...promises,
               {
                 [k]: proxyFetch(
-                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`
+                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
+                  options
                 )
               }
             ]
