@@ -5,8 +5,7 @@ import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import { createLogger } from '~/src/helpers/logging/logger'
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
-import moment from 'moment'
-import 'moment-timezone'
+import moment from 'moment-timezone'
 
 process.setMaxListeners(500)
 
