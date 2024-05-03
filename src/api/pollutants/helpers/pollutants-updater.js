@@ -7,18 +7,21 @@ import xmlToJs from 'xml-js'
 import { config } from '~/src/config'
 import { XMLParser, XMLBuilder } from 'fast-xml-parser'
 import moment from 'moment'
+import 'moment-timezone'
 import { createLogger } from '~/src/helpers/logging/logger'
 
 process.setMaxListeners(500)
 const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
 const startTimeStamp = moment()
+  .tz('Europe/London')
   .add(-1, 'days')
-  .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
+  .set({ hour: 25, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const endTimeStamp = moment()
-  .add(2, 'days')
-  .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+  .tz('Europe/London')
+  .add(1, 'days')
+  .set({ hour: 2, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
 //
@@ -89,7 +92,7 @@ export async function pollutantUpdater(data) {
               : null
           pollutants[k].time.date =
             res[measuredIndex]?.value && res[measuredIndex]?.time.date
-              ? new Date(moment(res[measuredIndex]?.time.date).toISOString())
+              ? new Date(moment(res[measuredIndex]?.time.date))
               : null
           pollutants[k].exception = res[measuredIndex]?.exception
           logger.info(

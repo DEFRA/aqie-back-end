@@ -6,6 +6,8 @@ import { createLogger } from '~/src/helpers/logging/logger'
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
 import moment from 'moment'
+import 'moment-timezone'
+
 process.setMaxListeners(500)
 
 const logger = createLogger()
@@ -46,9 +48,8 @@ const fetchPollutants = async () => {
   const res18 = await proxyFetch(url + 18)
   const isleofManJSON = await res18.json()
 
-  const momentDate = moment()
-  const momentDateWithHourPlus = momentDate.add(1, 'hour')
-  const currentTime = new Date(momentDateWithHourPlus.toISOString())
+  const momentDate = moment().tz('Europe/London')
+  const currentTime = new Date(momentDate)
 
   const northEastScotlandObj = northEastScotlandJSON.map((item) => {
     let newObj = {}
