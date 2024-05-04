@@ -24,7 +24,7 @@ const endTimeStamp = moment()
   .set({ hour: 1, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
-//
+///
 const parser = new XMLParser()
 const builder = new XMLBuilder()
 const options = {
