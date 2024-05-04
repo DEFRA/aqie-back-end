@@ -20,7 +20,7 @@ const startTimeStamp = moment()
   .toISOString()
 const endTimeStamp = moment()
   .tz('Europe/London')
-  .add(2, 'days')
+  .add(1, 'days')
   .set({ hour: 1, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
