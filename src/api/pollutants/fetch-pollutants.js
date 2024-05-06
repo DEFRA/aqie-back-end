@@ -15,37 +15,105 @@ const fetchPollutants = async () => {
   const url = config.get('pollutantstUrl')
 
   const res3 = await proxyFetch(url + 3)
+  if (!res3.ok) {
+    const message = `An error has occured: ${res3.status}`
+    throw new Error(message)
+  }
   const northEastScotlandJSON = await res3.json()
-  logger.info('northEastScotlandJSON res ', res3)
+  logger.info('northEastScotlandJSON res3 ', JSON.stringify(res3))
+  logger.info(
+    'northEastScotlandJSON res3 northEastScotlandJSON ',
+    JSON.stringify(northEastScotlandJSON)
+  )
   const res4 = await proxyFetch(url + 4)
+  if (!res4.ok) {
+    const message = `An error has occured res4: ${res4.status}`
+    throw new Error(message)
+  }
   const northWalesJSON = await res4.json()
   const res5 = await proxyFetch(url + 5)
+  if (!res5.ok) {
+    const message = `An error has occured res5: ${res5.status}`
+    throw new Error(message)
+  }
   const highlandJSON = await res5.json()
   const res6 = await proxyFetch(url + 6)
+  if (!res6.ok) {
+    const message = `An error has occured res6: ${res6.status}`
+    throw new Error(message)
+  }
   const centralScotlandJSON = await res6.json()
   const res7 = await proxyFetch(url + 7)
+  if (!res7.ok) {
+    const message = `An error has occured res7: ${res7.status}`
+    throw new Error(message)
+  }
   const easternJSON = await res7.json()
   const res8 = await proxyFetch(url + 8)
+  if (!res8.ok) {
+    const message = `An error has occured res8: ${res8.status}`
+    throw new Error(message)
+  }
   const southEastJSON = await res8.json()
   const res9 = await proxyFetch(url + 9)
+  if (!res9.ok) {
+    const message = `An error has occured res9: ${res9.status}`
+    throw new Error(message)
+  }
   const southWalesJSON = await res9.json()
   const res10 = await proxyFetch(url + 10)
+  if (!res10.ok) {
+    const message = `An error has occured res10: ${res10.status}`
+    throw new Error(message)
+  }
   const northWestAndMerseysideJSON = await res10.json()
   const res11 = await proxyFetch(url + 11)
+  if (!res11.ok) {
+    const message = `An error has occured res11: ${res11.status}`
+    throw new Error(message)
+  }
   const southWestJSON = await res11.json()
   const res12 = await proxyFetch(url + 12)
+  if (!res12.ok) {
+    const message = `An error has occured res12: ${res12.status}`
+    throw new Error(message)
+  }
   const eastMidlandsJSON = await res12.json()
   const res13 = await proxyFetch(url + 13)
+  if (!res13.ok) {
+    const message = `An error has occured res13: ${res13.status}`
+    throw new Error(message)
+  }
   const scottishBordersJSON = await res13.json()
   const res14 = await proxyFetch(url + 14)
+  if (!res14.ok) {
+    const message = `An error has occured res14: ${res14.status}`
+    throw new Error(message)
+  }
   const northEastJSON = await res14.json()
   const res15 = await proxyFetch(url + 15)
+  if (!res15.ok) {
+    const message = `An error has occured res15: ${res15.status}`
+    throw new Error(message)
+  }
   const greaterLondonJSON = await res15.json()
   const res16 = await proxyFetch(url + 16)
+  if (!res16.ok) {
+    const message = `An error has occured res16: ${res16.status}`
+    throw new Error(message)
+  }
   const westMidlandsJSON = await res16.json()
   const res17 = await proxyFetch(url + 17)
+  if (!res17.ok) {
+    const message = `An error has occured res17: ${res17.status}`
+    throw new Error(message)
+  }
   const yorkshireAndHumbersideJSON = await res17.json()
   const res18 = await proxyFetch(url + 18)
+  if (!res18.ok) {
+    const message = `An error has occured res18: ${res18.status}`
+    throw new Error(message)
+  }
   const isleofManJSON = await res18.json()
 
   const momentDate = moment().tz('Europe/London')
@@ -635,7 +703,7 @@ const fetchPollutants = async () => {
     all[ch] = [].concat(all[ch] || [], one)
     return all
   }, [])
-  logger.info('North Wales object: ', northWalesObjSplit[0])
+  logger.info('North Wales object: ', JSON.stringify(northWalesObjSplit[0]))
   const northWalesResults1 = await pollutantUpdater(northWalesObjSplit[0])
   const northWalesResults2 = await pollutantUpdater(northWalesObjSplit[1])
 
