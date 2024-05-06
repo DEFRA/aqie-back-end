@@ -598,7 +598,7 @@ const fetchPollutants = async () => {
       pollutants: { ...newObj }
     }
   })
-  console.log('Current DATE ', currentTime)
+  logger.info('Current DATE ', currentTime)
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
     const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)
