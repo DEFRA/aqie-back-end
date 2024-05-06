@@ -13,17 +13,22 @@ import { createLogger } from '~/src/helpers/logging/logger'
 process.setMaxListeners(500)
 const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
-const startTimeStamp = moment()
-  .tz('Europe/London')
-  .add(0, 'days')
+const startTimeStamp = moment
+  .utc()
+  .add(-1, 'days')
+  .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
+  .toISOString()
+  .valueOf()
+const endTimeStamp = moment
+  .utc()
+  .add(1, 'days')
   .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
-const endTimeStamp = moment()
-  .tz('Europe/London')
-  .add(1, 'days')
-  .set({ hour: 1, minute: 0, second: 0, millisecond: 0 })
-  .toISOString()
+  .valueOf()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
+// console.log('before setting default: ', moment.defaultZone);
+// moment.tz.setDefault('Europe/London');
+// console.log('before setting default 2: ', moment.defaultZone);
 ///
 const parser = new XMLParser()
 const builder = new XMLBuilder()
