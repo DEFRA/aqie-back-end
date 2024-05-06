@@ -43,15 +43,17 @@ export async function pollutantUpdater(data) {
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
 
   data.forEach((site, index) => {
+    const momentUTCFormat = moment.utc().format()
+    const momentVar = moment()
+    const momentBrackets = moment().utc().format()
+    const momentValueOf = moment().utc().toISOString().valueOf()
+    const momentTZ = moment().tz('Europe/London')
     logger.info(`timestamp for API call: ${timestamp}`)
-    logger.info('moment(): ', moment())
-    logger.info('moment.utc().format(): ', moment.utc().format())
-    logger.info('moment().utc().format(): ', moment().utc().format())
-    logger.info(
-      'moment().utc().toISOString().valueOf(): ',
-      moment().utc().toISOString().valueOf()
-    )
-    logger.info('moment().tz(Europe/London): ', moment().tz('Europe/London'))
+    logger.info('moment(): ', momentVar)
+    logger.info('moment.utc().format(): ', momentUTCFormat)
+    logger.info('moment().utc().format(): ', momentBrackets)
+    logger.info('moment().utc().toISOString().valueOf(): ', momentValueOf)
+    logger.info('moment().tz(Europe/London): ', momentTZ)
     try {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
