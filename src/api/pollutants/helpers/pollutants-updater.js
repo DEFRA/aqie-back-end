@@ -13,27 +13,6 @@ import { createLogger } from '~/src/helpers/logging/logger'
 process.setMaxListeners(500)
 const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
-const startTimeStamp = moment
-  .utc()
-  .add(-1, 'days')
-  .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
-  .toISOString()
-  .valueOf()
-const endTimeStamp = moment
-  .utc()
-  .add(1, 'days')
-  .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
-  .toISOString()
-  .valueOf()
-const timestamp = `${startTimeStamp}/${endTimeStamp}`
-console.log('moment(): ', moment())
-console.log('moment.utc().format(): ', moment.utc().format())
-console.log('moment().utc().format(): ', moment().utc().format())
-console.log(
-  'moment().utc().toISOString().valueOf(): ',
-  moment().utc().toISOString().valueOf()
-)
-console.log('moment().tz(Europe/London): ', moment().tz('Europe/London'))
 
 ///
 const parser = new XMLParser()
@@ -49,6 +28,27 @@ export async function pollutantUpdater(data) {
     `pollutants updater running... ${data[0].name} max ${data.length}`
   )
   let promises = []
+  const startTimeStamp = moment
+    .utc()
+    .add(-1, 'days')
+    .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
+    .toISOString()
+    .valueOf()
+  const endTimeStamp = moment
+    .utc()
+    .add(1, 'days')
+    .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+    .toISOString()
+    .valueOf()
+  const timestamp = `${startTimeStamp}/${endTimeStamp}`
+  console.log('moment(): ', moment())
+  console.log('moment.utc().format(): ', moment.utc().format())
+  console.log('moment().utc().format(): ', moment().utc().format())
+  console.log(
+    'moment().utc().toISOString().valueOf(): ',
+    moment().utc().toISOString().valueOf()
+  )
+  console.log('moment().tz(Europe/London): ', moment().tz('Europe/London'))
   data.forEach((site, index) => {
     logger.info(`timestamp for API call: ${timestamp}`)
     try {
