@@ -13,13 +13,13 @@ import { createLogger } from '~/src/helpers/logging/logger'
 process.setMaxListeners(500)
 const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
-const startTimeStamp = moment()
+const startTimeStamp = moment
   .utc()
   .add(-1, 'days')
   .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
   .toISOString()
   .valueOf()
-const endTimeStamp = moment()
+const endTimeStamp = moment
   .utc()
   .add(1, 'days')
   .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
