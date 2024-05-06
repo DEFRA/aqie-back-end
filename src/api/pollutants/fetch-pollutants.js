@@ -20,10 +20,10 @@ const fetchPollutants = async () => {
     throw new Error(message)
   }
   const northEastScotlandJSON = await res3.json()
-  logger.info('northEastScotlandJSON res3 ', JSON.stringify(res3))
+  logger.info(`northEastScotlandJSON res3: ${JSON.stringify(res3)}`)
   logger.info(
-    'northEastScotlandJSON res3 northEastScotlandJSON ',
-    JSON.stringify(northEastScotlandJSON)
+    `northEastScotlandJSON res3 northEastScotlandJSON:
+    ${JSON.stringify(northEastScotlandJSON)}`
   )
   const res4 = await proxyFetch(url + 4)
   if (!res4.ok) {
@@ -598,7 +598,7 @@ const fetchPollutants = async () => {
       pollutants: { ...newObj }
     }
   })
-  logger.info('Current DATE ', currentTime)
+  logger.info(`Current DATE: ${currentTime}`)
   const centralScotlandObjSplit = centralScotlandObj.reduce((all, one, i) => {
     const ch = Math.floor(i % 12)
     all[ch] = [].concat(all[ch] || [], one)

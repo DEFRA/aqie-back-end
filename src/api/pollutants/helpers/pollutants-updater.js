@@ -43,19 +43,17 @@ export async function pollutantUpdater(data) {
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
 
   data.forEach((site, index) => {
-    const momentUTCFormat = new Date(moment.utc().format())
-    const momentVar = new Date(moment())
-    const momentBrackets = new Date(moment().utc().format())
-    const momentValueOf = new Date(moment().utc().toISOString().valueOf())
-    const momentTZ = new Date(moment().tz('Europe/London'))
+    const momentUTCFormat = moment.utc().format()
+    const momentVar = moment()
+    const momentBrackets = moment().utc().format()
+    const momentValueOf = moment().utc().toISOString().valueOf()
+    const momentTZ = moment().tz('Europe/London')
     logger.info(`timestamp for API call: ${timestamp}`)
-    logger.info('moment(): ', momentVar)
-    logger.info('moment.utc().format(): ', momentUTCFormat)
-    logger.info('moment().utc().format(): ', momentBrackets)
-    logger.info('moment().utc().toISOString().valueOf(): ', momentValueOf)
-    logger.info('moment().tz(Europe/London): ', momentTZ)
-    logger.info('startTimeStamp(): ', new Date(startTimeStamp))
-    logger.info('endTimeStamp(): ', new Date(endTimeStamp))
+    logger.info(`moment(): '${momentVar}`)
+    logger.info(`moment.utc().format(): ${momentUTCFormat}`)
+    logger.info(`moment().utc().format(): ${momentBrackets}`)
+    logger.info(`moment().utc().toISOString().valueOf(): ${momentValueOf}`)
+    logger.info(`moment().tz(Europe/London): ${momentTZ}`)
     try {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
