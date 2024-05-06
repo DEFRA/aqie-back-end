@@ -16,6 +16,7 @@ const fetchPollutants = async () => {
 
   const res3 = await proxyFetch(url + 3)
   const northEastScotlandJSON = await res3.json()
+  logger.info('northEastScotlandJSON res ', res3)
   const res4 = await proxyFetch(url + 4)
   const northWalesJSON = await res4.json()
   const res5 = await proxyFetch(url + 5)
