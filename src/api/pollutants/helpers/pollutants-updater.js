@@ -127,8 +127,10 @@ export async function pollutantUpdater(data) {
       let tempDate = []
       let exceptionReport = ''
       if (!response.ok && response !== 'missingFOI') {
+        logger.info(`response.status accumulator: ${response.status}`)
         return accumulator
       }
+
       try {
         if (response === 'missingFOI') {
           valueMeasured = 'N/A'
