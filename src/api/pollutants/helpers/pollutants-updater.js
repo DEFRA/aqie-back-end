@@ -41,16 +41,17 @@ export async function pollutantUpdater(data) {
     .toISOString()
     .valueOf()
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
-  console.log('moment(): ', moment())
-  console.log('moment.utc().format(): ', moment.utc().format())
-  console.log('moment().utc().format(): ', moment().utc().format())
-  console.log(
-    'moment().utc().toISOString().valueOf(): ',
-    moment().utc().toISOString().valueOf()
-  )
-  console.log('moment().tz(Europe/London): ', moment().tz('Europe/London'))
+
   data.forEach((site, index) => {
     logger.info(`timestamp for API call: ${timestamp}`)
+    logger.info('moment(): ', moment())
+    logger.info('moment.utc().format(): ', moment.utc().format())
+    logger.info('moment().utc().format(): ', moment().utc().format())
+    logger.info(
+      'moment().utc().toISOString().valueOf(): ',
+      moment().utc().toISOString().valueOf()
+    )
+    logger.info('moment().tz(Europe/London): ', moment().tz('Europe/London'))
     try {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
@@ -67,7 +68,7 @@ export async function pollutantUpdater(data) {
               }
             ]
           } catch (error) {
-            console.log(error)
+            logger.info(error)
           }
         } else {
           promises = [
@@ -79,7 +80,7 @@ export async function pollutantUpdater(data) {
         }
       })
     } catch (error) {
-      console.log(error)
+      logger.info(error)
     }
   })
 
@@ -114,7 +115,7 @@ export async function pollutantUpdater(data) {
           measuredIndex++
         })
       } catch (error) {
-        console.log(error)
+        logger.info(error)
       }
     })
   }
@@ -187,7 +188,7 @@ export async function pollutantUpdater(data) {
           }
         }
       } catch (error) {
-        console.log(error)
+        logger.info(error)
       }
       const result = [
         ...accumulator,
