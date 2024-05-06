@@ -26,9 +26,15 @@ const endTimeStamp = moment
   .toISOString()
   .valueOf()
 const timestamp = `${startTimeStamp}/${endTimeStamp}`
-// console.log('before setting default: ', moment.defaultZone);
-// moment.tz.setDefault('Europe/London');
-// console.log('before setting default 2: ', moment.defaultZone);
+console.log('moment(): ', moment())
+console.log('moment.utc().format(): ', moment.utc().format())
+console.log('moment().utc().format(): ', moment().utc().format())
+console.log(
+  'moment().utc().toISOString().valueOf(): ',
+  moment().utc().toISOString().valueOf()
+)
+console.log('moment().tz(Europe/London): ', moment().tz('Europe/London'))
+
 ///
 const parser = new XMLParser()
 const builder = new XMLBuilder()
@@ -97,11 +103,13 @@ export async function pollutantUpdater(data) {
               : null
           pollutants[k].time.date =
             res[measuredIndex]?.value && res[measuredIndex]?.time.date
-              ? new Date(moment(res[measuredIndex]?.time.date))
+              ? new Date(
+                  moment(res[measuredIndex]?.time.date).tz('Europe/London')
+                )
               : null
           pollutants[k].exception = res[measuredIndex]?.exception
           logger.info(
-            `name log: ${site.name} pollutant: ${k} date: ${pollutants[k].time.date} value: ${pollutants[k].value}`
+            `name log: ${site.name} pollutant: ${k} date time-zone: ${pollutants[k].time.date} value: ${pollutants[k].value}`
           )
           measuredIndex++
         })
