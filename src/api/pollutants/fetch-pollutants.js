@@ -20,9 +20,9 @@ const fetchPollutants = async () => {
     throw new Error(message)
   }
   const northEastScotlandJSON = await res3.json()
-  logger.info(`northEastScotlandJSON res3: ${JSON.stringify(res3)}`)
+  logger.info(`northEastScotlandJSON: ${northEastScotlandJSON}`)
   logger.info(
-    `northEastScotlandJSON res3 northEastScotlandJSON:
+    `northEastScotlandJSON stringify:
     ${JSON.stringify(northEastScotlandJSON)}`
   )
   const res4 = await proxyFetch(url + 4)
