@@ -1,5 +1,8 @@
 import { config } from '~/src/config'
 import { ProxyAgent, fetch as undiciFetch } from 'undici'
+import { createLogger } from '~/src/helpers/logging/logger'
+
+const logger = createLogger()
 
 const nonProxyFetch = (url, opts) => {
   return undiciFetch(url, {
@@ -12,7 +15,9 @@ const proxyFetch = (url, opts) => {
   if (!httpsProxy) {
     return nonProxyFetch(url, opts)
   } else {
-    return undiciFetch(url, {
+    const startTime = Date.now()
+
+    const res = undiciFetch(url, {
       ...opts,
       dispatcher: new ProxyAgent({
         uri: httpsProxy,
@@ -20,6 +25,20 @@ const proxyFetch = (url, opts) => {
         keepAliveMaxTimeout: 10
       })
     })
+      .then((result) => {
+        const endTime = Date.now()
+        logger.info(
+          `Call to ${url} completed ${endTime - startTime}ms - ${result.status}`
+        )
+        return result
+      })
+      .catch((error) => {
+        const endTime = Date.now()
+        logger.info(`Call to ${url} rejected ${endTime - startTime}ms` - error)
+        throw error
+      })
+
+    return res
   }
 }
 

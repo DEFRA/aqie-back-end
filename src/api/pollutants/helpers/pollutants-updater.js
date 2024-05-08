@@ -124,9 +124,7 @@ export async function pollutantUpdater(data) {
         logger.info(`response.status accumulator: ${response.status}`)
         return accumulator
       }
-      logger.info(
-        `data response for each 174 station entries: ${JSON.stringify(response)}`
-      )
+      logger.info(`data response for each 174 station entries: ${response}`)
       try {
         if (response === 'missingFOI') {
           valueMeasured = 'N/A'

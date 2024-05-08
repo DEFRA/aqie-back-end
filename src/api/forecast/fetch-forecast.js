@@ -36,7 +36,7 @@ const saveForecasts = async (server, forecasts) => {
     await server.db
       .collection('forecasts')
       .bulkWrite(forecasts.map(toBulkReplace))
-    logger.info(`forecasts update done: ${forecasts}`)
+    logger.info(`forecasts update done`)
   } catch (error) {
     logger.info(`forecasts update error: ${error}`)
   }
