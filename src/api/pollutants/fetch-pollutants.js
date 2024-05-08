@@ -19,103 +19,145 @@ const fetchPollutants = async () => {
     const message = `An error has occured: ${res3.status}`
     throw new Error(message)
   }
-  const northEastScotlandJSON = await res3.json()
-  logger.info(`northEastScotlandJSON: ${northEastScotlandJSON}`)
   logger.info(
-    `northEastScotlandJSON stringify:
-    ${JSON.stringify(northEastScotlandJSON)}`
+    `data response for each 16 region entries northEastScotlandJSON:${JSON.stringify(res3)}`
   )
+  const northEastScotlandJSON = await res3.json()
   const res4 = await proxyFetch(url + 4)
   if (!res4.ok) {
     const message = `An error has occured res4: ${res4.status}`
     throw new Error(message)
   }
   const northWalesJSON = await res4.json()
+  logger.info(
+    `data response for each 16 region entries northWalesJSON:${JSON.stringify(res4)}`
+  )
   const res5 = await proxyFetch(url + 5)
   if (!res5.ok) {
     const message = `An error has occured res5: ${res5.status}`
     throw new Error(message)
   }
   const highlandJSON = await res5.json()
+  logger.info(
+    `data response for each 16 region entries highlandJSON:${JSON.stringify(res5)}`
+  )
   const res6 = await proxyFetch(url + 6)
   if (!res6.ok) {
     const message = `An error has occured res6: ${res6.status}`
     throw new Error(message)
   }
   const centralScotlandJSON = await res6.json()
+  logger.info(
+    `data response for each 16 region entries centralScotlandJSON:${JSON.stringify(res6)}`
+  )
   const res7 = await proxyFetch(url + 7)
   if (!res7.ok) {
     const message = `An error has occured res7: ${res7.status}`
     throw new Error(message)
   }
   const easternJSON = await res7.json()
+  logger.info(
+    `data response for each 16 region entries easternJSON:${JSON.stringify(res7)}`
+  )
   const res8 = await proxyFetch(url + 8)
   if (!res8.ok) {
     const message = `An error has occured res8: ${res8.status}`
     throw new Error(message)
   }
   const southEastJSON = await res8.json()
+  logger.info(
+    `data response for each 16 region entries southEastJSON:${JSON.stringify(res8)}`
+  )
   const res9 = await proxyFetch(url + 9)
   if (!res9.ok) {
     const message = `An error has occured res9: ${res9.status}`
     throw new Error(message)
   }
   const southWalesJSON = await res9.json()
+  logger.info(
+    `data response for each 16 region entries southWalesJSON:${JSON.stringify(res9)}`
+  )
   const res10 = await proxyFetch(url + 10)
   if (!res10.ok) {
     const message = `An error has occured res10: ${res10.status}`
     throw new Error(message)
   }
   const northWestAndMerseysideJSON = await res10.json()
+  logger.info(
+    `data response for each 16 region entries northWestAndMerseysideJSON:${JSON.stringify(res10)}`
+  )
   const res11 = await proxyFetch(url + 11)
   if (!res11.ok) {
     const message = `An error has occured res11: ${res11.status}`
     throw new Error(message)
   }
   const southWestJSON = await res11.json()
+  logger.info(
+    `data response for each 16 region entries southWestJSON:${JSON.stringify(res11)}`
+  )
   const res12 = await proxyFetch(url + 12)
   if (!res12.ok) {
     const message = `An error has occured res12: ${res12.status}`
     throw new Error(message)
   }
   const eastMidlandsJSON = await res12.json()
+  logger.info(
+    `data response for each 16 region entries eastMidlandsJSON:${JSON.stringify(res12)}`
+  )
   const res13 = await proxyFetch(url + 13)
   if (!res13.ok) {
     const message = `An error has occured res13: ${res13.status}`
     throw new Error(message)
   }
   const scottishBordersJSON = await res13.json()
+  logger.info(
+    `data response for each 16 region entries scottishBordersJSON:${JSON.stringify(res13)}`
+  )
   const res14 = await proxyFetch(url + 14)
   if (!res14.ok) {
     const message = `An error has occured res14: ${res14.status}`
     throw new Error(message)
   }
   const northEastJSON = await res14.json()
+  logger.info(
+    `data response for each 16 region entries northEastJSON:${JSON.stringify(res14)}`
+  )
   const res15 = await proxyFetch(url + 15)
   if (!res15.ok) {
     const message = `An error has occured res15: ${res15.status}`
     throw new Error(message)
   }
   const greaterLondonJSON = await res15.json()
+  logger.info(
+    `data response for each 16 region entries greaterLondonJSON:${JSON.stringify(res15)}`
+  )
   const res16 = await proxyFetch(url + 16)
   if (!res16.ok) {
     const message = `An error has occured res16: ${res16.status}`
     throw new Error(message)
   }
   const westMidlandsJSON = await res16.json()
+  logger.info(
+    `data response for each 16 region entries westMidlandsJSON:${JSON.stringify(res16)}`
+  )
   const res17 = await proxyFetch(url + 17)
   if (!res17.ok) {
     const message = `An error has occured res17: ${res17.status}`
     throw new Error(message)
   }
   const yorkshireAndHumbersideJSON = await res17.json()
+  logger.info(
+    `data response for each 16 region entries yorkshireAndHumbersideJSON:${JSON.stringify(res17)}`
+  )
   const res18 = await proxyFetch(url + 18)
   if (!res18.ok) {
     const message = `An error has occured res18: ${res18.status}`
     throw new Error(message)
   }
   const isleofManJSON = await res18.json()
-
+  logger.info(
+    `data response for each 16 region entries isleofManJSON:${JSON.stringify(res18)}`
+  )
   const momentDate = moment().tz('Europe/London')
   const currentTime = new Date(momentDate)
 
