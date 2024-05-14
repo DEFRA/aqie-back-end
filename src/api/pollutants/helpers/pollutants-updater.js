@@ -92,8 +92,8 @@ export async function pollutantUpdater(data) {
             res[measuredIndex]?.value &&
             !isNaN(Math.round(res[measuredIndex]?.value))
               ? res[measuredIndex]?.value < 1 && res[measuredIndex]?.value > 0
-                ? parseFloat(res[measuredIndex]?.value).toFixed(0) === '1'
-                  ? Math.round(res[measuredIndex]?.value)
+                ? res[measuredIndex]?.value > parseFloat(0.98999)
+                  ? parseFloat(res[measuredIndex]?.value).toFixed(0)
                   : parseFloat(res[measuredIndex]?.value).toFixed(2)
                 : Math.round(res[measuredIndex]?.value)
               : null
