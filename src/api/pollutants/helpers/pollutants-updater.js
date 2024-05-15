@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable camelcase */
-/* eslint-disable no-console */
 import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import reduce from 'await-reduce'
 import xmlToJs from 'xml-js'
@@ -43,8 +42,6 @@ export async function pollutantUpdater(data) {
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
 
   data.forEach((site, index) => {
-    const momentTZ = moment().tz('Europe/London')
-    logger.info(`moment().tz(Europe/London): ${momentTZ}`)
     try {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
@@ -104,9 +101,6 @@ export async function pollutantUpdater(data) {
                 )
               : null
           pollutants[k].exception = res[measuredIndex]?.exception
-          logger.info(
-            `name log: ${site.name} pollutant: ${k} date time-zone: ${pollutants[k].time.date} value: ${pollutants[k].value}`
-          )
           measuredIndex++
         })
       } catch (error) {
@@ -123,10 +117,8 @@ export async function pollutantUpdater(data) {
       let tempDate = []
       let exceptionReport = ''
       if (!response.ok && response !== 'missingFOI') {
-        logger.info(`response.status accumulator: ${response.status}`)
         return accumulator
       }
-      logger.info(`data response for each 174 station entries: ${response}`)
       try {
         if (response === 'missingFOI') {
           valueMeasured = 'N/A'
