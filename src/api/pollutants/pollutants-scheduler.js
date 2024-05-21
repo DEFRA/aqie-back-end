@@ -5,6 +5,7 @@ import {
   fetchPollutants,
   savePollutants
 } from '~/src/api/pollutants/fetch-pollutants'
+import { lock, unlock } from '~/src/helpers/db/lock'
 const logger = createLogger()
 
 // Populate the DB in this template on startup of the API.
@@ -27,13 +28,19 @@ const pollutantsScheduler = {
 }
 
 async function fetchAndSavePollutants(server) {
-  const measurements = await fetchPollutants()
-  logger.info(`updating ${measurements.length} measurements`)
-  const result = measurements.filter(function ({ name }) {
-    return !this.has(name) && this.add(name)
-  }, new Set())
-  logger.info(`updating ${result.length} result`)
-  await savePollutants(server, result)
+  if (await lock(server.db, 'pollutants')) {
+    try {
+      const measurements = await fetchPollutants()
+      logger.info(`updating ${measurements.length} measurements`)
+      const result = measurements.filter(function ({ name }) {
+        return !this.has(name) && this.add(name)
+      }, new Set())
+      logger.info(`updating ${result.length} result`)
+      await savePollutants(server, result)
+    } finally {
+      await unlock(server.db, 'pollutants')
+    }
+  }
 }
 
 export { pollutantsScheduler }

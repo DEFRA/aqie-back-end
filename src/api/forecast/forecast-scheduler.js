@@ -2,6 +2,7 @@ import { createLogger } from '~/src/helpers/logging/logger'
 import { schedule } from 'node-cron'
 import { config } from '~/src/config'
 import { fetchForecast, saveForecasts } from '~/src/api/forecast/fetch-forecast'
+import { lock, unlock } from '~/src/helpers/db/lock'
 
 const logger = createLogger()
 
@@ -23,8 +24,14 @@ const forecastScheduler = {
 }
 
 async function fetchAndSaveForecasts(server) {
-  const forecasts = await fetchForecast()
-  await saveForecasts(server, forecasts)
+  if (await lock(server.db, 'forecasts')) {
+    try {
+      const forecasts = await fetchForecast()
+      await saveForecasts(server, forecasts)
+    } finally {
+      await unlock(server.db, 'forecasts')
+    }
+  }
 }
 
 export { forecastScheduler }
