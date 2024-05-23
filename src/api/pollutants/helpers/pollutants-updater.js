@@ -2,12 +2,12 @@
 /* eslint-disable camelcase */
 import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import reduce from 'await-reduce'
-import xmlToJs from 'xml-js'
 import { config } from '~/src/config'
-import { XMLParser, XMLBuilder } from 'fast-xml-parser'
+import { XMLParser } from 'fast-xml-parser'
 import moment from 'moment-timezone'
 
 import { createLogger } from '~/src/helpers/logging/logger'
+import { getDateMeasured, getTempDate, getValueMeasured } from './body-parser'
 
 process.setMaxListeners(500)
 const logger = createLogger()
@@ -15,7 +15,6 @@ const urlExtra = config.get('pollutantstUrlExtra')
 
 ///
 const parser = new XMLParser()
-const builder = new XMLBuilder()
 const options = {
   headers: {
     'Cache-Control': 'no-cache'
@@ -126,48 +125,26 @@ export async function pollutantUpdater(data) {
           dateMeasured = null
         } else {
           const body = parser.parse(await response.text())
-          const xmlContent = builder.build(body)
-          let jsonResult = xmlToJs.xml2json(xmlContent, {
-            compact: true,
-            spaces: 4
-          })
-          jsonResult = JSON.parse(jsonResult)
           if (
-            jsonResult &&
-            !jsonResult?.['ows:ExceptionReport'] &&
+            body &&
+            !body?.['ows:ExceptionReport'] &&
             !['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
             ]?.['aqd:reportingPeriod']
           ) {
-            valueMeasured = jsonResult?.['gml:FeatureCollection']?.[
-              'gml:featureMember'
-            ][1]?.['om:OM_Observation']?.['om:result']?.['swe:DataArray']?.[
-              'swe:values'
-            ]._text
-              .split(',')
-              .pop()
-            tempDate =
-              jsonResult?.['gml:FeatureCollection']?.['gml:featureMember'][1]?.[
-                'om:OM_Observation'
-              ]?.['om:result']?.['swe:DataArray']?.['swe:values']._text.split(
-                ','
-              )
-            dateMeasured = tempDate
-              ? tempDate[tempDate?.length - 4]
-              : jsonResult?.['gml:FeatureCollection']?.['gml:featureMember']?.[
-                  'aqd:AQD_ReportingHeader'
-                ]?.['aqd:changeDescription']._text
-
+            valueMeasured = getValueMeasured(body)
+            tempDate = getTempDate(body)
+            dateMeasured = getDateMeasured(body, tempDate)
             exceptionReport = ''
           }
           if (
-            ['gml:FeatureCollection']?.['gml:featureMember']?.[
+            body?.['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
             ]?.['aqd:reportingPeriod'] ||
-            jsonResult?.['ows:ExceptionReport']?.['ows:Exception']?.[
+            body?.['ows:ExceptionReport']?.['ows:Exception']?.[
               'ows:ExceptionText'
             ] ||
-            jsonResult?.['ows:ExceptionReport']
+            body?.['ows:ExceptionReport']
           ) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
