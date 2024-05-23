@@ -1,14 +1,12 @@
 /* eslint-disable prettier/prettier */
 import { proxyFetch } from '~/src/helpers/proxy-fetch'
-import moment from 'moment-timezone'
+
 import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
 import { config } from '~/src/config'
 
-const momentDate = moment().tz('Europe/London')
-const currentTime = new Date(momentDate)
 const url = config.get('pollutantstUrl')
 
-async function getAPIPollutants(region) {
+async function getAPIPollutants(region, currentTime) {
   const res = await proxyFetch(url + region.id)
   const respose = await res.json()
   const obj = respose.map((item) => {

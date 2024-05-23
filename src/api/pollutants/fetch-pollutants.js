@@ -3,11 +3,13 @@
 /* eslint-disable prettier/prettier */
 import { createLogger } from '~/src/helpers/logging/logger'
 import { getAPIPollutants } from './helpers/get-api-pollutants'
+import moment from 'moment-timezone'
 
 process.setMaxListeners(500)
 
 const logger = createLogger()
-
+const momentDate = moment().tz('Europe/London')
+const currentTime = new Date(momentDate)
 const regions = [
   { name: 'North East Scotland', id: 3, split: 12 },
   { name: 'North Wales', id: 4, split: 2 },
@@ -31,7 +33,7 @@ const fetchPollutants = async () => {
   const measurements = []
   let measurementsFinal = []
   for (let i = 0; i < regions.length; i++) {
-    const res = await getAPIPollutants(regions[i])
+    const res = await getAPIPollutants(regions[i], currentTime)
     measurements.push(res)
   }
   measurementsFinal = measurements.flat().flat()
