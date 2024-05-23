@@ -20,7 +20,7 @@ const pollutantsScheduler = {
         await fetchAndSavePollutants(server)
       })
       logger.info(
-        'pollutants Scheduler done! Running every hour between 6:00am to 23:00pm'
+        'pollutants Scheduler done! Running every hour between 4:00 to 24:00'
       )
     }
   }

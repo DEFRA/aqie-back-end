@@ -31,7 +31,6 @@ const fetchForecast = async () => {
 const saveForecasts = async (server, forecasts) => {
   // await server.db.collection('historicalForecasts').deleteMany({})
   // await server.db.collection('forecasts').deleteMany({})
-  logger.info(`updating ${forecasts.length} forecasts`)
   try {
     await server.db
       .collection('forecasts')
