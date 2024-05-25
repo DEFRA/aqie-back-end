@@ -30,6 +30,9 @@ const mongoPlugin = {
 }
 
 async function createIndexes(db) {
+  await db
+    .collection('locks')
+    .createIndex({ timestamp: 1 }, { expireAfterSeconds: 60 * 60 }) // all locks expire after 1h, adjust as needed
   await db.collection('forecasts').createIndex({ name: 1 })
   await db.collection('forecasts').createIndex({ location: '2dsphere' })
   await db.collection('historicalForecasts').createIndex({ name: 1 })
