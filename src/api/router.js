@@ -1,5 +1,6 @@
 import { forecasts, historicalForecasts } from '~/src/api/forecast'
 import { measurements, historicalMeasurements } from '~/src/api/pollutants'
+import { health } from '~/src/api/health'
 
 const router = {
   plugin: {
@@ -9,7 +10,8 @@ const router = {
         forecasts,
         historicalForecasts,
         measurements,
-        historicalMeasurements
+        historicalMeasurements,
+        health
       ])
     }
   }
