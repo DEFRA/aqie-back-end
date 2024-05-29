@@ -12,7 +12,6 @@ async function lock(db, lockName) {
     logger.info(`lock on ${lockName} claim successfully`)
     return true
   } catch (error) {
-    logger.error(error)
     logger.info(`lock ${lockName} is already claimed`)
     return false
   }
