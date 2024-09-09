@@ -80,7 +80,7 @@ const config = convict({
   forecastSchedule: {
     doc: 'How often to poll the forecast data (cron format)',
     format: String, // TODO: maybe custom validate this
-    default: '0 05 * * *',
+    default: '0 05-07 * * *',
     env: 'FORECAST_SCHEDULE'
   },
   pollutantstUrl: {
