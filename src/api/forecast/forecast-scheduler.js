@@ -28,10 +28,14 @@ async function fetchAndSaveForecasts(server) {
     try {
       const forecasts = await fetchForecast()
       await saveForecasts(server, forecasts)
+      logger.info('saveForecasts done!')
+    } catch (err) {
+      logger.error('Error fetching and saving forecasts', err)
     } finally {
       await unlock(server.db, 'forecasts')
     }
   }
+  logger.info('forecast save bypassed!')
 }
 
 export { forecastScheduler }
