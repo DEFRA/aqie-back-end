@@ -29,13 +29,13 @@ export async function pollutantUpdater(data) {
   const startTimeStamp = moment
     .utc()
     .add(-1, 'days')
-    .set({ hour: 23, minute: 0, second: 0, millisecond: 0 })
+    .set({ hour: 23, minute: 0 })
     .toISOString()
     .valueOf()
   const endTimeStamp = moment
     .utc()
     .add(1, 'days')
-    .set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+    .set({ hour: 0, minute: 0 })
     .toISOString()
     .valueOf()
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
