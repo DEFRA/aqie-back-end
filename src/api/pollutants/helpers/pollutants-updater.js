@@ -53,7 +53,7 @@ export async function pollutantUpdater(data) {
               ...promises,
               {
                 [k]: proxyFetch(
-                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
+                  `${urlExtra}${timestamp}&featureOfInterest=${httpUrl}`,
                   options
                 )
               }
