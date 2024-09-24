@@ -43,6 +43,9 @@ export async function pollutantUpdater(data) {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
       Object.entries(pollutants).forEach(([k, v], i) => {
+        logger.info(
+          `pollutants url with timestamps... {urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`
+        )
         if (v.featureOfInterest !== 'missingFOI') {
           try {
             promises = [
@@ -55,7 +58,7 @@ export async function pollutantUpdater(data) {
               }
             ]
           } catch (error) {
-            logger.info(error)
+            logger.error(error)
           }
         } else {
           promises = [
@@ -67,7 +70,7 @@ export async function pollutantUpdater(data) {
         }
       })
     } catch (error) {
-      logger.info(error)
+      logger.error(error)
     }
   })
 
