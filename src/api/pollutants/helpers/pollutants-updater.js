@@ -43,8 +43,9 @@ export async function pollutantUpdater(data) {
       const { pollutants } = site
       // eslint-disable-next-line prefer-const
       Object.entries(pollutants).forEach(([k, v], i) => {
+        const httpUrl = v.featureOfInterest.replace(/^https:/, 'http:') // Replace https with http
         logger.info(
-          `pollutants url with timestamps... {urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`
+          `pollutants url with timestamps... ${urlExtra}${timestamp}&featureOfInterest=${httpUrl}`
         )
         if (v.featureOfInterest !== 'missingFOI') {
           try {
