@@ -17,9 +17,13 @@ async function getAPIPollutants(region, currentTime) {
           el.parameter_id
         )
       ) {
+        const httpUrl = el.feature_of_interest[0].featureOfInterset.replace(
+          /^https:/,
+          'http:'
+        ) // Replace https with http
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
-            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            featureOfInterest: httpUrl,
             time: { date: '' },
             exception: ''
           }

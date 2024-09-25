@@ -44,6 +44,7 @@ const savePollutants = async (server, pollutants) => {
   // await server.db.collection('measurements').deleteMany({})
   // await server.db.collection('historicalMeasurements').deleteMany({})
   logger.info(`updating ${pollutants.length} pollutants`)
+  logger.info(`pollutantsss ${JSON.stringify(pollutants)}`)
   try {
     await server.db
       .collection('measurements')
