@@ -29,13 +29,13 @@ export async function pollutantUpdater(data) {
   const startTimeStamp = moment
     .utc()
     .add(-1, 'days')
-    .set({ hour: 23, minute: 0 })
-    .format('YYYY-MM-DDTHH:mm[Z]')
+    .set({ hour: 23, minute: 0, second: 0 })
+    .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const endTimeStamp = moment
     .utc()
     .add(1, 'days')
-    .set({ hour: 0, minute: 0 })
-    .format('YYYY-MM-DDTHH:mm[Z]')
+    .set({ hour: 0, minute: 0, second: 0 })
+    .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
 
   data.forEach((site, index) => {
@@ -169,6 +169,6 @@ export async function pollutantUpdater(data) {
     },
     []
   )
-
+  logger.info(`pollutants updater done! ${JSON.stringify(data)}`)
   return data
 }
