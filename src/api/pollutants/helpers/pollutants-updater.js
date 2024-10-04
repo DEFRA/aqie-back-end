@@ -28,7 +28,7 @@ export async function pollutantUpdater(data) {
   let promises = []
   const startTimeStamp = moment
     .utc()
-    .add(-1, 'days')
+    .add(-2, 'days')
     .set({ hour: 23, minute: 0, second: 0 })
     .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const endTimeStamp = moment
