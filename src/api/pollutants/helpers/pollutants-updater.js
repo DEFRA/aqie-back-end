@@ -33,7 +33,7 @@ export async function pollutantUpdater(data) {
     .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const endTimeStamp = moment
     .utc()
-    .add(1, 'days')
+    .add(1, 'years')
     .set({ hour: 0, minute: 0, second: 0 })
     .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const timestamp = `${startTimeStamp}/${endTimeStamp}`
