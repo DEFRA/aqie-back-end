@@ -4,7 +4,7 @@ import { getForecasts } from '~/src/api/forecast/helpers/get-forecasts'
 const forecastsController = {
   handler: async (request, h) => {
     const forecasts = await getForecasts(request.db)
-    h.header(
+    h.response.header(
       'Access-Control-Allow-Origin',
       'https://check-local-air-quality.gov.uk'
     )
