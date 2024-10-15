@@ -4,7 +4,10 @@ import { getPollutants } from '~/src/api/pollutants/helpers/get-pollutants'
 const pollutantsController = {
   handler: async (request, h) => {
     const measurements = await getPollutants(request.db)
-
+    h.header(
+      'Access-Control-Allow-Origin',
+      'https://check-local-air-quality.gov.uk'
+    )
     return h.response({ message: 'success', measurements }).code(200)
   }
 }
