@@ -16,7 +16,7 @@ const router = {
     }
   },
   cors: {
-    origin: ['https://check-local-air-quality.gov.uk'], // Allow only this domain
+    origin: ['https://aqie-back-end.dev.cdp-int.defra.cloud'], // Allow only this domain
     headers:
       'Access-Control-Allow-Headers: Origin, Content-Type, Accept, X-Requested-With', // all default apart from Accept-language
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // all default apart from PATCH

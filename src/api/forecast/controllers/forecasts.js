@@ -6,7 +6,7 @@ const forecastsController = {
     const forecasts = await getForecasts(request.db)
     h.response.header(
       'Access-Control-Allow-Origin',
-      'https://check-local-air-quality.gov.uk'
+      'https://aqie-back-end.dev.cdp-int.defra.cloud'
     )
     return h.response({ message: 'success', forecasts }).code(200)
   }
