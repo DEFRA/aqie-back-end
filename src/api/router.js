@@ -1,7 +1,9 @@
 import { forecasts, historicalForecasts } from '~/src/api/forecast'
 import { measurements, historicalMeasurements } from '~/src/api/pollutants'
 import { health } from '~/src/api/health'
+import { config } from '~/src/config'
 
+const allowOriginUrl = config.get('allowOriginUrl')
 const router = {
   plugin: {
     name: 'Router',
@@ -16,7 +18,7 @@ const router = {
     }
   },
   cors: {
-    origin: ['https://check-air-quality.service.gov.uk'], // Allow only this domain
+    origin: [allowOriginUrl], // Allow only this domain
     headers:
       'Access-Control-Allow-Headers: Origin, Content-Type, Accept, X-Requested-With', // all default apart from Accept-language
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // all default apart from PATCH
