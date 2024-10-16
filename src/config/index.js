@@ -102,6 +102,12 @@ const config = convict({
     format: String, // TODO: maybe custom validate this
     default: '0 */1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
+  },
+  allowOriginUrl: {
+    doc: 'URL to Access-Control-Allow-Origin',
+    format: String,
+    default: '',
+    env: 'ACCESS_CONTROL_ALLOW_ORIGIN_URL'
   }
 })
 
