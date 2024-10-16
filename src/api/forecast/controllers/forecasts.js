@@ -9,7 +9,7 @@ const forecastsController = {
       .code(200)
       .header(
         'Access-Control-Allow-Origin',
-        'https://aqie-back-end.dev.cdp-int.defra.cloud'
+        'https://check-air-quality.service.gov.uk'
       )
   }
 }
