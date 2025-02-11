@@ -29,7 +29,7 @@ async function getAPIPollutants(region, currentTime) {
     return {
       name: item.site_name,
       area: region.name,
-      localSiteID: item.local_site_id, 
+      localSiteID: item.local_site_id,
       areaType: item.location_type,
       location: {
         type: 'Point',
