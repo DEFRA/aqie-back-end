@@ -9,11 +9,16 @@ const metOfficeForecastListController = {
   handler: async (request, h) => {
     const allowOriginUrl = config.get('allowOriginUrl')
     const sftp = new SFTPClient()
+    const privateKeyBase64 = config.get('sftpPrivateKey')
+    // Decode it
+    const decodedPrivateKey = Buffer.from(privateKeyBase64, 'base64').toString(
+      'utf-8'
+    )
     const configuration = {
       host: 'sftp22.sftp-defra-gov-uk.quatrix.it',
       port: 22,
       username: 'q2031671',
-      privateKey: config.get('sftpPrivateKey')
+      privateKey: decodedPrivateKey
       // If key has a passphrase:
       // passphrase: 'passphrase',
     }
