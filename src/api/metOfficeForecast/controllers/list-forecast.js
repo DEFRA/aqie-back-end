@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import SFTPClient from 'ssh2-sftp-client'
 import { config } from '~/src/config/index'
 
