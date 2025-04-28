@@ -53,7 +53,7 @@ const metOfficeForecastReadController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (err) {
-        logger.info('Error reading file:', err)
+      logger.info('Error reading file:', err)
       return h.response({ success: false, error: err.message }).code(500)
     }
   }
