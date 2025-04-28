@@ -1,6 +1,9 @@
 /* eslint-disable prettier/prettier */
 import SFTPClient from 'ssh2-sftp-client'
 import { config } from '~/src/config/index'
+import { createLogger } from '~/src/helpers/logging/logger'
+
+const logger = createLogger()
 
 const metOfficeForecastReadController = {
   handler: async (request, h) => {
@@ -16,20 +19,20 @@ const metOfficeForecastReadController = {
     }
 
     const { filename } = request.params
-    console.log(`filename:: ${filename}`)
+    logger.info(`filename:: ${filename}`)
     const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
 
     try {
       await sftp.connect(configuration)
 
       const fileList = await sftp.list(remoteDir)
-      console.log(
+      logger.info(
         'Files in directory:',
         fileList.map((f) => f.name)
       )
       // Filter file by exact name
       const match = fileList.find((files) => files.name === filename)
-      console.log('Match found:', match)
+      logger.info('Match found:', match)
 
       if (!match) {
         await sftp.end()
@@ -50,7 +53,7 @@ const metOfficeForecastReadController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (err) {
-      console.error('Error reading file:', err)
+        logger.info('Error reading file:', err)
       return h.response({ success: false, error: err.message }).code(500)
     }
   }

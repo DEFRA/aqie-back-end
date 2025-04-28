@@ -1,6 +1,9 @@
 /* eslint-disable prettier/prettier */
 import SFTPClient from 'ssh2-sftp-client'
 import { config } from '~/src/config/index'
+import { createLogger } from '~/src/helpers/logging/logger'
+
+const logger = createLogger()
 
 const metOfficeForecastListController = {
   handler: async (request, h) => {
@@ -30,7 +33,7 @@ const metOfficeForecastListController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (err) {
-      console.error('Error listing file:', err)
+      logger.info('Error listing file:', err)
       return h.response({ success: false, error: err.message }).code(500)
     }
   }
