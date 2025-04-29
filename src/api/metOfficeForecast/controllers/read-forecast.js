@@ -10,7 +10,7 @@ const metOfficeForecastReadController = {
     const allowOriginUrl = config.get('allowOriginUrl')
     const sftp = new SFTPClient()
     const privateKeyBase64 = config.get('sftpPrivateKey')
-    // Decode it
+    // Decode the private key
     const decodedPrivateKey = Buffer.from(privateKeyBase64, 'base64').toString(
       'utf-8'
     )
