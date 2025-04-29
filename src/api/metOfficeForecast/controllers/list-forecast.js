@@ -23,8 +23,9 @@ const metOfficeForecastListController = {
       // passphrase: 'passphrase',
     }
     try {
+      logger.info('Before Connection')
       await sftp.connect(configuration)
-
+      logger.info('After Connection')
       const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
       const fileList = await sftp.list(remoteDir)
 
@@ -38,7 +39,7 @@ const metOfficeForecastListController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (err) {
-      logger.info('Error listing file:', err)
+      logger.error('Error listing file:', err)
       return h.response({ success: false, error: err.message }).code(500)
     }
   }
