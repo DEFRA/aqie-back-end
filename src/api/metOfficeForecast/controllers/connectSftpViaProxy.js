@@ -1,8 +1,8 @@
 import SFTPClient from 'ssh2-sftp-client'
 import { ProxyAgent } from 'undici'
-import { config } from '../../config/index.js'
+import { config } from '~/src/config'
 import { Buffer } from 'buffer'
-import { createLogger } from '../helpers/logging/logger.js'
+import { createLogger } from '~/src/helpers/logging/logger.js'
 
 const logger = createLogger()
 
