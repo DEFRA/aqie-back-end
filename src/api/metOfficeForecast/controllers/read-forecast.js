@@ -1,27 +1,25 @@
 /* eslint-disable prettier/prettier */
-import SFTPClient from 'ssh2-sftp-client'
 import { config } from '~/src/config/index'
-import { createLogger } from '~/src/helpers/logging/logger'
+import { createLogger } from '~/src/helpers/logging/logger.js'
+import connectSftpThroughProxy from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxy.js'
 
 const logger = createLogger()
 
 const metOfficeForecastReadController = {
   handler: async (request, h) => {
     const allowOriginUrl = config.get('allowOriginUrl')
-    const sftp = new SFTPClient()
-    const privateKeyBase64 = config.get('sftpPrivateKey')
-    // Decode the private key
-    const decodedPrivateKey = Buffer.from(privateKeyBase64, 'base64').toString(
-      'utf-8'
-    )
-    const configuration = {
-      host: 'sftp22.sftp-defra-gov-uk.quatrix.it',
-      port: 22,
-      username: 'q2031671',
-      privateKey: decodedPrivateKey
-      // If key has a passphrase:
-      // passphrase: 'passphrase',
-    }
+    // const sftp = new SFTPClient()
+    // const privateKeyBase64 = config.get('sftpPrivateKey')
+    // // Decode the private key
+    // const decodedPrivateKey = Buffer.from(privateKeyBase64, 'base64').toString(
+    //   'utf-8'
+    // )
+    // const configuration = {
+    //   host: 'sftp22.sftp-defra-gov-uk.quatrix.it',
+    //   port: 22,
+    //   username: 'q2031671',
+    //   privateKey: decodedPrivateKey
+    // }
 
     const { filename } = request.params
     logger.info(`filename:: ${filename}`)
@@ -29,7 +27,7 @@ const metOfficeForecastReadController = {
 
     try {
       logger.info('Before Connection')
-      await sftp.connect(configuration)
+      const sftp = await connectSftpThroughProxy()
       logger.info('After Connection')
       const fileList = await sftp.list(remoteDir)
       logger.info(
