@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { config } from '~/src/config'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-import connectSftpThroughProxy from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxy.js'
+import { connectSftpThroughProxy } from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxy.js'
 
 const logger = createLogger()
 
@@ -56,9 +56,9 @@ const metOfficeForecastReadController = {
         .type('application/xml') // or 'text/xml'
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
-    } catch (err) {
-      logger.error('Error reading file:', err)
-      return h.response({ success: false, error: err.message }).code(500)
+    } catch (error) {
+      logger.error('Error reading file:', error)
+      return h.response({ success: false, error: error.message }).code(500)
     }
   }
 }
