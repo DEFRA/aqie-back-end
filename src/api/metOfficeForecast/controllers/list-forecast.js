@@ -25,10 +25,16 @@ const metOfficeForecastListController = {
     try {
       logger.info('Before Connection')
       const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
-      const sftp = await connectSftpThroughProxy()
+      const { sftp, conn } = await connectSftpThroughProxy()
       logger.info('After Connection')
-      const fileList = await sftp.list(remoteDir)
-      await sftp.end()
+      const fileList = await new Promise((resolve, reject) => {
+        sftp.readdir(remoteDir, (err, list) => {
+          if (err) return reject(err)
+          resolve(list.map((file) => file.filename))
+        })
+      })
+
+      conn.end()
 
       return h
         .response({
@@ -38,7 +44,9 @@ const metOfficeForecastListController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (error) {
-      logger.error('Error listing file:', error)
+      logger.error(`Error listing file: ${error.message}`)
+      logger.error(`'Error listing file:' ${error}`)
+      logger.error(`'Error listing file:' ${JSON.stringify(error)}`)
       return h.response({ success: false, error: error.message }).code(500)
     }
   }
