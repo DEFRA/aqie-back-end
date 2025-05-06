@@ -20,6 +20,8 @@ async function getAPIPollutants(region, currentTime) {
         newObj = Object.assign({}, newObj, {
           [el.parameter_id]: {
             featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+            startDate: el.feature_of_interest[0].start_date,
+            endDate: el.feature_of_interest[0].ended_date,
             time: { date: '' },
             exception: ''
           }
