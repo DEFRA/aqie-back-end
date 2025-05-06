@@ -57,31 +57,26 @@ const logger = createLogger()
 export async function connectSftpThroughProxy() {
   return new Promise((resolve, reject) => {
     try {
-      const proxyHost = new URL(config.get('httpsProxy')).hostname
-      const proxyPort = parseInt(
-        new URL(config.get('httpsProxy')).port || '443'
-      )
+      const proxyHost = new URL(config.get('httpProxy')).hostname
+      const proxyPort = parseInt(new URL(config.get('httpProxy')).port || '80')
       const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
       const sftpPort = 22
-
       logger.info(`[Proxy Debug] Using proxy ${proxyHost}:${proxyPort}`)
       logger.info(
         `[Proxy Debug] Attempting to create tunnel to ${sftpHost}:${sftpPort}`
       )
-
       const tunneler = tunnel.httpsOverHttp({
         proxy: {
           host: proxyHost,
           port: proxyPort
         }
       })
-
       const timeout = setTimeout(() => {
         logger.error(
-          '[Tunnel Timeout] SFTP proxy connection timed out after 10s'
+          '[Tunnel Timeout] SFTP proxy connection timed out after 30s'
         )
         reject(new Error('Tunnel connection timed out'))
-      }, 10000) // 10 seconds
+      }, 30000) // 30 seconds
 
       tunneler.createSocket(
         { host: sftpHost, port: sftpPort },
