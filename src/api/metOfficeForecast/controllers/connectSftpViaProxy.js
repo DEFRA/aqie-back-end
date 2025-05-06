@@ -64,8 +64,8 @@ export async function connectSftpThroughProxy() {
       const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
       const sftpPort = 22
 
-      console.log(`[Proxy Debug] Using proxy ${proxyHost}:${proxyPort}`)
-      console.log(
+      logger.info(`[Proxy Debug] Using proxy ${proxyHost}:${proxyPort}`)
+      logger.info(
         `[Proxy Debug] Attempting to create tunnel to ${sftpHost}:${sftpPort}`
       )
 
@@ -77,7 +77,7 @@ export async function connectSftpThroughProxy() {
       })
 
       const timeout = setTimeout(() => {
-        console.error(
+        logger.error(
           '[Tunnel Timeout] SFTP proxy connection timed out after 10s'
         )
         reject(new Error('Tunnel connection timed out'))
@@ -88,11 +88,11 @@ export async function connectSftpThroughProxy() {
         (err, socket) => {
           clearTimeout(timeout) // clear on success/error
           if (err) {
-            console.error('[Tunnel Error]', err)
+            logger.error(`'[Tunnel Error]', ${err}`)
             return reject(err)
           }
 
-          console.log('[Tunnel] Socket created, starting SSH connection...')
+          logger.info('[Tunnel] Socket created, starting SSH connection...')
 
           const privateKeyBase64 = config.get('sftpPrivateKey')
           const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
@@ -103,22 +103,22 @@ export async function connectSftpThroughProxy() {
 
           conn
             .on('ready', () => {
-              console.log('[SSH] Connection ready, initializing SFTP...')
+              logger.info('[SSH] Connection ready, initializing SFTP...')
               conn.sftp((err, sftp) => {
                 if (err) {
-                  console.error('[SFTP Error]', err)
+                  logger.error(`'[SFTP Error]', ${err}`)
                   return reject(err)
                 }
-                console.log('[SFTP] SFTP session established.')
+                logger.info('[SFTP] SFTP session established.')
                 resolve({ sftp, conn })
               })
             })
             .on('error', (err) => {
-              console.error('[SSH Error]', err)
+              logger.error(`'[SSH Error]', ${err}`)
               reject(err)
             })
             .on('close', () => {
-              console.log('[SSH] Connection closed')
+              logger.info(`'[SSH] Connection closed'`)
             })
             .connect({
               sock: socket,
@@ -128,7 +128,7 @@ export async function connectSftpThroughProxy() {
         }
       )
     } catch (e) {
-      console.error('[Fatal Error]', e)
+      logger.error(`'[Fatal Error]' , ${e}`)
       reject(e)
     }
   })
