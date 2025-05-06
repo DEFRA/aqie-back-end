@@ -25,16 +25,16 @@ const metOfficeForecastListController = {
     try {
       logger.info('Before Connection')
       const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
-      const {sftp, conn} = await connectSftpThroughProxy()
+      const { sftp, conn } = await connectSftpThroughProxy()
       logger.info('After Connection')
       const fileList = await new Promise((resolve, reject) => {
         sftp.readdir(remoteDir, (err, list) => {
-          if (err) return reject(err);
-            resolve(list.map(file => file.filename));
-        });
-      });
- 
-      conn.end();
+          if (err) return reject(err)
+          resolve(list.map((file) => file.filename))
+        })
+      })
+
+      conn.end()
 
       return h
         .response({
