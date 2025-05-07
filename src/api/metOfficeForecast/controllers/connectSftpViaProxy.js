@@ -6,8 +6,9 @@ import { Buffer } from 'buffer'
 import { createLogger } from '~/src/helpers/logging/logger.js'
 // import fs from 'fs'
 // import { HttpsProxyAgent } from 'https-proxy-agent'
-import tunnel from 'tunnel'
+// import tunnel from 'tunnel'
 import { URL } from 'url'
+import http from 'http'
 
 const logger = createLogger()
 /**
@@ -56,75 +57,61 @@ const logger = createLogger()
 
 export async function connectSftpThroughProxy() {
   return new Promise((resolve, reject) => {
-    try {
-      const proxyHost = new URL(config.get('httpProxy')).hostname
-      const proxyPort = parseInt(new URL(config.get('httpProxy')).port || '80')
-      const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
-      const sftpPort = 22
-      logger.info(`[Proxy Debug] Using proxy ${proxyHost}:${proxyPort}`)
-      logger.info(
-        `[Proxy Debug] Attempting to create tunnel to ${sftpHost}:${sftpPort}`
+    const proxyUrl = new URL(config.get('httpProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
+    const proxyHost = proxyUrl.hostname
+    const proxyPort = parseInt(proxyUrl.port || '80')
+    const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
+    const sftpPort = 22
+
+    logger.info(
+      `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxy ${proxyHost}:${proxyPort}`
+    )
+
+    const req = http.request({
+      host: proxyHost,
+      port: proxyPort,
+      method: 'CONNECT',
+      path: `${sftpHost}:${sftpPort}`,
+      headers: {
+        Host: `${sftpHost}:${sftpPort}`
+      }
+    })
+
+    req.on('connect', (res, socket) => {
+      if (res.statusCode !== 200) {
+        return reject(new Error(`Proxy CONNECT failed: ${res.statusCode}`))
+      }
+
+      logger.info('[Proxy Debug] Tunnel established — starting SSH connection')
+
+      const privateKeyBase64 = config.get('sftpPrivateKey')
+      const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
+        'utf-8'
       )
-      const tunneler = tunnel.httpsOverHttp({
-        proxy: {
-          host: proxyHost,
-          port: proxyPort
-        }
-      })
-      const timeout = setTimeout(() => {
-        logger.error(
-          '[Tunnel Timeout] SFTP proxy connection timed out after 30s'
-        )
-        reject(new Error('Tunnel connection timed out'))
-      }, 30000) // 30 seconds
 
-      tunneler.createSocket(
-        { host: sftpHost, port: sftpPort },
-        (err, socket) => {
-          clearTimeout(timeout) // clear on success/error
-          if (err) {
-            logger.error(`'[Tunnel Error]', ${err}`)
-            return reject(err)
-          }
+      const conn = new Client()
+      conn
+        .on('ready', () => {
+          logger.info('[SSH] Connected')
+          conn.sftp((err, sftp) => {
+            if (err) return reject(err)
+            logger.info('[SFTP] Session established')
+            resolve({ sftp, conn })
+          })
+        })
+        .on('error', reject)
+        .connect({
+          sock: socket,
+          username: 'q2031671',
+          privateKey
+        })
+    })
 
-          logger.info('[Tunnel] Socket created, starting SSH connection...')
+    req.on('error', (err) => {
+      logger.error(`'[Proxy Error]', ${err}`)
+      reject(err)
+    })
 
-          const privateKeyBase64 = config.get('sftpPrivateKey')
-          const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
-            'utf-8'
-          )
-
-          const conn = new Client()
-
-          conn
-            .on('ready', () => {
-              logger.info('[SSH] Connection ready, initializing SFTP...')
-              conn.sftp((err, sftp) => {
-                if (err) {
-                  logger.error(`'[SFTP Error]', ${err}`)
-                  return reject(err)
-                }
-                logger.info('[SFTP] SFTP session established.')
-                resolve({ sftp, conn })
-              })
-            })
-            .on('error', (err) => {
-              logger.error(`'[SSH Error]', ${err}`)
-              reject(err)
-            })
-            .on('close', () => {
-              logger.info(`'[SSH] Connection closed'`)
-            })
-            .connect({
-              sock: socket,
-              username: 'q2031671',
-              privateKey
-            })
-        }
-      )
-    } catch (e) {
-      logger.error(`'[Fatal Error]' , ${e}`)
-      reject(e)
-    }
+    req.end()
   })
 }
