@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { config } from '~/src/config'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-import { connectSftpThroughProxy } from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxy.js'
+import { connectSftpViaProxyAgent } from '~/src/api/metOfficeForecast/controllers/connectSftpviaProxyAgent.js'
 
 const logger = createLogger()
 
@@ -25,7 +25,7 @@ const metOfficeForecastListController = {
     try {
       logger.info('Before Connection')
       const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
-      const { sftp, conn } = await connectSftpThroughProxy()
+      const { sftp, conn } = await connectSftpViaProxyAgent()
       logger.info('After Connection')
       const fileList = await new Promise((resolve, reject) => {
         sftp.readdir(remoteDir, (err, list) => {
