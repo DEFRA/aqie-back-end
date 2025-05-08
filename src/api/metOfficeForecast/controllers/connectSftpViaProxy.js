@@ -2,9 +2,9 @@
 import { Client } from 'ssh2'
 // import { ProxyAgent } from 'undici'
 import { config } from '~/src/config'
-import { Buffer } from 'buffer'
+// import { Buffer } from 'buffer'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-// import fs from 'fs'
+import fs from 'fs'
 // import { HttpsProxyAgent } from 'https-proxy-agent'
 // import tunnel from 'tunnel'
 import { URL } from 'url'
@@ -56,26 +56,27 @@ const logger = createLogger()
 // }
 
 export async function connectSftpThroughProxy() {
+  const proxyUrl = new URL(config.get('httpProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
+  const proxyHost = proxyUrl.hostname
+  const proxyPort = parseInt(proxyUrl.port || '80')
+  const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
+  const sftpPort = 22
+
+  logger.info(
+    `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxy ${proxyHost}:${proxyPort}`
+  )
+
+  const proxyOptions = {
+    host: proxyHost,
+    port: proxyPort,
+    method: 'CONNECT',
+    path: `${sftpHost}:${sftpPort}`,
+    headers: {
+      Host: `${sftpHost}:${sftpPort}`
+    }
+  }
   return new Promise((resolve, reject) => {
-    const proxyUrl = new URL(config.get('httpProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
-    const proxyHost = proxyUrl.hostname
-    const proxyPort = parseInt(proxyUrl.port || '80')
-    const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
-    const sftpPort = 22
-
-    logger.info(
-      `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxy ${proxyHost}:${proxyPort}`
-    )
-
-    const req = http.request({
-      host: proxyHost,
-      port: proxyPort,
-      method: 'CONNECT',
-      path: `${sftpHost}:${sftpPort}`,
-      headers: {
-        Host: `${sftpHost}:${sftpPort}`
-      }
-    })
+    const req = http.request(proxyOptions)
 
     req.on('connect', (res, socket) => {
       if (res.statusCode !== 200) {
@@ -84,34 +85,39 @@ export async function connectSftpThroughProxy() {
 
       logger.info('[Proxy Debug] Tunnel established — starting SSH connection')
 
-      const privateKeyBase64 = config.get('sftpPrivateKey')
-      const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
-        'utf-8'
+      // const privateKeyBase64 = config.get('sftpPrivateKey')
+      // const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
+      //   'utf-8'
+      // )
+
+      const privateKey = fs.readFileSync(
+        'C:/Users/486272/.ssh/private_key_base64'
       )
 
       const conn = new Client()
       conn
         .on('ready', () => {
-          logger.info('[SSH] Connected')
-          conn.sftp((err, sftp) => {
-            if (err) return reject(err)
-            logger.info('[SFTP] Session established')
-            resolve({ sftp, conn })
-          })
+          logger.info('SFTP connection established successfully via proxy')
+          resolve({ sftp: conn.sftp(), conn })
         })
-        .on('error', reject)
+        .on('error', (err) => {
+          logger.error(`Failed to establish SFTP connection: ${err}`)
+          reject(err)
+        })
         .connect({
           sock: socket,
+          host: sftpHost,
+          port: sftpPort,
           username: 'q2031671',
           privateKey
         })
     })
-
     req.on('error', (err) => {
-      logger.error(`'[Proxy Error]', ${err}`)
+      logger.error(
+        `Failed to create socket or establish SFTP connection: ${err}`
+      )
       reject(err)
     })
-
     req.end()
   })
 }

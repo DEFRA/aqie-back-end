@@ -1,17 +1,15 @@
-import { ProxyAgent } from 'undici'
+import { proxyFetch } from '~/src/helpers/proxy-fetch'
 import SFTPClient from 'ssh2-sftp-client'
-import { config } from '~/src/config' // Adjust import path
+import { config } from '~/src/config'
 import { Buffer } from 'buffer'
-import { createLogger } from '~/src/helpers/logging/logger.js' // Adjust import path
+import { createLogger } from '~/src/helpers/logging/logger.js'
 // import { URL } from 'url'
-
+// import fs from 'fs';
 const logger = createLogger()
 
 export async function connectSftpViaProxyAgent() {
   const sftp = new SFTPClient()
-  const proxyUrl = config.get('httpProxy') // This should map to HTTP_PROXY env var
-  //   const proxyHost = new URL(config.get('httpProxy')).hostname;
-  //   const proxyPort = parseInt(new URL(config.get('httpProxy')).port || '80');
+  const proxyUrl = config.get('httpProxy')
 
   const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
   const sftpPort = 22
@@ -21,38 +19,42 @@ export async function connectSftpViaProxyAgent() {
   }
 
   logger.info(`Connecting to ${sftpHost}:${sftpPort} via proxy ${proxyUrl}`)
+  try {
+    // 1. Create CONNECT tunnel to SFTP server via Squid
+    const response = await proxyFetch(`${proxyUrl}`, {
+      method: 'CONNECT',
+      headers: {
+        Host: `${sftpHost}:${sftpPort}`
+      }
+    })
+    const socket = response.socket
 
-  const proxyAgent = new ProxyAgent(proxyUrl)
+    logger.info(`Socket created: ${socket}`)
 
-  logger.info(`new proxy agent`)
-  // 1. Create CONNECT tunnel to SFTP server via Squid
-  //   const { socket } = await proxyAgent.connect({
-  //     origin: `http://${sftpHost}:${sftpPort}`
-  //   });
-  const { socket } = await proxyAgent.connect({
-    host: sftpHost,
-    port: sftpPort
-  })
-  logger.info(`socket :: ${socket}`)
+    // 2. Read and Decode private key from base64 from the file
+    const privateKeyBase64 = config.get('sftpPrivateKey')
+    const privateKeyDecoded = Buffer.from(privateKeyBase64, 'base64').toString(
+      'utf-8'
+    )
+    logger.info(`Private key decoded`)
+    // const privateKeyBase64 = fs.readFileSync('C:/Users/486272/.ssh/private_key_base64', 'utf-8');
+    const connectionConfig = {
+      sock: socket, // pass the tunneled socket
+      username: 'q2031671',
+      privateKey: privateKeyDecoded
+    }
 
-  // 2. Decode private key from base64 env variable
-  const privateKey = Buffer.from(
-    config.get('sftpPrivateKey'),
-    'base64'
-  ).toString('utf-8')
-  // const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1')
-  logger.info(`privateKey:: ${privateKey}`)
-  const connectionConfig = {
-    sock: socket, // pass the tunneled socket
-    username: 'q2031671',
-    privateKey
+    logger.info('Establishing SFTP connection over tunneled socket...')
+
+    // 3. Connect via SFTP
+    await sftp.connect(connectionConfig)
+
+    logger.info('SFTP connection established successfully via proxy')
+    return { sftp, conn: sftp }
+  } catch (error) {
+    logger.error(
+      `Failed to create socket or establish SFTP connection: ${error}`
+    )
+    throw error
   }
-
-  logger.info('Establishing SFTP connection over tunneled socket...')
-
-  // 3. Connect via SFTP
-  await sftp.connect(connectionConfig)
-
-  logger.info('SFTP connection established successfully via proxy')
-  return sftp
 }
