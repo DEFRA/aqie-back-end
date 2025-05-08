@@ -61,14 +61,14 @@ const config = convict({
     doc: 'HTTP Proxy',
     format: String,
     nullable: true,
-    default: null,
+    default: 'http://proxy.dev.cdp-int.defra.cloud:80',
     env: 'CDP_HTTP_PROXY'
   },
   httpsProxy: {
     doc: 'HTTPS Proxy',
     format: String,
     nullable: true,
-    default: null,
+    default: 'https://proxy.dev.cdp-int.defra.cloud:443',
     env: 'CDP_HTTPS_PROXY'
   },
   forecastUrl: {

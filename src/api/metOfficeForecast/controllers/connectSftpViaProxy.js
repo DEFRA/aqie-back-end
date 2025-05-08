@@ -2,9 +2,9 @@
 import { Client } from 'ssh2'
 // import { ProxyAgent } from 'undici'
 import { config } from '~/src/config'
-// import { Buffer } from 'buffer'
+import { Buffer } from 'buffer'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-import fs from 'fs'
+// import fs from 'fs'
 // import { HttpsProxyAgent } from 'https-proxy-agent'
 // import tunnel from 'tunnel'
 import { URL } from 'url'
@@ -63,7 +63,7 @@ export async function connectSftpThroughProxy() {
   const sftpPort = 22
 
   logger.info(
-    `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxy ${proxyHost}:${proxyPort}`
+    `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxyurl ${proxyUrl} ${proxyHost}:${proxyPort}`
   )
 
   const proxyOptions = {
@@ -75,24 +75,25 @@ export async function connectSftpThroughProxy() {
       Host: `${sftpHost}:${sftpPort}`
     }
   }
-  return new Promise((resolve, reject) => {
-    const req = http.request(proxyOptions)
 
+  // const privateKey = fs.readFileSync(
+  //   'C:/Users/486272/.ssh/met_office_rsa_v1'
+  // )
+  const privateKeyBase64 = config.get('sftpPrivateKey')
+  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
+  return new Promise((resolve, reject) => {
+    logger.info(`inside Promise`)
+    logger.info(`privateKey:: ${privateKey}`)
+    const req = http.request(proxyOptions)
+    logger.info(`REQUEST:: ${JSON.stringify(req)}`)
     req.on('connect', (res, socket) => {
+      logger.info(`SOCKET:: ${socket}`)
+      logger.info(`RESPONSE:: ${res}`)
       if (res.statusCode !== 200) {
         return reject(new Error(`Proxy CONNECT failed: ${res.statusCode}`))
       }
 
       logger.info('[Proxy Debug] Tunnel established — starting SSH connection')
-
-      // const privateKeyBase64 = config.get('sftpPrivateKey')
-      // const privateKey = Buffer.from(privateKeyBase64, 'base64').toString(
-      //   'utf-8'
-      // )
-
-      const privateKey = fs.readFileSync(
-        'C:/Users/486272/.ssh/private_key_base64'
-      )
 
       const conn = new Client()
       conn
