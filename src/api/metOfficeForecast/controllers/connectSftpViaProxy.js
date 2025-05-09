@@ -9,7 +9,7 @@ import { createLogger } from '~/src/helpers/logging/logger.js'
 // import tunnel from 'tunnel'
 import { URL } from 'url'
 import http from 'http'
-
+import https from 'https'
 const logger = createLogger()
 /**
  * Creates an SFTP client via CDP proxy and returns a connected SFTP instance.
@@ -58,7 +58,8 @@ const logger = createLogger()
 export async function connectSftpThroughProxy() {
   const proxyUrl = new URL(config.get('httpsProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
   const proxyHost = proxyUrl.hostname
-  const proxyPort = parseInt(proxyUrl.port || '443')
+  const proxyPort = proxyUrl.port || (proxyUrl.protocol === 'https:' ? 443 : 80)
+  logger.info(`port::: ${proxyPort}`)
   const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
   const sftpPort = 22
 
@@ -81,10 +82,14 @@ export async function connectSftpThroughProxy() {
   // )
   const privateKeyBase64 = config.get('sftpPrivateKey')
   const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
+
+  const proxyModule = proxyUrl.protocol.startsWith('https') ? https : http
+  logger.info(`proxyModule::: ${JSON.stringify(proxyModule)}`)
+
   return new Promise((resolve, reject) => {
     logger.info(`inside Promise`)
     logger.info(`privateKey:: ${privateKey}`)
-    const req = http.request(proxyOptions)
+    const req = proxyModule.request(proxyOptions)
     logger.info(`REQUEST:: ${JSON.stringify(req)}`)
     req.on('connect', (res, socket) => {
       logger.info(`SOCKET:: ${socket}`)
