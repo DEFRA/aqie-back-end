@@ -74,7 +74,8 @@ export async function connectSftpThroughProxy() {
     path: `${sftpHost}:${sftpPort}`,
     headers: {
       Host: `${sftpHost}:${sftpPort}`
-    }
+    },
+    rejectUnauthorized: false // Disable certificate validation
   }
 
   // const privateKey = fs.readFileSync(
@@ -92,8 +93,8 @@ export async function connectSftpThroughProxy() {
     const req = proxyModule.request(proxyOptions)
     logger.info(`REQUEST:: ${JSON.stringify(req)}`)
     req.on('connect', (res, socket) => {
-      logger.info(`SOCKET:: ${socket}`)
-      logger.info(`RESPONSE:: ${res}`)
+      logger.info(`SOCKET:: ${JSON.stringify(socket)}`)
+      logger.info(`RESPONSE:: ${JSON.stringify(res)}`)
       if (res.statusCode !== 200) {
         return reject(new Error(`Proxy CONNECT failed: ${res.statusCode}`))
       }
