@@ -56,9 +56,9 @@ const logger = createLogger()
 // }
 
 export async function connectSftpThroughProxy() {
-  const proxyUrl = new URL(config.get('httpProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
+  const proxyUrl = new URL(config.get('httpsProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
   const proxyHost = proxyUrl.hostname
-  const proxyPort = parseInt(proxyUrl.port || '80')
+  const proxyPort = parseInt(proxyUrl.port || '443')
   const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
   const sftpPort = 22
 
