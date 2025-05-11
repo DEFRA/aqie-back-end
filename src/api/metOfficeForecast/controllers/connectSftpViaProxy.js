@@ -75,12 +75,11 @@ export async function connectSftpThroughProxy() {
     headers: {
       Host: `${sftpHost}:${sftpPort}`
     },
-    rejectUnauthorized: false // Disable certificate validation
+    // rejectUnauthorized: false // Disable certificate validation
+    servername: proxyHost // this ensures the TLS cert matches the expected domain
   }
 
-  // const privateKey = fs.readFileSync(
-  //   'C:/Users/486272/.ssh/met_office_rsa_v1'
-  // )
+  // const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1')
   const privateKeyBase64 = config.get('sftpPrivateKey')
   const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
 
