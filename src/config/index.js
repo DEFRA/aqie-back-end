@@ -103,6 +103,25 @@ const config = convict({
     default: '0 */1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
   },
+  alertNotifucationUrl: {
+    doc: 'URL to the Notify API service',
+    format: String,
+    default: 'https://api.notifications.service.gov.uk',
+    env: 'NOTIFY_BASE_URL'
+  },
+  squidProxyUsername: {
+    doc: 'Squid Proxy username',
+    format: String,
+    default: '',
+    env: 'SQUID_USERNAME'
+  },
+  squidProxyPassword: {
+    doc: 'Squid Proxy password',
+    format: '*',
+    default: '',
+    sensitive: true,
+    env: 'SQUID_PASSWORD'
+  },
   allowOriginUrl: {
     doc: 'URL to Access-Control-Allow-Origin',
     format: String,
