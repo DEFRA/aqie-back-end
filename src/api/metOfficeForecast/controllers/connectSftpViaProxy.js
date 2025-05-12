@@ -67,20 +67,27 @@ export async function connectSftpThroughProxy() {
     `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxyurl ${proxyUrl} ${proxyHost}:${proxyPort}`
   )
 
+  const proxyUsername = config.get('squidProxyUsername')
+  const proxyPassword = config.get('squidProxyPassword')
+
+  const proxyAuthHeader =
+    'Basic ' +
+    Buffer.from(`${proxyUsername}:${proxyPassword}`).toString('base64')
+  logger.info(`PROXY AUTH: ${proxyAuthHeader}`)
   const proxyOptions = {
     host: proxyHost,
     port: proxyPort,
     method: 'CONNECT',
     path: `${sftpHost}:${sftpPort}`,
     headers: {
-      Host: `${sftpHost}:${sftpPort}`
+      Host: `${sftpHost}:${sftpPort}`,
+      'Proxy-Authorization': proxyAuthHeader
     },
     rejectUnauthorized: false // Disable certificate validation
+    // servername: proxyHost // this ensures the TLS cert matches the expected domain
   }
 
-  // const privateKey = fs.readFileSync(
-  //   'C:/Users/486272/.ssh/met_office_rsa_v1'
-  // )
+  // const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1')
   const privateKeyBase64 = config.get('sftpPrivateKey')
   const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
 
