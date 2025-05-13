@@ -56,9 +56,10 @@ const logger = createLogger()
 // }
 
 export async function connectSftpThroughProxy() {
-  const proxyUrl = new URL(config.get('httpsProxy')) // http://proxy.dev.cdp-int.defra.cloud:80
+  const proxyUrl = new URL(config.get('httpProxyNew')) // http://proxy.dev.cdp-int.defra.cloud:80
   const proxyHost = proxyUrl.hostname
-  const proxyPort = proxyUrl.port || (proxyUrl.protocol === 'https:' ? 443 : 80)
+  const proxyPort =
+    proxyUrl.port || (proxyUrl.protocol === 'https:' ? 3128 : 3128)
   logger.info(`port::: ${proxyPort}`)
   const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
   const sftpPort = 22
@@ -80,8 +81,8 @@ export async function connectSftpThroughProxy() {
     method: 'CONNECT',
     path: `${sftpHost}:${sftpPort}`,
     headers: {
-      Host: `${sftpHost}:${sftpPort}`,
-      'Proxy-Authorization': proxyAuthHeader
+      Host: `${sftpHost}:${sftpPort}`
+      // 'Proxy-Authorization': proxyAuthHeader
     },
     rejectUnauthorized: false // Disable certificate validation
     // servername: proxyHost // this ensures the TLS cert matches the expected domain
@@ -103,7 +104,9 @@ export async function connectSftpThroughProxy() {
       logger.info(`SOCKET:: ${JSON.stringify(socket)}`)
       logger.info(`RESPONSE:: ${JSON.stringify(res)}`)
       if (res.statusCode !== 200) {
-        return reject(new Error(`Proxy CONNECT failed: ${res.statusCode}`))
+        return reject(
+          new Error(`Proxy CONNECT failed: ${res} : ${res.statusCode}`)
+        )
       }
 
       logger.info('[Proxy Debug] Tunnel established — starting SSH connection')
@@ -128,7 +131,7 @@ export async function connectSftpThroughProxy() {
     })
     req.on('error', (err) => {
       logger.error(
-        `Failed to create socket or establish SFTP connection: ${err}`
+        `Failed to create socket or establish SFTP connection: ${JSON.stringify(err)}`
       )
       reject(err)
     })
