@@ -71,6 +71,20 @@ const config = convict({
     default: 'https://proxy.dev.cdp-int.defra.cloud:443',
     env: 'CDP_HTTPS_PROXY'
   },
+  httpProxyNew: {
+    doc: 'HTTP Proxy',
+    format: String,
+    nullable: true,
+    default: 'http://localhost:3128',
+    env: 'HTTP_PROXY'
+  },
+  httpsProxyNew: {
+    doc: 'HTTPS Proxy',
+    format: String,
+    nullable: true,
+    default: 'https://localhost:3128',
+    env: 'HTTPS_PROXY'
+  },
   forecastUrl: {
     doc: 'URL to the forecast data service',
     format: String,
