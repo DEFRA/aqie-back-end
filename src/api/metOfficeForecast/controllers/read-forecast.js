@@ -8,19 +8,6 @@ const logger = createLogger()
 const metOfficeForecastReadController = {
   handler: async (request, h) => {
     const allowOriginUrl = config.get('allowOriginUrl')
-    // const sftp = new SFTPClient()
-    // const privateKeyBase64 = config.get('sftpPrivateKey')
-    // // Decode the private key
-    // const decodedPrivateKey = Buffer.from(privateKeyBase64, 'base64').toString(
-    //   'utf-8'
-    // )
-    // const configuration = {
-    //   host: 'sftp22.sftp-defra-gov-uk.quatrix.it',
-    //   port: 22,
-    //   username: 'q2031671',
-    //   privateKey: decodedPrivateKey
-    // }
-
     const { filename } = request.params
     logger.info(`filename:: ${filename}`)
     const remoteDir = '/Incoming Shares/AQIE/MetOffice/'
@@ -29,14 +16,22 @@ const metOfficeForecastReadController = {
       logger.info('Before Connection')
       const { sftp, conn } = await connectSftpThroughProxy()
       logger.info('After Connection')
-      const fileList = await sftp.list(remoteDir)
+
+      // List files in the remote directory
+      const fileList = await new Promise((resolve, reject) => {
+        sftp.readdir(remoteDir, (err, list) => {
+          if (err) return reject(err)
+          resolve(list)
+        })
+      })
       logger.info(
         'Files in directory:',
-        fileList.map((f) => f.name)
+        fileList.map((f) => f.filename)
       )
+
       // Filter file by exact name
-      const match = fileList.find((files) => files.name === filename)
-      logger.info('Match found:', match)
+      const match = fileList.find((file) => file.filename === filename)
+      logger.info(`'Match found:', match`)
 
       if (!match) {
         await conn.end()
@@ -47,8 +42,14 @@ const metOfficeForecastReadController = {
           })
           .code(404)
       }
-      // If found, get the file content Download file content into buffer
-      const fileBuffer = await sftp.get(`${remoteDir}${filename}`)
+
+      // If found, get the file content and download it into a buffer
+      const fileBuffer = await new Promise((resolve, reject) => {
+        sftp.readFile(`${remoteDir}${filename}`, (err, buffer) => {
+          if (err) return reject(err)
+          resolve(buffer)
+        })
+      })
       await conn.end()
 
       return h
@@ -57,7 +58,9 @@ const metOfficeForecastReadController = {
         .code(200)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (error) {
-      logger.error('Error reading file:', error)
+      logger.error(`Error Message listing file: ${error.message}`)
+      logger.error(`'Error listing file:' ${error}`)
+      logger.error(`'JSON Error listing file:' ${JSON.stringify(error)}`)
       return h.response({ success: false, error: error.message }).code(500)
     }
   }
