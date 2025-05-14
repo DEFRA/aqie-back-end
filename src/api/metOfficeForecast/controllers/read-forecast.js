@@ -27,7 +27,7 @@ const metOfficeForecastReadController = {
 
     try {
       logger.info('Before Connection')
-      const sftp = await connectSftpThroughProxy()
+      const { sftp, conn } = await connectSftpThroughProxy()
       logger.info('After Connection')
       const fileList = await sftp.list(remoteDir)
       logger.info(
@@ -39,7 +39,7 @@ const metOfficeForecastReadController = {
       logger.info('Match found:', match)
 
       if (!match) {
-        await sftp.end()
+        await conn.end()
         return h
           .response({
             success: false,
@@ -49,7 +49,7 @@ const metOfficeForecastReadController = {
       }
       // If found, get the file content Download file content into buffer
       const fileBuffer = await sftp.get(`${remoteDir}${filename}`)
-      await sftp.end()
+      await conn.end()
 
       return h
         .response(fileBuffer.toString())
