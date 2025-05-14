@@ -2,6 +2,10 @@ import { forecasts, historicalForecasts } from '~/src/api/forecast'
 import { measurements, historicalMeasurements } from '~/src/api/pollutants'
 import { health } from '~/src/api/health'
 import { config } from '~/src/config'
+import {
+  metOfficeForecastRead,
+  metOfficeForecastList
+} from '~/src/api/metOfficeForecast'
 
 const allowOriginUrl = config.get('allowOriginUrl')
 const router = {
@@ -13,7 +17,9 @@ const router = {
         historicalForecasts,
         measurements,
         historicalMeasurements,
-        health
+        health,
+        metOfficeForecastRead,
+        metOfficeForecastList
       ])
     }
   },

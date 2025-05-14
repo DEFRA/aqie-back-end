@@ -61,15 +61,29 @@ const config = convict({
     doc: 'HTTP Proxy',
     format: String,
     nullable: true,
-    default: null,
+    default: 'http://proxy.dev.cdp-int.defra.cloud:80',
     env: 'CDP_HTTP_PROXY'
   },
   httpsProxy: {
     doc: 'HTTPS Proxy',
     format: String,
     nullable: true,
-    default: null,
+    default: 'https://proxy.dev.cdp-int.defra.cloud:443',
     env: 'CDP_HTTPS_PROXY'
+  },
+  httpProxyNew: {
+    doc: 'HTTP Proxy',
+    format: String,
+    nullable: true,
+    default: 'http://localhost:3128',
+    env: 'HTTP_PROXY'
+  },
+  httpsProxyNew: {
+    doc: 'HTTPS Proxy',
+    format: String,
+    nullable: true,
+    default: 'https://localhost:3128',
+    env: 'HTTPS_PROXY'
   },
   forecastUrl: {
     doc: 'URL to the forecast data service',
@@ -102,6 +116,25 @@ const config = convict({
     format: String, // TODO: maybe custom validate this
     default: '0 */1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
+  },
+  alertNotifucationUrl: {
+    doc: 'URL to the Notify API service',
+    format: String,
+    default: 'https://api.notifications.service.gov.uk',
+    env: 'NOTIFY_BASE_URL'
+  },
+  squidProxyUsername: {
+    doc: 'Squid Proxy username',
+    format: String,
+    default: '',
+    env: 'SQUID_USERNAME'
+  },
+  squidProxyPassword: {
+    doc: 'Squid Proxy password',
+    format: '*',
+    default: '',
+    sensitive: true,
+    env: 'SQUID_PASSWORD'
   },
   allowOriginUrl: {
     doc: 'URL to Access-Control-Allow-Origin',

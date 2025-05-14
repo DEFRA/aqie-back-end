@@ -39,9 +39,10 @@
     "awaity": "1.0.0",
     "aws4": "1.12.0",
     "babel-plugin-module-resolver": "5.0.0",
+    "buffer": "6.0.3",
     "convict": "6.2.4",
+    "dayjs": "1.11.13",
     "fast-xml-parser": "4.5.0",
-    "geolib": "3.3.4",
     "hapi-pino": "12.1.0",
     "https-proxy-agent": "7.0.4",
     "joi": "17.12.3",
@@ -53,7 +54,12 @@
     "node-fetch": "^2.7.0",
     "pino": "8.20.0",
     "save-dev": "0.0.1-security",
-    "undici": "6.12.0"
+    "ssh2": "1.16.0",
+    "ssh2-sftp-client": "12.0.0",
+    "tunnel": "0.0.6",
+    "undici": "6.12.0",
+    "url": "0.11.4",
+    "xml2js": "0.6.2"
   },
   "devDependencies": {
     "@babel/cli": "7.24.1",
