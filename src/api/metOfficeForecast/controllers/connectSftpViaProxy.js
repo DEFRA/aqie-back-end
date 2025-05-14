@@ -105,7 +105,9 @@ export async function connectSftpThroughProxy() {
       logger.info(`RESPONSE:: ${JSON.stringify(res)}`)
       if (res.statusCode !== 200) {
         return reject(
-          new Error(`Proxy CONNECT failed: ${res} : ${res.statusCode}`)
+          new Error(
+            `Proxy CONNECT failed: ${JSON.stringify(res)} : ${res.statusCode}`
+          )
         )
       }
 
@@ -115,10 +117,18 @@ export async function connectSftpThroughProxy() {
       conn
         .on('ready', () => {
           logger.info('SFTP connection established successfully via proxy')
-          resolve({ sftp: conn.sftp(), conn })
+          conn.sftp((err, sftp) => {
+            if (err) {
+              logger.error(`Failed to initialize SFTP: ${JSON.stringify(err)}`)
+              return reject(err)
+            }
+            resolve({ sftp, conn })
+          })
         })
         .on('error', (err) => {
-          logger.error(`Failed to establish SFTP connection: ${err}`)
+          logger.error(
+            `Failed to establish SFTP connection: ${JSON.stringify(err)}`
+          )
           reject(err)
         })
         .connect({
