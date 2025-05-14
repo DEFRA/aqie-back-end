@@ -40,7 +40,7 @@ const metOfficeForecastListController = {
         })
       })
 
-      conn.end()
+      await conn.end()
 
       return h
         .response({
