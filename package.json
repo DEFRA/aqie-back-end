@@ -43,6 +43,7 @@
     "convict": "6.2.4",
     "dayjs": "1.11.13",
     "fast-xml-parser": "4.5.0",
+    "geolib": "3.3.4",
     "hapi-pino": "12.1.0",
     "https-proxy-agent": "7.0.4",
     "joi": "17.12.3",

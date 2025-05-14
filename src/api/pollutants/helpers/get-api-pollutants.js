@@ -41,6 +41,7 @@ async function getAPIPollutants(region, currentTime) {
       pollutants: { ...newObj }
     }
   })
+
   const split = obj.reduce((all, one, i) => {
     const ch = Math.floor(i % region.split) // again from data
     all[ch] = [].concat(all[ch] || [], one)
