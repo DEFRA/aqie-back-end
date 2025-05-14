@@ -61,20 +61,20 @@ export async function connectSftpThroughProxy() {
   const proxyPort =
     proxyUrl.port || (proxyUrl.protocol === 'https:' ? 3128 : 3128)
   logger.info(`port::: ${proxyPort}`)
-  const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
+  const sftpHost = 'sftp22.sftp-defra-gov-uk.quatrix.it'
   const sftpPort = 22
 
   logger.info(
     `[Proxy Debug] CONNECTING to ${sftpHost}:${sftpPort} via proxyurl ${proxyUrl} ${proxyHost}:${proxyPort}`
   )
 
-  const proxyUsername = config.get('squidProxyUsername')
-  const proxyPassword = config.get('squidProxyPassword')
+  // const proxyUsername = config.get('squidProxyUsername')
+  // const proxyPassword = config.get('squidProxyPassword')
 
-  const proxyAuthHeader =
-    'Basic ' +
-    Buffer.from(`${proxyUsername}:${proxyPassword}`).toString('base64')
-  logger.info(`PROXY AUTH: ${proxyAuthHeader}`)
+  // const proxyAuthHeader =
+  //   'Basic ' +
+  //   Buffer.from(`${proxyUsername}:${proxyPassword}`).toString('base64')
+  // logger.info(`PROXY AUTH: ${proxyAuthHeader}`)
   const proxyOptions = {
     host: proxyHost,
     port: proxyPort,
