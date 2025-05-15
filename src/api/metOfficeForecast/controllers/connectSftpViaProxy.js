@@ -83,8 +83,8 @@ export async function connectSftpThroughProxy() {
     headers: {
       Host: `${sftpHost}:${sftpPort}`
       // 'Proxy-Authorization': proxyAuthHeader
-    },
-    rejectUnauthorized: false // Disable certificate validation
+    }
+    // rejectUnauthorized: false // Disable certificate validation
     // servername: proxyHost // this ensures the TLS cert matches the expected domain
   }
 
