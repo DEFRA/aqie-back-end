@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { config } from '~/src/config'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-import { connectSftpThroughProxy } from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxy.js'
+import { connectSftpThroughProxy } from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxyAgent.js'
 
 const logger = createLogger()
 
@@ -14,7 +14,7 @@ const metOfficeForecastReadController = {
 
     try {
       logger.info('Before Connection')
-      const { sftp, conn } = await connectSftpThroughProxy()
+      const { sftp, conn } = await connectSftpViaProxyAgent()
       logger.info('After Connection')
 
       // List files in the remote directory
