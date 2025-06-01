@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { config } from '~/src/config'
 import { createLogger } from '~/src/helpers/logging/logger.js'
-import { connectSftpThroughProxy } from '~/src/api/metOfficeForecast/controllers/connectSftpViaProxyAgent.js'
+import { connectSftpViaProxyAgent } from '~/src/api/metOfficeForecast/controllers/connectSftpviaProxyAgent.js'
 
 const logger = createLogger()
 
