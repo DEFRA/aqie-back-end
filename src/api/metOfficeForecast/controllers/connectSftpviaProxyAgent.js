@@ -11,7 +11,7 @@ export async function connectSftpViaProxyAgent() {
   const sftp = new SFTPClient()
   const proxyUrl = config.get('httpProxy')
 
-  const sftpHost = 'sftp22.sftp-server-gov-uk.quatrix.it'
+  const sftpHost = 'sftp22.sftp-defra-gov-uk.quatrix.it'
   const sftpPort = 22
 
   if (!proxyUrl) {
