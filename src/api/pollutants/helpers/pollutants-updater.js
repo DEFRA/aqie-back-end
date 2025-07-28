@@ -1,13 +1,14 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable camelcase */
-import { proxyFetch } from '~/src/helpers/proxy-fetch'
+import { proxyFetch } from '../../../helpers/proxy-fetch.js'
 import reduce from 'await-reduce'
-import { config } from '~/src/config'
+import { config } from '../../../config/index.js'
 import { XMLParser } from 'fast-xml-parser'
 import moment from 'moment-timezone'
-
-import { createLogger } from '~/src/helpers/logging/logger'
-import { getDateMeasured, getTempDate, getValueMeasured } from './body-parser'
+import { createLogger } from '../../../helpers/logging/logger.js'
+import {
+  getDateMeasured,
+  getTempDate,
+  getValueMeasured
+} from './body-parser.js'
 
 process.setMaxListeners(500)
 const logger = createLogger()
@@ -42,7 +43,6 @@ export async function pollutantUpdater(data) {
   data.forEach((site, index) => {
     try {
       const { pollutants } = site
-      // eslint-disable-next-line prefer-const
       Object.entries(pollutants).forEach(([k, v], i) => {
         logger.info(
           `pollutants url with timestamps... ${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`
@@ -84,7 +84,6 @@ export async function pollutantUpdater(data) {
       try {
         const { pollutants } = site
         let measuredIndex = 0
-        // eslint-disable-next-line prefer-const
         Object.entries(pollutants).forEach(([k, v], i) => {
           pollutants[k].value =
             res[measuredIndex]?.value &&

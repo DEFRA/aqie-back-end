@@ -1,8 +1,8 @@
-import { proxyFetch } from '~/src/helpers/proxy-fetch'
+import { proxyFetch } from '../../../helpers/proxy-fetch.js'
 import SFTPClient from 'ssh2-sftp-client'
-import { config } from '~/src/config'
+import { config } from '../../../config/index.js'
 import { Buffer } from 'buffer'
-import { createLogger } from '~/src/helpers/logging/logger.js'
+import { createLogger } from '../../../helpers/logging/logger.js'
 // import { URL } from 'url'
 // import fs from 'fs';
 const logger = createLogger()

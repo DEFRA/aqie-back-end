@@ -1,5 +1,5 @@
-import { createLogger } from '~/src/helpers/logging/logger'
-import { populateApi } from '~/src/api/forecast/db/populate-api'
+import { createLogger } from '../../../helpers/logging/logger.js'
+import { populateApi } from './populate-api.js'
 
 const logger = createLogger()
 

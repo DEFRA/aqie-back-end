@@ -1,6 +1,5 @@
-/* eslint-disable prettier/prettier */
-import { getPollutants } from '~/src/api/pollutants/helpers/get-pollutants'
-import { config } from '~/src/config'
+import { getPollutants } from '../helpers/get-pollutants.js'
+import { config } from '../../../config/index.js'
 
 const pollutantsController = {
   handler: async (request, h) => {

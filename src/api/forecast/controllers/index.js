@@ -1,3 +1,3 @@
-import { forecastsController } from '~/src/api/forecast/controllers/forecasts'
-import { historicalForecastsController } from '~/src/api/forecast/controllers/forecasts-historical'
+import { forecastsController } from './forecasts.js'
+import { historicalForecastsController } from './forecasts-historical.js'
 export { forecastsController, historicalForecastsController }

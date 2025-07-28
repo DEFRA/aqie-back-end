@@ -1,6 +1,6 @@
-import { config } from '~/src/config'
-import { createServer } from '~/src/api/server'
-import { createLogger } from '~/src/helpers/logging/logger'
+import { config } from './config/index.js'
+import { createServer } from './api/server.js'
+import { createLogger } from './helpers/logging/logger.js'
 
 const logger = createLogger()
 

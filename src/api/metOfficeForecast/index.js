@@ -1,7 +1,7 @@
 import {
   metOfficeForecastReadController,
   metOfficeForecastListController
-} from '~/src/api/metOfficeForecast/controllers'
+} from './controllers/index.js'
 
 const metOfficeForecastRead = {
   plugin: {

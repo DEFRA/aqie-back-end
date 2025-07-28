@@ -1,5 +1,5 @@
-import { createLogger } from '~/src/helpers/logging/logger'
-import { fetchEntities } from '~/src/helpers/db/fetch-entities'
+import { createLogger } from '../logging/logger.js'
+import { fetchEntities } from './fetch-entities.js'
 
 const logger = createLogger()
 

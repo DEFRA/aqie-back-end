@@ -1,8 +1,7 @@
-/* eslint-disable prettier/prettier */
 import {
   pollutantsController,
   historicalPollutantsController
-} from '~/src/api/pollutants/controllers'
+} from './controllers/index.js'
 
 const measurements = {
   plugin: {

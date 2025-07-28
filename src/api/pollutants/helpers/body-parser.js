@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 function getValueMeasured(data) {
   const value = data?.['gml:FeatureCollection']?.['gml:featureMember']?.[1]?.[
     'om:OM_Observation'

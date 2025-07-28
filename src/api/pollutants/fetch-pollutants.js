@@ -1,8 +1,5 @@
-/* eslint-disable camelcase */
-/* eslint-disable no-console */
-/* eslint-disable prettier/prettier */
-import { createLogger } from '~/src/helpers/logging/logger'
-import { getAPIPollutants } from './helpers/get-api-pollutants'
+import { createLogger } from '../../helpers/logging/logger.js'
+import { getAPIPollutants } from './helpers/get-api-pollutants.js'
 import moment from 'moment-timezone'
 
 process.setMaxListeners(500)

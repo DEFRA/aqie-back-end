@@ -1,5 +1,4 @@
-/* eslint-disable prettier/prettier */
-import { getForecastsHistorical } from '~/src/api/forecast/helpers/get-forecasts-historical'
+import { getForecastsHistorical } from '../helpers/get-forecasts-historical.js'
 
 const historicalForecastsController = {
   handler: async (request, h) => {

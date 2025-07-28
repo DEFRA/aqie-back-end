@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 
-import { config } from '~/src/config'
+import { config } from '../config/index.js'
 
 const mongoPlugin = {
   name: 'mongodb',

@@ -1,8 +1,8 @@
-import { proxyFetch } from '~/src/helpers/proxy-fetch'
+import { proxyFetch } from '../../helpers/proxy-fetch.js'
 import { XMLParser } from 'fast-xml-parser'
-import { createLogger } from '~/src/helpers/logging/logger'
-import { config } from '~/src/config'
-import { parseForecast } from '~/src/api/forecast/parse-forecast'
+import { createLogger } from '../../helpers/logging/logger.js'
+import { config } from '../../config/index.js'
+import { parseForecast } from './parse-forecast.js'
 
 const logger = createLogger()
 
