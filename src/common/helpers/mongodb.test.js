@@ -1,3 +1,6 @@
+import { Db, MongoClient } from 'mongodb'
+import { LockManager } from 'mongo-locks'
+
 // Suppress unhandled MongoDB shutdown errors in Vitest
 process.on('unhandledRejection', (reason) => {
   if (
@@ -11,8 +14,6 @@ process.on('unhandledRejection', (reason) => {
   // Otherwise, throw so Vitest can report
   throw reason
 })
-import { Db, MongoClient } from 'mongodb'
-import { LockManager } from 'mongo-locks'
 
 describe('#mongoDb', () => {
   let server
@@ -62,7 +63,7 @@ describe('#mongoDb', () => {
       try {
         await server.stop({ timeout: 0 })
         // Wait for the event loop to process the 'stop' event handler
-        await new Promise(r => setTimeout(r, 0))
+        await new Promise((resolve) => setTimeout(resolve, 0))
       } catch (err) {
         // Ignore Mongo shutdown errors
         if (!/interrupted at shutdown/.test(err?.message)) throw err

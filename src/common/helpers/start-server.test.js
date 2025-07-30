@@ -1,3 +1,5 @@
+import hapi from '@hapi/hapi'
+
 // Suppress unhandled MongoDB shutdown errors in Vitest
 process.on('unhandledRejection', (reason) => {
   if (
@@ -11,7 +13,6 @@ process.on('unhandledRejection', (reason) => {
   // Otherwise, throw so Vitest can report
   throw reason
 })
-import hapi from '@hapi/hapi'
 
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
