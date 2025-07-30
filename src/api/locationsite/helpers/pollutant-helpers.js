@@ -51,13 +51,30 @@ function buildPollutantData(found) {
     ? new Date(found.startDateTime).toISOString().slice(0, 10)
     : undefined
   const unit = getPollutantUnit(found.unit)
+  // Dynamically extract hour, day, month, year from endDateTime
+  let hour, day, month, year
+  if (found.endDateTime) {
+    const dateObj = new Date(found.endDateTime)
+    let hours = dateObj.getHours()
+    const ampm = hours >= 12 ? 'pm' : 'am'
+    hours = hours % 12
+    hours = hours === 0 ? 12 : hours
+    hour = `${hours}${ampm}`
+    day = `${dateObj.getDate()}`
+    month = dateObj.toLocaleString('en-GB', { month: 'long' })
+    year = `${dateObj.getFullYear()}`
+  }
   return {
     value: found.value,
     unit,
     startDate: ymdStartDate,
     endDate: isoEndDate,
     time: {
-      date: isoEndDate
+      date: isoEndDate,
+      hour,
+      day,
+      month,
+      year
     }
   }
 }

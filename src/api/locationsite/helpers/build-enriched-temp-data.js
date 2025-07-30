@@ -43,7 +43,8 @@ async function buildEnrichedTempData({
       location: {
         type: 'Point',
         coordinates: [item.latitude, item.longitude]
-      }
+      },
+      distance: item.distanceFromPoint
     }))
   }
   logger.info(`tempData: ${JSON.stringify(tempData)}`)
