@@ -32,14 +32,14 @@ function buildRicardoQueryParams(requestQuery) {
 async function fetchRicardoDataAll({
   ricardoApiAllDataUrl,
   optionsOAuthRicardo,
-  requestQuery
+  requestQuery,
+  catchProxyFetchError
 }) {
   const paramsValues = buildRicardoQueryParams(requestQuery)
 
-  // catchProxyFetchError must be passed in from the caller's scope
-  if (typeof global.catchProxyFetchError !== 'function') {
+  if (typeof catchProxyFetchError !== 'function') {
     throw new Error(
-      'catchProxyFetchError must be set globally or passed in context'
+      'catchProxyFetchError must be provided as a function dependency'
     )
   }
   // Add '?' if paramsValues is not empty and ricardoApiAllDataUrl does not already end with '?'
@@ -55,7 +55,7 @@ async function fetchRicardoDataAll({
   }
   let dataAll
   try {
-    ;[, dataAll] = await global.catchProxyFetchError(url, optionsOAuthRicardo)
+    ;[, dataAll] = await catchProxyFetchError(url, optionsOAuthRicardo)
   } catch (err) {
     // Log the error for debugging purposes
     console.error('Error fetching Ricardo data:', err)

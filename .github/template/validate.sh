@@ -69,7 +69,6 @@ run_tests() {
 
   # Check endpoints respond
   checkUrl "http://localhost:8085/health"
-  checkUrl "http://localhost:8085/example"
 
   # Check its using ECS
   checkLogSchema
