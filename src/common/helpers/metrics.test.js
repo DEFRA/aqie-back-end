@@ -1,6 +1,6 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { config } from '../../config.js'
+import { config } from '../../config/index.js'
 import { metricsCounter } from './metrics.js'
 
 const mockPutMetric = vi.fn()

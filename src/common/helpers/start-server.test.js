@@ -1,3 +1,16 @@
+// Suppress unhandled MongoDB shutdown errors in Vitest
+process.on('unhandledRejection', (reason) => {
+  if (
+    reason &&
+    reason.codeName === 'InterruptedAtShutdown' &&
+    reason.errmsg === 'interrupted at shutdown'
+  ) {
+    // Suppress this known error
+    return
+  }
+  // Otherwise, throw so Vitest can report
+  throw reason
+})
 import hapi from '@hapi/hapi'
 
 const mockLoggerInfo = vi.fn()
@@ -35,7 +48,7 @@ describe('#startServer', () => {
     process.env = { ...PROCESS_ENV }
     process.env.PORT = '3098' // Set to obscure port to avoid conflicts
 
-    createServerImport = await import('../../server.js')
+    createServerImport = await import('../../api/server.js')
     startServerImport = await import('./start-server.js')
 
     createServerSpy = vi.spyOn(createServerImport, 'createServer')
@@ -60,22 +73,18 @@ describe('#startServer', () => {
       expect(hapiServerSpy).toHaveBeenCalled()
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         1,
-        'Custom secure context is disabled'
+        'Setting up mongodb'
       )
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         2,
-        'Setting up MongoDb'
+        'mongodb connected to aqie-back-end'
       )
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         3,
-        'MongoDb connected to cdp-node-backend-template'
-      )
-      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
-        4,
         'Server started successfully'
       )
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
-        5,
+        4,
         'Access your backend on http://localhost:3098'
       )
     })

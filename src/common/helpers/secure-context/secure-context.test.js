@@ -2,7 +2,7 @@ import hapi from '@hapi/hapi'
 
 import { secureContext } from './index.js'
 import { requestLogger } from '../logging/request-logger.js'
-import { config } from '../../../config.js'
+import { config } from '../../../config/index.js'
 
 const mockAddCACert = vi.fn()
 const mockCreateSecureContext = vi

@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { LockManager } from 'mongo-locks'
 
 import { config } from '../config/index.js'
 
@@ -21,10 +22,14 @@ const mongoPlugin = {
     const db = client.db(databaseName)
     await createIndexes(db)
 
+    // Add locker
+    const locker = new LockManager(db.collection('mongo-locks'))
+
     server.logger.info(`mongodb connected to ${databaseName}`)
 
     server.decorate('server', 'mongoClient', client)
     server.decorate('server', 'db', db)
+    server.decorate('server', 'locker', locker)
     server.decorate('request', 'db', db)
   }
 }
