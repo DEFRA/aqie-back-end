@@ -6,9 +6,11 @@ process.on('unhandledRejection', (reason) => {
   if (
     reason &&
     reason.codeName === 'InterruptedAtShutdown' &&
-    reason.errmsg === 'interrupted at shutdown'
+    (reason.errmsg === 'interrupted at shutdown' ||
+      (typeof reason.errmsg === 'string' &&
+        reason.errmsg.includes('Index build failed')))
   ) {
-    // Suppress this known error
+    // Suppress this known error (including index build failures at shutdown)
     return
   }
   // Otherwise, throw so Vitest can report

@@ -33,13 +33,12 @@ const siteController = {
       }
     }
 
-    // Use the new helper to fetch dataAll
-    // Set catchProxyFetchError globally for the helper
-    global.catchProxyFetchError = catchProxyFetchError
+    // Use the new helper to fetch dataAll, passing catchProxyFetchError explicitly
     const dataAll = await fetchRicardoDataAll({
       ricardoApiAllDataUrl,
       optionsOAuthRicardo,
-      requestQuery: request.query
+      requestQuery: request.query,
+      catchProxyFetchError
     })
 
     // Set requestQuery globally for the helper
