@@ -1,4 +1,4 @@
-import { createLogger } from '~/src/helpers/logging/logger'
+import { createLogger } from '../logging/logger.js'
 const logger = createLogger()
 
 async function lock(db, lockName) {

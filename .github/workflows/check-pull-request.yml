@@ -4,9 +4,9 @@ on:
   pull_request:
     branches:
       - main
+      - minimal
     types:
       - opened
-      - edited
       - reopened
       - synchronize
       - ready_for_review
@@ -16,12 +16,29 @@ jobs:
     name: Run Pull Request Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test code and Create Test Coverage Reports
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
-      - run: npm install
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm test
+      - run: |
+          npm ci
+          npm run format:check
+          npm run lint
+          npm test
+
+      - name: Test Docker Image Build
+        run: |
+          set +e
+          docker build --no-cache --tag aqie-back-end .
+          exit $?
+
+#      - name: SonarCloud Scan
+#        if: github.actor != 'dependabot[bot]'
+#        uses: SonarSource/sonarqube-scan-action@v5.2.0 #  (or check latest version on https://github.com/marketplace/actions/official-sonarqube-scan)
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 async function getPollutants(db) {
   const cursor = db
     .collection('measurements')

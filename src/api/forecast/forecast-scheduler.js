@@ -1,8 +1,8 @@
-import { createLogger } from '~/src/helpers/logging/logger'
+import { createLogger } from '../../helpers/logging/logger.js'
 import { schedule } from 'node-cron'
-import { config } from '~/src/config'
-import { fetchForecast, saveForecasts } from '~/src/api/forecast/fetch-forecast'
-import { lock, unlock } from '~/src/helpers/db/lock'
+import { config } from '../../config/index.js'
+import { fetchForecast, saveForecasts } from './fetch-forecast.js'
+import { lock, unlock } from '../../helpers/db/lock.js'
 
 const logger = createLogger()
 

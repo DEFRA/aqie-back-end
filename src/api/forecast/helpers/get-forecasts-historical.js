@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 async function getForecastsHistorical(db) {
   const cursor = db
     .collection('historicalForecasts')

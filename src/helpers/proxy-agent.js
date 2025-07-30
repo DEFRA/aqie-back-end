@@ -1,4 +1,4 @@
-import { config } from '~/src/config'
+import { config } from '../config/index.js'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import { Url } from 'url'
 

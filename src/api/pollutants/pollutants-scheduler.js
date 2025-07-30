@@ -1,11 +1,8 @@
-import { createLogger } from '~/src/helpers/logging/logger'
+import { createLogger } from '../../helpers/logging/logger.js'
 import { schedule } from 'node-cron'
-import { config } from '~/src/config'
-import {
-  fetchPollutants,
-  savePollutants
-} from '~/src/api/pollutants/fetch-pollutants'
-import { lock, unlock } from '~/src/helpers/db/lock'
+import { config } from '../../config/index.js'
+import { fetchPollutants, savePollutants } from './fetch-pollutants.js'
+import { lock, unlock } from '../../helpers/db/lock.js'
 const logger = createLogger()
 
 // Populate the DB in this template on startup of the API.

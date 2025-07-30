@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
-import { pollutantsController } from '~/src/api/pollutants/controllers/pollutants'
-import { historicalPollutantsController } from '~/src/api/pollutants/controllers/pollutants-historical'
+import { pollutantsController } from './pollutants.js'
+import { historicalPollutantsController } from './pollutants-historical.js'
 export { pollutantsController, historicalPollutantsController }

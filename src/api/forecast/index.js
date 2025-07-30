@@ -1,7 +1,7 @@
 import {
   forecastsController,
   historicalForecastsController
-} from '~/src/api/forecast/controllers'
+} from './controllers/index.js'
 
 const forecasts = {
   plugin: {

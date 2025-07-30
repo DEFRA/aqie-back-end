@@ -1,8 +1,6 @@
-/* eslint-disable prettier/prettier */
-import { proxyFetch } from '~/src/helpers/proxy-fetch'
-
-import { pollutantUpdater } from '~/src/api/pollutants/helpers/pollutants-updater'
-import { config } from '~/src/config'
+import { proxyFetch } from '../../../helpers/proxy-fetch.js'
+import { pollutantUpdater } from './pollutants-updater.js'
+import { config } from '../../../config/index.js'
 
 const url = config.get('pollutantstUrl')
 

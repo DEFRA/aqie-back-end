@@ -1,7 +1,28 @@
 import convict from 'convict'
-import path from 'path'
+import convictFormatWithValidator from 'convict-format-with-validator'
+
+import { convictValidateMongoUri } from '../common/helpers/convict/validate-mongo-uri.js'
+
+convict.addFormat(convictValidateMongoUri)
+convict.addFormats(convictFormatWithValidator)
+
+const isProduction = process.env.NODE_ENV === 'production'
+const isTest = process.env.NODE_ENV === 'test'
 
 const config = convict({
+  serviceVersion: {
+    doc: 'The service version, this variable is injected into your docker container in CDP environments',
+    format: String,
+    nullable: true,
+    default: null,
+    env: 'SERVICE_VERSION'
+  },
+  host: {
+    doc: 'The IP address to bind',
+    format: 'ipaddress',
+    default: '0.0.0.0',
+    env: 'HOST'
+  },
   env: {
     doc: 'The application environment.',
     format: ['production', 'development', 'test'],
@@ -19,10 +40,47 @@ const config = convict({
     format: String,
     default: 'aqie-back-end'
   },
-  root: {
-    doc: 'Project root',
-    format: String,
-    default: path.normalize(path.join(__dirname, '..', '..'))
+  cdpEnvironment: {
+    doc: 'The CDP environment the app is running in. With the addition of "local" for local development',
+    format: [
+      'local',
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod'
+    ],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
+  log: {
+    isEnabled: {
+      doc: 'Is logging enabled',
+      format: Boolean,
+      default: !isTest,
+      env: 'LOG_ENABLED'
+    },
+    level: {
+      doc: 'Logging level',
+      format: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'],
+      default: 'info',
+      env: 'LOG_LEVEL'
+    },
+    format: {
+      doc: 'Format to output logs in',
+      format: ['ecs', 'pino-pretty'],
+      default: isProduction ? 'ecs' : 'pino-pretty',
+      env: 'LOG_FORMAT'
+    },
+    redact: {
+      doc: 'Log paths to redact',
+      format: Array,
+      default: isProduction
+        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
+        : ['req', 'res', 'responseTime']
+    }
   },
   isProduction: {
     doc: 'If this application running in the production environment',
@@ -57,33 +115,78 @@ const config = convict({
     default: 'aqie-back-end',
     env: 'MONGO_DATABASE'
   },
+  mongo: {
+    mongoUrl: {
+      doc: 'URI for mongodb',
+      format: String,
+      default: 'mongodb://127.0.0.1:27017/',
+      env: 'MONGO_URI'
+    },
+    databaseName: {
+      doc: 'database for mongodb',
+      format: String,
+      default: 'cdp-node-backend-template',
+      env: 'MONGO_DATABASE'
+    },
+    mongoOptions: {
+      retryWrites: {
+        doc: 'enable mongo write retries',
+        format: Boolean,
+        default: false
+      },
+      readPreference: {
+        doc: 'mongo read preference',
+        format: [
+          'primary',
+          'primaryPreferred',
+          'secondary',
+          'secondaryPreferred',
+          'nearest'
+        ],
+        default: 'secondary'
+      }
+    }
+  },
   httpProxy: {
-    doc: 'HTTP Proxy',
+    doc: 'HTTP Proxy URL',
     format: String,
     nullable: true,
-    default: 'http://proxy.dev.cdp-int.defra.cloud:80',
-    env: 'CDP_HTTP_PROXY'
+    default: null,
+    env: 'HTTP_PROXY'
   },
   httpsProxy: {
     doc: 'HTTPS Proxy',
     format: String,
     nullable: true,
-    default: 'https://proxy.dev.cdp-int.defra.cloud:443',
-    env: 'CDP_HTTPS_PROXY'
+    default: null,
+    env: 'HTTPS_PROXY'
   },
   httpProxyNew: {
     doc: 'HTTP Proxy',
     format: String,
     nullable: true,
-    default: 'http://localhost:3128',
+    default: null,
     env: 'HTTP_PROXY'
   },
-  httpsProxyNew: {
-    doc: 'HTTPS Proxy',
-    format: String,
-    nullable: true,
-    default: 'https://localhost:3128',
-    env: 'HTTPS_PROXY'
+  isSecureContextEnabled: {
+    doc: 'Enable Secure Context',
+    format: Boolean,
+    default: isProduction,
+    env: 'ENABLE_SECURE_CONTEXT'
+  },
+  isMetricsEnabled: {
+    doc: 'Enable metrics reporting',
+    format: Boolean,
+    default: isProduction,
+    env: 'ENABLE_METRICS'
+  },
+  tracing: {
+    header: {
+      doc: 'CDP tracing header name',
+      format: String,
+      default: 'x-cdp-request-id',
+      env: 'TRACING_HEADER'
+    }
   },
   forecastUrl: {
     doc: 'URL to the forecast data service',
@@ -147,6 +250,38 @@ const config = convict({
     format: String, // TODO: maybe custom validate this
     default: '',
     env: 'SSH_PRIVATE_KEY'
+  },
+  ricardoApiLoginUrl: {
+    doc: 'Ricardo API login url',
+    format: String,
+    default: 'https://uk-air-api.staging.rcdo.co.uk/api/login_check',
+    env: 'RICARDO_API_LOGIN_URL'
+  },
+  ricardoApiAllDataUrl: {
+    doc: 'Ricardo API all data url',
+    format: String,
+    default: 'https://uk-air-api.staging.rcdo.co.uk/api/site_meta_datas?',
+    env: 'RICARDO_API_ALL_DATA_URL'
+  },
+  ricardoApiSiteIdUrl: {
+    doc: 'Ricardo API site ID data url',
+    format: String,
+    default:
+      'https://uk-air-api.staging.rcdo.co.uk/api/pollutant_measurement_datas?',
+    env: 'RICARDO_API_SITE_ID_URL'
+  },
+  ricardoApiEmail: {
+    doc: 'Ricardo API email',
+    format: String,
+    default: 'maruthi.chokkanathan@cognizant.com',
+    env: 'RICARDO_API_EMAIL'
+  },
+  ricardoApiPassword: {
+    doc: 'Ricardo API password',
+    format: '*',
+    sensitive: true,
+    default: 'Mr5e7TFseqzD8Mt#',
+    env: 'RICARDO_API_PASSWORD'
   }
 })
 

@@ -1,5 +1,4 @@
-/* eslint-disable prettier/prettier */
-import { getPollutantsHistorical } from '~/src/api/pollutants/helpers/get-pollutants-historical'
+import { getPollutantsHistorical } from '../helpers/get-pollutants-historical.js'
 
 const historicalPollutantsController = {
   handler: async (request, h) => {

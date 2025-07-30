@@ -1,3 +1,3 @@
-import { metOfficeForecastReadController } from '~/src/api/metOfficeForecast/controllers/read-forecast'
-import { metOfficeForecastListController } from '~/src/api/metOfficeForecast/controllers/list-forecast'
+import { metOfficeForecastReadController } from './read-forecast.js'
+import { metOfficeForecastListController } from './list-forecast.js'
 export { metOfficeForecastReadController, metOfficeForecastListController }

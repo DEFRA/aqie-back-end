@@ -1,11 +1,12 @@
-import { forecasts, historicalForecasts } from '~/src/api/forecast'
-import { measurements, historicalMeasurements } from '~/src/api/pollutants'
-import { health } from '~/src/api/health'
-import { config } from '~/src/config'
+import { forecasts, historicalForecasts } from './forecast/index.js'
+import { measurements, historicalMeasurements } from './pollutants/index.js'
+import { health } from './health/index.js'
+import { config } from '../config/index.js'
 import {
   metOfficeForecastRead,
   metOfficeForecastList
-} from '~/src/api/metOfficeForecast'
+} from './metOfficeForecast/index.js'
+import { monitoringStationInfo } from './locationsite/index.js'
 
 const allowOriginUrl = config.get('allowOriginUrl')
 const router = {
@@ -19,7 +20,8 @@ const router = {
         historicalMeasurements,
         health,
         metOfficeForecastRead,
-        metOfficeForecastList
+        metOfficeForecastList,
+        monitoringStationInfo
       ])
     }
   },

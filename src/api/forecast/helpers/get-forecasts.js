@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 async function getForecasts(db) {
   const cursor = db.collection('forecasts').find({}, { projection: { _id: 0 } })
 

@@ -1,8 +1,8 @@
 import tunnel from 'tunnel'
 // import fs from 'fs';
 import { Client } from 'ssh2'
-import { config } from '~/src/config'
-import { createLogger } from '~/src/helpers/logging/logger.js'
+import { config } from '../../../config/index.js'
+import { createLogger } from '../../../helpers/logging/logger.js'
 
 const logger = createLogger()
 

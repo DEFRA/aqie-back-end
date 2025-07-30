@@ -1,5 +1,5 @@
-import { createLogger } from '~/src/helpers/logging/logger'
-import { fetchForecasts } from '~/src/api/forecast/fetch-forecast'
+import { createLogger } from '../../../helpers/logging/logger.js'
+import { fetchForecasts } from '../fetch-forecast.js'
 
 const logger = createLogger()
 

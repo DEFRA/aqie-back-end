@@ -1,19 +1,28 @@
-import path from 'path'
-import hapi from '@hapi/hapi'
+import Hapi from '@hapi/hapi'
 
-import { config } from '~/src/config'
-import { router } from '~/src/api/router'
-import { requestLogger } from '~/src/helpers/logging/request-logger'
-import { mongoPlugin } from '~/src/helpers/mongodb'
-import { failAction } from '~/src/helpers/fail-action'
-import { secureContext } from '~/src/helpers/secure-context'
-import { forecastScheduler } from '~/src/api/forecast/forecast-scheduler'
-import { pollutantsScheduler } from '~/src/api/pollutants/pollutants-scheduler'
+import { config } from '../config/index.js'
+import { router } from './router.js'
+import { requestLogger } from '../helpers/logging/request-logger.js'
+import { mongoPlugin } from '../helpers/mongodb.js'
+import { failAction } from '../helpers/fail-action.js'
+import { forecastScheduler } from './forecast/forecast-scheduler.js'
+import { pollutantsScheduler } from './pollutants/pollutants-scheduler.js'
+import { secureContext } from '../helpers/secure-context/index.js'
+import { setupProxy } from '../common/helpers/proxy/setup-proxy.js'
+import { createLogger } from '../helpers/logging/logger.js'
+
+import yar from '@hapi/yar'
+import crypto from 'crypto'
+
+const logger = createLogger()
 
 const isProduction = config.get('isProduction')
 
 async function createServer() {
-  const server = hapi.server({
+  setupProxy()
+  logger.info('Proxy setup completed')
+  const server = Hapi.server({
+    host: config.get('host'),
     port: config.get('port'),
     routes: {
       validate: {
@@ -21,9 +30,6 @@ async function createServer() {
           abortEarly: false
         },
         failAction
-      },
-      files: {
-        relativeTo: path.resolve(config.get('root'), '.public')
       },
       security: {
         hsts: {
@@ -41,6 +47,19 @@ async function createServer() {
     }
   })
 
+  // Register yar session plugin
+  await server.register({
+    plugin: yar,
+    options: {
+      storeBlank: false,
+      cookieOptions: {
+        password:
+          process.env.YAR_COOKIE_PASSWORD ||
+          crypto.randomBytes(32).toString('hex'),
+        isSecure: process.env.NODE_ENV === 'production'
+      }
+    }
+  })
   await server.register(requestLogger)
 
   if (isProduction) {

@@ -1,6 +1,5 @@
-/* eslint-disable prettier/prettier */
-import { getForecasts } from '~/src/api/forecast/helpers/get-forecasts'
-import { config } from '~/src/config'
+import { getForecasts } from '../helpers/get-forecasts.js'
+import { config } from '../../../config/index.js'
 
 const forecastsController = {
   handler: async (request, h) => {
