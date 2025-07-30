@@ -280,7 +280,7 @@ const config = convict({
     doc: 'Ricardo API password',
     format: '*',
     sensitive: true,
-    default: 'Mr5e7TFseqzD8Mt#',
+    default: '',
     env: 'RICARDO_API_PASSWORD'
   }
 })
