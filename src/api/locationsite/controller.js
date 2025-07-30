@@ -51,9 +51,21 @@ const siteController = {
       catchProxyFetchError
     })
 
+    // Build dynamic message for station names
+    let message
+    if (!enrichedTempData || enrichedTempData.length === 0) {
+      message =
+        'There are currently not monitoring stations for that station id.'
+    } else {
+      // Always show 3 slots, fill with 'Not Available' if missing
+      const names = [0, 1, 2].map(
+        (i) => enrichedTempData[i]?.name || 'Not Available'
+      )
+      message = `Monitoring Stations Info for ${names.join(' - ')}`
+    }
     return h
       .response({
-        message: `Monitoring Stations Info for ${enrichedTempData[0]?.name} - ${enrichedTempData[1]?.name} - ${enrichedTempData[2]?.name}`,
+        message,
         measurements: enrichedTempData
       })
       .code(200)
