@@ -52,7 +52,7 @@ const metOfficeForecastListController = {
       logger.error(`Error Message listing file: ${error.message}`)
       logger.error(`'Error listing file:' ${error}`)
       logger.error(`'JSON Error listing file:' ${JSON.stringify(error)}`)
-      return h.response({ success: false, error: error }).code(500)
+      return h.response({ success: false, error }).code(500)
     }
   }
 }
