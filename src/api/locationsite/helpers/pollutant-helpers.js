@@ -3,7 +3,7 @@
 // Map of short code to full pollutant name
 const pollutantMap = {
   NO2: 'Nitrogen dioxide',
-  MP10: 'PM10',
+  PM10: 'PM10',
   PM25: 'PM2.5',
   O3: 'Ozone',
   SO2: 'Sulphur dioxide'
@@ -47,9 +47,6 @@ function buildPollutantData(found) {
   const isoEndDate = found.endDateTime
     ? new Date(found.endDateTime).toISOString()
     : undefined
-  const ymdStartDate = found.startDateTime
-    ? new Date(found.startDateTime).toISOString().slice(0, 10)
-    : undefined
   const unit = getPollutantUnit(found.unit)
   // Dynamically extract hour, day, month, year from endDateTime
   let hour, day, month, year
@@ -67,8 +64,6 @@ function buildPollutantData(found) {
   return {
     value: found.value,
     unit,
-    startDate: ymdStartDate,
-    endDate: isoEndDate,
     time: {
       date: isoEndDate,
       hour,
