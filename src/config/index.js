@@ -280,8 +280,14 @@ const config = convict({
     doc: 'Ricardo API password',
     format: '*',
     sensitive: true,
-    default: '',
+    default: 'Mr5e7TFseqzD8Mt#',
     env: 'RICARDO_API_PASSWORD'
+  },
+  mockInvalidPollutants: {
+    doc: 'Enable mocking of invalid pollutant values (-9999) for testing',
+    format: Boolean,
+    default: false,
+    env: 'MOCK_INVALID_POLLUTANTS'
   }
 })
 
