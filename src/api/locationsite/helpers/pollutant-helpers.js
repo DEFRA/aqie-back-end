@@ -1,5 +1,8 @@
 // Pollutant helpers for locationsite
 import { config } from '../../../config/index.js'
+import { createLogger } from '../../../helpers/logging/logger.js'
+
+const logger = createLogger()
 
 // Map of short code to full pollutant name
 const pollutantMap = {
@@ -24,18 +27,18 @@ function extractPollutants(siteData) {
   if (!Array.isArray(siteData?.member)) return undefined
   const pollutants = {}
 
-  console.log(
+  logger.info(
     `Extracting pollutants from siteData: ${JSON.stringify(siteData)}`
   )
 
   for (const [shortCode, fullName] of Object.entries(pollutantMap)) {
     const found = findPollutant(siteData.member, fullName)
-    console.log(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
+    logger.info(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
 
     if (found) {
       // Build pollutant data first (which includes mocking)
       const pollutantData = buildPollutantData(found)
-      console.log(
+      logger.info(
         `Built pollutant data for ${shortCode}: value=${pollutantData.value}`
       )
 
@@ -49,11 +52,11 @@ function extractPollutants(siteData) {
         pollutantData.value !== 0
       ) {
         pollutants[shortCode] = pollutantData
-        console.log(
+        logger.info(
           `✓ Added pollutant ${shortCode} with value: ${pollutantData.value}`
         )
       } else {
-        console.log(
+        logger.info(
           `✗ Filtered out pollutant ${shortCode} due to invalid value (${pollutantData.value}) after mocking`
         )
       }
@@ -98,7 +101,7 @@ function buildPollutantData(found) {
   const mockMode = config.get('mockInvalidPollutants')
   let value = found.value
 
-  console.log(`Mock mode: ${mockMode}, Original value: ${found.value}`)
+  logger.info(`Mock mode: ${mockMode}, Original value: ${found.value}`)
 
   if (mockMode) {
     // 90% chance to mock a pollutant as -9999
@@ -107,9 +110,18 @@ function buildPollutantData(found) {
       // Randomly choose between different invalid values to test filtering
       const invalidValues = [-9999, -99, null, '0', 0]
       value = invalidValues[Math.floor(Math.random() * invalidValues.length)]
-      console.log(`MOCKED: Value changed from ${found.value} to ${value}`)
+      logger.info(`MOCKED: Value changed from ${found.value} to ${value}`)
     } else {
-      console.log(`NOT MOCKED: Value kept original: ${value}`)
+      logger.info(`NOT MOCKED: Value kept original: ${value}`)
+    }
+  }
+
+  // Round value to 2 decimal places if it's a number with more than 2 decimal places
+  if (typeof value === 'number' && !Number.isInteger(value)) {
+    const rounded = Number.parseFloat(value.toFixed(2))
+    if (rounded !== value) {
+      logger.info(`Rounded value from ${value} to ${rounded}`)
+      value = rounded
     }
   }
 
@@ -173,7 +185,7 @@ async function enrichSitesWithPollutants(
     }
 
     const pollutants = extractPollutants(siteData)
-    console.log(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
+    logger.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
 
     // Only include sites that have valid pollutants after filtering
     if (pollutants) {
@@ -181,11 +193,11 @@ async function enrichSitesWithPollutants(
         ...site,
         pollutants
       })
-      console.log(
+      logger.info(
         `✓ Including site ${site.name} with ${Object.keys(pollutants).length} pollutants`
       )
     } else {
-      console.log(
+      logger.info(
         `✗ Excluding site ${site.name} - no valid pollutants after filtering`
       )
     }
