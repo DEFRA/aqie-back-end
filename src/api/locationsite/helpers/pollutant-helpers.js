@@ -113,6 +113,15 @@ function buildPollutantData(found) {
     }
   }
 
+  // Round value to 2 decimal places if it's a number with more than 2 decimal places
+  if (typeof value === 'number' && !Number.isInteger(value)) {
+    const rounded = Math.round(value * 100) / 100
+    if (rounded !== value) {
+      console.log(`Rounded value from ${value} to ${rounded}`)
+      value = rounded
+    }
+  }
+
   // Dynamically extract hour, day, month, year from endDateTime
   let hour, day, month, year
   if (found.endDateTime) {
