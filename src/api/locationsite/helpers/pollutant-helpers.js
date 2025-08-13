@@ -95,6 +95,9 @@ function buildPollutantData(found) {
   const isoEndDate = found.endDateTime
     ? new Date(found.endDateTime).toISOString()
     : undefined
+  const ymdStartDate = found.startDateTime
+    ? new Date(found.startDateTime).toISOString().slice(0, 10)
+    : undefined
   const unit = getPollutantUnit(found.unit)
 
   // Use config-based mock mode
@@ -141,6 +144,8 @@ function buildPollutantData(found) {
   return {
     value,
     unit,
+    startDate: ymdStartDate,
+    endDate: isoEndDate,
     time: {
       date: isoEndDate,
       hour,
