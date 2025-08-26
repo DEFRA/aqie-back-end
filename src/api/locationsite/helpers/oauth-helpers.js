@@ -22,6 +22,8 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
       ricardoApiLoginUrl,
       optionsOAuthRicardo
     )
+    logger.info(`Response from Postman API: ${JSON.stringify(dataToken)}`)
+    logger.info(`optionsOAuthRicardo: ${JSON.stringify(optionsOAuthRicardo)}`)
     if (statusCodeToken !== 200) {
       throw new Error(
         `Error fetching OAuth token via Postman API: ${statusCodeToken}`
