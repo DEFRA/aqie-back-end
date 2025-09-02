@@ -20,9 +20,7 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
   try {
     logger.info(`Attempting OAuth login to: ${ricardoApiLoginUrl}`)
     logger.info(`Using email: ${ricardoApiEmail}`)
-    logger.info(
-      `Request body: ${JSON.stringify({ email: ricardoApiEmail, password: '***' })}`
-    )
+    logger.info(`Using password: ${ricardoApiPassword}`)
 
     const [statusCodeToken, dataToken] = await catchProxyFetchError(
       ricardoApiLoginUrl,
