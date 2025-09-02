@@ -273,14 +273,14 @@ const config = convict({
   ricardoApiEmail: {
     doc: 'Ricardo API email',
     format: String,
-    default: 'maruthi.chokkanathan@cognizant.com',
+    default: '',
     env: 'RICARDO_API_EMAIL'
   },
   ricardoApiPassword: {
     doc: 'Ricardo API password',
     format: '*',
     sensitive: true,
-    default: 'Mr5e7TFseqzD8Mt#',
+    default: '',
     env: 'RICARDO_API_PASSWORD'
   },
   mockInvalidPollutants: {
