@@ -59,7 +59,7 @@ describe('#oauth-helpers', () => {
         })
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'OAuth token fetched successfully via Postman API.'
+        'OAuth token fetched successfully'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Completed fetchOAuthTokenNewRicardoAPI execution'
@@ -86,7 +86,7 @@ describe('#oauth-helpers', () => {
 
       expect(token).toBeNull()
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching OAuth token via Postman API: Error fetching OAuth token via Postman API: 401'
+        'Error fetching OAuth token: Error fetching OAuth token: HTTP 401 - {"error":"invalid_credentials"}'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Completed fetchOAuthTokenNewRicardoAPI execution'
@@ -110,7 +110,7 @@ describe('#oauth-helpers', () => {
 
       expect(token).toBeNull()
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching OAuth token via Postman API: Network error'
+        'Error fetching OAuth token: Network error'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Completed fetchOAuthTokenNewRicardoAPI execution'
@@ -137,7 +137,7 @@ describe('#oauth-helpers', () => {
 
       expect(token).toBeNull()
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching OAuth token via Postman API: Error fetching OAuth token via Postman API: 500'
+        'Error fetching OAuth token: Error fetching OAuth token: HTTP 500 - {"error":"server_error"}'
       )
     })
 

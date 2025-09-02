@@ -9,6 +9,7 @@ vi.mock('../../../common/helpers/proxy/proxy.js', () => ({
 vi.mock('../../../helpers/logging/logger.js', () => ({
   createLogger: () => ({
     info: vi.fn(),
+    warn: vi.fn(),
     error: vi.fn()
   })
 }))
@@ -57,18 +58,19 @@ describe('#catch-proxy-fetch-error', () => {
     const mockResponse = {
       ok: false,
       status: 404,
-      statusText: 'Not Found'
+      statusText: 'Not Found',
+      json: vi.fn().mockResolvedValue({ error: 'Resource not found' })
     }
 
     proxyFetch.mockResolvedValue(mockResponse)
 
     const result = await catchProxyFetchError(mockUrl, mockOptions)
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toBeInstanceOf(Error)
-    expect(result[0].message).toBe(
-      'HTTP error! status from https://api.example.com/data: 404'
-    )
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBe(404)
+    expect(result[1]).toEqual({
+      error: 'Resource not found'
+    })
   })
 
   test('Should return error array when network request fails', async () => {
@@ -84,8 +86,12 @@ describe('#catch-proxy-fetch-error', () => {
 
     const result = await catchProxyFetchError(mockUrl, mockOptions)
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toBe(networkError)
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBe(0)
+    expect(result[1]).toEqual({
+      error: 'Network Error',
+      message: 'Network error'
+    })
   })
 
   test('Should return error array when JSON parsing fails', async () => {
@@ -96,8 +102,9 @@ describe('#catch-proxy-fetch-error', () => {
     const mockUrl = 'https://api.example.com/data'
     const mockOptions = { method: 'GET', headers: {} }
     const mockResponse = {
-      ok: true,
-      status: 200,
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
       json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
     }
 
@@ -105,9 +112,12 @@ describe('#catch-proxy-fetch-error', () => {
 
     const result = await catchProxyFetchError(mockUrl, mockOptions)
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toBeInstanceOf(Error)
-    expect(result[0].message).toBe('Invalid JSON')
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBe(400)
+    expect(result[1]).toEqual({
+      error: 'HTTP 400',
+      message: 'Bad Request'
+    })
   })
 
   test('Should handle different HTTP status codes', async () => {
@@ -141,18 +151,19 @@ describe('#catch-proxy-fetch-error', () => {
     const mockResponse = {
       ok: false,
       status: 500,
-      statusText: 'Internal Server Error'
+      statusText: 'Internal Server Error',
+      json: vi.fn().mockResolvedValue({ error: 'Internal server error' })
     }
 
     proxyFetch.mockResolvedValue(mockResponse)
 
     const result = await catchProxyFetchError(mockUrl, mockOptions)
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toBeInstanceOf(Error)
-    expect(result[0].message).toBe(
-      'HTTP error! status from https://api.example.com/data: 500'
-    )
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBe(500)
+    expect(result[1]).toEqual({
+      error: 'Internal server error'
+    })
   })
 
   test('Should handle authentication errors (401)', async () => {
@@ -165,18 +176,19 @@ describe('#catch-proxy-fetch-error', () => {
     const mockResponse = {
       ok: false,
       status: 401,
-      statusText: 'Unauthorized'
+      statusText: 'Unauthorized',
+      json: vi.fn().mockResolvedValue({ error: 'Unauthorized' })
     }
 
     proxyFetch.mockResolvedValue(mockResponse)
 
     const result = await catchProxyFetchError(mockUrl, mockOptions)
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toBeInstanceOf(Error)
-    expect(result[0].message).toBe(
-      'HTTP error! status from https://api.example.com/data: 401'
-    )
+    expect(result).toHaveLength(2)
+    expect(result[0]).toBe(401)
+    expect(result[1]).toEqual({
+      error: 'Unauthorized'
+    })
   })
 
   test('Should work with complex request options', async () => {
