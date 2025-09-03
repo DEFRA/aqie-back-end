@@ -284,7 +284,7 @@ const config = convict({
     env: 'RICARDO_API_PASSWORD'
   },
   mockInvalidPollutants: {
-    doc: 'Enable mocking of invalid pollutant values (-9999) for testing',
+    doc: 'Enable mocking of invalid pollutant values (-9999, -99, 0) for testing',
     format: Boolean,
     default: false,
     env: 'MOCK_INVALID_POLLUTANTS'
