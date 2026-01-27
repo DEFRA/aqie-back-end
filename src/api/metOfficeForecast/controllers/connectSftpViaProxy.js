@@ -2,9 +2,9 @@
 import { Client } from 'ssh2'
 // import { ProxyAgent } from 'undici'
 import { config } from '../../../config/index.js'
-import { Buffer } from 'buffer'
-import { createLogger } from '../../../helpers/logging/logger.js'
-// import fs from 'fs'
+// import { Buffer } from 'buffer'
+import { createLogger } from '~/src/helpers/logging/logger.js'
+import fs from 'fs'
 // import { HttpsProxyAgent } from 'https-proxy-agent'
 // import tunnel from 'tunnel'
 import { URL } from 'url'
@@ -88,9 +88,9 @@ export async function connectSftpThroughProxy() {
     // servername: proxyHost // this ensures the TLS cert matches the expected domain
   }
 
-  // const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1')
-  const privateKeyBase64 = config.get('sftpPrivateKey')
-  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
+  const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1')
+  // const privateKeyBase64 = config.get('sftpPrivateKey')
+  // const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8')
 
   const proxyModule = proxyUrl.protocol.startsWith('https') ? https : http
   logger.info(`proxyModule::: ${JSON.stringify(proxyModule)}`)

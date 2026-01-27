@@ -1,0 +1,965 @@
+{
+  "success": true,
+  "files": [
+    {
+      "type": "-",
+      "name": "202504211800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 50781,
+      "modifyTime": 1745280131000,
+      "accessTime": 1745280131000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    50781 Apr 22 00:02 202504211800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250413.xml",
+      "size": 1498151,
+      "modifyTime": 1744517433000,
+      "accessTime": 1744517433000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 13 04:10 MetOfficeDefraAQSites_20250413.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-21-0538.TXT",
+      "size": 425,
+      "modifyTime": 1745213923000,
+      "accessTime": 1745213923000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      425 Apr 21 05:38 EMARC_AirQualityTweet_2025-04-21-0538.TXT"
+    },
+    {
+      "type": "-",
+      "name": "202504051800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 67980,
+      "modifyTime": 1743899701000,
+      "accessTime": 1743899701000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    67980 Apr  6 00:35 202504051800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250416.xml",
+      "size": 1498151,
+      "modifyTime": 1744776633000,
+      "accessTime": 1744776633000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 16 04:10 MetOfficeDefraAQSites_20250416.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504181800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 50094,
+      "modifyTime": 1745020922000,
+      "accessTime": 1745020922000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    50094 Apr 19 00:02 202504181800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504141800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 58604,
+      "modifyTime": 1744675332000,
+      "accessTime": 1744675332000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    58604 Apr 15 00:02 202504141800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504191800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 49602,
+      "modifyTime": 1745107332000,
+      "accessTime": 1745107332000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    49602 Apr 20 00:02 202504191800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250419.xml",
+      "size": 1498151,
+      "modifyTime": 1745035834000,
+      "accessTime": 1745035834000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 19 04:10 MetOfficeDefraAQSites_20250419.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-19-0448.TXT",
+      "size": 443,
+      "modifyTime": 1745038151000,
+      "accessTime": 1745038151000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      443 Apr 19 04:49 EMARC_AirQualityTweet_2025-04-19-0448.TXT"
+    },
+    {
+      "type": "-",
+      "name": "202504041800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 65571,
+      "modifyTime": 1743813351000,
+      "accessTime": 1743813351000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    65571 Apr  5 00:35 202504041800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504011800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 51609,
+      "modifyTime": 1743554123000,
+      "accessTime": 1743554123000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    51609 Apr  2 00:35 202504011800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250406.xml",
+      "size": 1498151,
+      "modifyTime": 1743912632000,
+      "accessTime": 1743912632000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  6 04:10 MetOfficeDefraAQSites_20250406.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504171800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 51268,
+      "modifyTime": 1744934531000,
+      "accessTime": 1744934531000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    51268 Apr 18 00:02 202504171800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250420.xml",
+      "size": 1498151,
+      "modifyTime": 1745122233000,
+      "accessTime": 1745122233000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 20 04:10 MetOfficeDefraAQSites_20250420.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-20-0438.TXT",
+      "size": 448,
+      "modifyTime": 1745123932000,
+      "accessTime": 1745123932000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      448 Apr 20 04:38 EMARC_AirQualityTweet_2025-04-20-0438.TXT"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250422.xml",
+      "size": 1498151,
+      "modifyTime": 1745295033000,
+      "accessTime": 1745295033000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 22 04:10 MetOfficeDefraAQSites_20250422.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-18-0436.TXT",
+      "size": 460,
+      "modifyTime": 1744951022000,
+      "accessTime": 1744951022000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      460 Apr 18 04:37 EMARC_AirQualityTweet_2025-04-18-0436.TXT"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-22-0431.TXT",
+      "size": 459,
+      "modifyTime": 1745296313000,
+      "accessTime": 1745296313000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      459 Apr 22 04:31 EMARC_AirQualityTweet_2025-04-22-0431.TXT"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250418.xml",
+      "size": 1498151,
+      "modifyTime": 1744949433000,
+      "accessTime": 1744949433000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 18 04:10 MetOfficeDefraAQSites_20250418.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250405.xml",
+      "size": 1498151,
+      "modifyTime": 1743826232000,
+      "accessTime": 1743826232000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  5 04:10 MetOfficeDefraAQSites_20250405.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504201800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 55842,
+      "modifyTime": 1745193721000,
+      "accessTime": 1745193721000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    55842 Apr 21 00:02 202504201800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504161800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 57964,
+      "modifyTime": 1744848132000,
+      "accessTime": 1744848132000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    57964 Apr 17 00:02 202504161800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250421.xml",
+      "size": 1498151,
+      "modifyTime": 1745208633000,
+      "accessTime": 1745208633000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 21 04:10 MetOfficeDefraAQSites_20250421.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250415.xml",
+      "size": 1498151,
+      "modifyTime": 1744690232000,
+      "accessTime": 1744690232000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 15 04:10 MetOfficeDefraAQSites_20250415.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504071800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 64938,
+      "modifyTime": 1744071681000,
+      "accessTime": 1744071681000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    64938 Apr  8 00:21 202504071800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202503311800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 54280,
+      "modifyTime": 1743466852000,
+      "accessTime": 1743466852000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    54280 Apr  1 00:20 202503311800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504021800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 55659,
+      "modifyTime": 1743639721000,
+      "accessTime": 1743639721000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    55659 Apr  3 00:22 202504021800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202503291800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 42587,
+      "modifyTime": 1743294892000,
+      "accessTime": 1743294892000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    42587 Mar 30 00:34 202503291800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504031800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 64345,
+      "modifyTime": 1743726101000,
+      "accessTime": 1743726101000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    64345 Apr  4 00:21 202504031800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250408.xml",
+      "size": 1498151,
+      "modifyTime": 1744085433000,
+      "accessTime": 1744085433000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  8 04:10 MetOfficeDefraAQSites_20250408.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504061800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 66281,
+      "modifyTime": 1743986022000,
+      "accessTime": 1743986022000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    66281 Apr  7 00:33 202504061800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202503261800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 46621,
+      "modifyTime": 1743071773000,
+      "accessTime": 1743071773000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    46621 Mar 27 10:36 202503261800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250327.xml",
+      "size": 1498151,
+      "modifyTime": 1743071783000,
+      "accessTime": 1743071783000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Mar 27 10:36 MetOfficeDefraAQSites_20250327.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250330.xml",
+      "size": 1498151,
+      "modifyTime": 1743307832000,
+      "accessTime": 1743307832000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Mar 30 04:10 MetOfficeDefraAQSites_20250330.xml"
+    },
+    {
+      "type": "-",
+      "name": "202503301800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 51378,
+      "modifyTime": 1743381251000,
+      "accessTime": 1743381251000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    51378 Mar 31 00:34 202503301800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250403.xml",
+      "size": 1498151,
+      "modifyTime": 1743653423000,
+      "accessTime": 1743653423000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  3 04:10 MetOfficeDefraAQSites_20250403.xml"
+    },
+    {
+      "type": "-",
+      "name": "202503281800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 46870,
+      "modifyTime": 1743208491000,
+      "accessTime": 1743208491000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    46870 Mar 29 00:34 202503281800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504131800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 57487,
+      "modifyTime": 1744588922000,
+      "accessTime": 1744588922000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    57487 Apr 14 00:02 202504131800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504221800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 53702,
+      "modifyTime": 1745366531000,
+      "accessTime": 1745366531000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    53702 Apr 23 00:02 202504221800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250329.xml",
+      "size": 1498151,
+      "modifyTime": 1743221433000,
+      "accessTime": 1743221433000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Mar 29 04:10 MetOfficeDefraAQSites_20250329.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250423.xml",
+      "size": 1498151,
+      "modifyTime": 1745381423000,
+      "accessTime": 1745381423000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 23 04:10 MetOfficeDefraAQSites_20250423.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-23-0428.TXT",
+      "size": 411,
+      "modifyTime": 1745382531000,
+      "accessTime": 1745382531000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      411 Apr 23 04:28 EMARC_AirQualityTweet_2025-04-23-0428.TXT"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250404.xml",
+      "size": 1498151,
+      "modifyTime": 1743739823000,
+      "accessTime": 1743739823000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  4 04:10 MetOfficeDefraAQSites_20250404.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250407.xml",
+      "size": 1498151,
+      "modifyTime": 1743999032000,
+      "accessTime": 1743999032000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  7 04:10 MetOfficeDefraAQSites_20250407.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250402.xml",
+      "size": 1498151,
+      "modifyTime": 1743567043000,
+      "accessTime": 1743567043000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  2 04:10 MetOfficeDefraAQSites_20250402.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250331.xml",
+      "size": 1498151,
+      "modifyTime": 1743394233000,
+      "accessTime": 1743394233000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Mar 31 04:10 MetOfficeDefraAQSites_20250331.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250414.xml",
+      "size": 1498151,
+      "modifyTime": 1744603834000,
+      "accessTime": 1744603834000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 14 04:10 MetOfficeDefraAQSites_20250414.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250401.xml",
+      "size": 1498151,
+      "modifyTime": 1743480633000,
+      "accessTime": 1743480633000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  1 04:10 MetOfficeDefraAQSites_20250401.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504151800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 58923,
+      "modifyTime": 1744761732000,
+      "accessTime": 1744761732000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    58923 Apr 16 00:02 202504151800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250410.xml",
+      "size": 1498151,
+      "modifyTime": 1744258223000,
+      "accessTime": 1744258223000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 10 04:10 MetOfficeDefraAQSites_20250410.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504091800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 61170,
+      "modifyTime": 1744243342000,
+      "accessTime": 1744243342000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    61170 Apr 10 00:02 202504091800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250417.xml",
+      "size": 1498151,
+      "modifyTime": 1744863023000,
+      "accessTime": 1744863023000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 17 04:10 MetOfficeDefraAQSites_20250417.xml"
+    },
+    {
+      "type": "-",
+      "name": "EMARC_AirQualityTweet_2025-04-17-0459.TXT",
+      "size": 498,
+      "modifyTime": 1744865952000,
+      "accessTime": 1744865952000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk      498 Apr 17 04:59 EMARC_AirQualityTweet_2025-04-17-0459.TXT"
+    },
+    {
+      "type": "-",
+      "name": "202504081800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 62923,
+      "modifyTime": 1744159052000,
+      "accessTime": 1744159052000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    62923 Apr  9 00:37 202504081800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250409.xml",
+      "size": 1498151,
+      "modifyTime": 1744171834000,
+      "accessTime": 1744171834000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr  9 04:10 MetOfficeDefraAQSites_20250409.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504101800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 64265,
+      "modifyTime": 1744329732000,
+      "accessTime": 1744329732000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    64265 Apr 11 00:02 202504101800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202504111800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 69049,
+      "modifyTime": 1744416132000,
+      "accessTime": 1744416132000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    69049 Apr 12 00:02 202504111800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "test.txt",
+      "size": 40,
+      "modifyTime": 1742997074000,
+      "accessTime": 1742997074000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk       40 Mar 26 13:51 test.txt"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250411.xml",
+      "size": 1498151,
+      "modifyTime": 1744344633000,
+      "accessTime": 1744344633000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 11 04:10 MetOfficeDefraAQSites_20250411.xml"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250412.xml",
+      "size": 1498151,
+      "modifyTime": 1744431034000,
+      "accessTime": 1744431034000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Apr 12 04:10 MetOfficeDefraAQSites_20250412.xml"
+    },
+    {
+      "type": "-",
+      "name": "202504121800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 66086,
+      "modifyTime": 1744502532000,
+      "accessTime": 1744502532000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    66086 Apr 13 00:02 202504121800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "202503271800_u1096_ng_aqum_dafc.nc.gz",
+      "size": 43691,
+      "modifyTime": 1743122272000,
+      "accessTime": 1743122272000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk    43691 Mar 28 00:37 202503271800_u1096_ng_aqum_dafc.nc.gz"
+    },
+    {
+      "type": "-",
+      "name": "MetOfficeDefraAQSites_20250328.xml",
+      "size": 1498151,
+      "modifyTime": 1743135033000,
+      "accessTime": 1743135033000,
+      "rights": {
+        "user": "rw",
+        "group": "rw",
+        "other": ""
+      },
+      "owner": 67156,
+      "group": 2495,
+      "longname": "-rw-rw----    1 checklocalairquality@defra.gov.uk sftp-defra-gov-uk  1498151 Mar 28 04:10 MetOfficeDefraAQSites_20250328.xml"
+    }
+  ]
+}
