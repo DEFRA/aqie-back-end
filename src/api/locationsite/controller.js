@@ -43,6 +43,7 @@ const siteController = {
 
     // Set requestQuery globally for the helper
     global.requestQuery = request.query
+    if (!global.requestQuery?.stream || global.requestQuery.stream !== 'data') {    
     const enrichedTempData = await buildEnrichedTempData({
       dataAll,
       ricardoApiSiteIdUrl,
@@ -69,7 +70,14 @@ const siteController = {
         measurements: enrichedTempData
       })
       .code(200)
-  }
+    } else {
+      return h
+        .response({
+          // message,
+          measurements: dataAll
+        })
+        .code(200)
+    }
 }
-
+}
 export { siteController }
