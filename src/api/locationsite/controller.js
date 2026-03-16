@@ -43,33 +43,41 @@ const siteController = {
 
     // Set requestQuery globally for the helper
     global.requestQuery = request.query
-    const enrichedTempData = await buildEnrichedTempData({
-      dataAll,
-      ricardoApiSiteIdUrl,
-      accessToken,
-      logger,
-      catchProxyFetchError
-    })
-
-    // Build dynamic message for station names
-    let message
-    if (!enrichedTempData || enrichedTempData.length === 0) {
-      message =
-        'There are currently not monitoring stations for that station id.'
-    } else {
-      // Always show 3 slots, fill with 'Not Available' if missing
-      const names = [0, 1, 2].map(
-        (i) => enrichedTempData[i]?.name || 'Not Available'
-      )
-      message = `Monitoring Stations Info for ${names.join(' - ')}`
-    }
-    return h
-      .response({
-        message,
-        measurements: enrichedTempData
+    if (!global.requestQuery?.stream || global.requestQuery.stream !== 'data') {
+      const enrichedTempData = await buildEnrichedTempData({
+        dataAll,
+        ricardoApiSiteIdUrl,
+        accessToken,
+        logger,
+        catchProxyFetchError
       })
-      .code(200)
+
+      // Build dynamic message for station names
+      let message
+      if (!enrichedTempData || enrichedTempData.length === 0) {
+        message =
+          'There are currently not monitoring stations for that station id.'
+      } else {
+        // Always show 3 slots, fill with 'Not Available' if missing
+        const names = [0, 1, 2].map(
+          (i) => enrichedTempData[i]?.name || 'Not Available'
+        )
+        message = `Monitoring Stations Info for ${names.join(' - ')}`
+      }
+      return h
+        .response({
+          message,
+          measurements: enrichedTempData
+        })
+        .code(200)
+    } else {
+      return h
+        .response({
+          // message,
+          measurements: dataAll
+        })
+        .code(200)
+    }
   }
 }
-
 export { siteController }

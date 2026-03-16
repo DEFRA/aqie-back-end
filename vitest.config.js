@@ -1,9 +1,11 @@
 import { defineConfig, configDefaults } from 'vitest/config'
-
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    hookTimeout: 30000,
+    testTimeout: 30000,
+    include: ['src/**/*.test.js', 'tests/**/*.test.js'],
     clearMocks: true,
     coverage: {
       provider: 'v8',
@@ -20,6 +22,7 @@ export default defineConfig({
         }
       }
     },
-    setupFiles: ['.vite/mongo-memory-server.js', '.vite/setup-files.js']
+    setupFiles: ['.vite/setup-files.js'],
+    globalSetup: ['.vite/mongo-memory-server.js']
   }
 })

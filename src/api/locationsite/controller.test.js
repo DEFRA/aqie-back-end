@@ -1,27 +1,30 @@
-import { vi, describe, test, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { siteController } from './controller.js'
+import { buildEnrichedTempData } from './helpers/build-enriched-temp-data.js'
+import { fetchRicardoDataAll } from './helpers/fetch-ricardo-data-all.js'
+import { refreshOAuthToken } from './helpers/oauth-helpers.js'
 
-// Mock all dependencies first
+// Mock all dependencies
 vi.mock('../../helpers/logging/logger.js', () => ({
-  createLogger: () => ({
+  createLogger: vi.fn(() => ({
     info: vi.fn(),
-    error: vi.fn()
-  })
+    error: vi.fn(),
+    warn: vi.fn()
+  }))
+}))
+
+vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
+  catchProxyFetchError: vi.fn()
 }))
 
 vi.mock('../../config/index.js', () => ({
   config: {
     get: vi.fn((key) => {
-      const configMap = {
-        ricardoApiAllDataUrl: 'https://api.example.com/data',
-        ricardoApiSiteIdUrl: 'https://api.example.com/site'
-      }
-      return configMap[key]
+      if (key === 'ricardoApiAllDataUrl') return 'http://mock-all-data-url'
+      if (key === 'ricardoApiSiteIdUrl') return 'http://mock-site-id-url'
+      return null
     })
   }
-}))
-
-vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
-  catchProxyFetchError: vi.fn()
 }))
 
 vi.mock('./helpers/build-enriched-temp-data.js', () => ({
@@ -37,10 +40,7 @@ vi.mock('./helpers/oauth-helpers.js', () => ({
   fetchOAuthToken: vi.fn()
 }))
 
-// Import after mocks are set up
-const { siteController } = await import('./controller.js')
-
-describe('#siteController', () => {
+describe('siteController', () => {
   let mockRequest
   let mockH
 
@@ -49,15 +49,9 @@ describe('#siteController', () => {
 
     mockRequest = {
       yar: {
-        get: vi.fn(),
-        set: vi.fn(),
-        clear: vi.fn()
+        get: vi.fn()
       },
-      query: {
-        page: '1',
-        latitude: '50.950300',
-        longitude: '-1.356700'
-      }
+      query: {}
     }
 
     mockH = {
@@ -65,98 +59,510 @@ describe('#siteController', () => {
       code: vi.fn().mockReturnThis()
     }
 
-    global.requestQuery = undefined
+    // Chain response().code()
+    mockH.response.mockImplementation(() => ({
+      code: mockH.code
+    }))
   })
 
-  test('Should handle successful request with saved access token', async () => {
-    const { fetchRicardoDataAll } = await import(
-      './helpers/fetch-ricardo-data-all.js'
-    )
-    const { buildEnrichedTempData } = await import(
-      './helpers/build-enriched-temp-data.js'
-    )
-    const { catchProxyFetchError } = await import(
-      './helpers/catch-proxy-fetch-error.js'
-    )
+  describe('access token handling', () => {
+    it('should use savedAccessToken from yar if available', async () => {
+      mockRequest.yar.get.mockReturnValue('saved-token-123')
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
 
-    const savedToken = 'saved-access-token'
-    const mockDataAll = { member: [{ siteId: '123', siteName: 'Test Site' }] }
-    const mockEnrichedData = [
-      { name: 'Site 1', localSiteID: '123' },
-      { name: 'Site 2', localSiteID: '456' },
-      { name: 'Site 3', localSiteID: '789' }
-    ]
+      await siteController.handler(mockRequest, mockH)
 
-    mockRequest.yar.get.mockReturnValue(savedToken)
-    fetchRicardoDataAll.mockResolvedValue(mockDataAll)
-    buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
-
-    await siteController.handler(mockRequest, mockH)
-
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('savedAccessToken')
-    expect(fetchRicardoDataAll).toHaveBeenCalledWith({
-      ricardoApiAllDataUrl: 'https://api.example.com/data',
-      optionsOAuthRicardo: {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer saved-access-token',
-          'Content-Type': 'application/json'
-        }
-      },
-      requestQuery: mockRequest.query,
-      catchProxyFetchError
+      expect(refreshOAuthToken).not.toHaveBeenCalled()
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('savedAccessToken')
     })
-    expect(buildEnrichedTempData).toHaveBeenCalledWith({
-      dataAll: mockDataAll,
-      ricardoApiSiteIdUrl: 'https://api.example.com/site',
-      accessToken: savedToken,
-      logger: expect.any(Object),
-      catchProxyFetchError
+
+    it('should call refreshOAuthToken when no savedAccessToken in yar', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue('refreshed-token-456')
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(refreshOAuthToken).toHaveBeenCalled()
     })
-    expect(mockH.response).toHaveBeenCalledWith({
-      message: 'Monitoring Stations Info for Site 1 - Site 2 - Site 3',
-      measurements: mockEnrichedData
+
+    it('should return 500 error when accessToken is null', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue(null)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'Failed to fetch access token'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
     })
-    expect(mockH.code).toHaveBeenCalledWith(200)
+
+    it('should return 500 error when accessToken is undefined', async () => {
+      mockRequest.yar.get.mockReturnValue(undefined)
+      refreshOAuthToken.mockResolvedValue(undefined)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'Failed to fetch access token'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    })
+
+    it('should return 500 error when accessToken is empty string', async () => {
+      mockRequest.yar.get.mockReturnValue('')
+      refreshOAuthToken.mockResolvedValue('')
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'Failed to fetch access token'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    })
+
+    it('should not call fetchRicardoDataAll when accessToken is null', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue(null)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).not.toHaveBeenCalled()
+    })
+
+    it('should not call buildEnrichedTempData when accessToken is null', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue(null)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).not.toHaveBeenCalled()
+    })
+
+    it('should use refreshed token in Authorization header when no savedAccessToken', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue('refreshed-token-789')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          optionsOAuthRicardo: expect.objectContaining({
+            headers: expect.objectContaining({
+              Authorization: 'Bearer refreshed-token-789'
+            })
+          })
+        })
+      )
+    })
   })
 
-  test('Should return error when access token fetch fails', async () => {
-    const { refreshOAuthToken } = await import('./helpers/oauth-helpers.js')
+  describe('stream=data query branch', () => {
+    it('should return measurements from dataAll when stream=data', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'data' }
+      const mockDataAll = [{ id: 1 }, { id: 2 }]
+      fetchRicardoDataAll.mockResolvedValue(mockDataAll)
 
-    mockRequest.yar.get.mockReturnValue(null)
-    refreshOAuthToken.mockResolvedValue(null)
+      await siteController.handler(mockRequest, mockH)
 
-    await siteController.handler(mockRequest, mockH)
-
-    expect(mockH.response).toHaveBeenCalledWith({
-      error: 'Failed to fetch access token'
+      expect(buildEnrichedTempData).not.toHaveBeenCalled()
+      expect(mockH.response).toHaveBeenCalledWith({
+        measurements: mockDataAll
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
-    expect(mockH.code).toHaveBeenCalledWith(500)
+
+    it('should return 200 with empty measurements when dataAll is empty and stream=data', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'data' }
+      fetchRicardoDataAll.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({ measurements: [] })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should not include message property when stream=data', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'data' }
+      fetchRicardoDataAll.mockResolvedValue([{ id: 1 }])
+
+      await siteController.handler(mockRequest, mockH)
+
+      const callArg = mockH.response.mock.calls[0][0]
+      expect(callArg).not.toHaveProperty('message')
+    })
   })
 
-  test('Should handle empty enriched data with proper message', async () => {
-    const { fetchRicardoDataAll } = await import(
-      './helpers/fetch-ricardo-data-all.js'
-    )
-    const { buildEnrichedTempData } = await import(
-      './helpers/build-enriched-temp-data.js'
-    )
+  describe('non-stream branch (enriched data path)', () => {
+    it('should return enriched data message when enrichedTempData has items', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [
+        { name: 'Station A' },
+        { name: 'Station B' },
+        { name: 'Station C' }
+      ]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
 
-    const savedToken = 'saved-access-token'
-    const mockDataAll = { member: [] }
-    const mockEnrichedData = []
+      await siteController.handler(mockRequest, mockH)
 
-    mockRequest.yar.get.mockReturnValue(savedToken)
-    fetchRicardoDataAll.mockResolvedValue(mockDataAll)
-    buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
-
-    await siteController.handler(mockRequest, mockH)
-
-    expect(mockH.response).toHaveBeenCalledWith({
-      message:
-        'There are currently not monitoring stations for that station id.',
-      measurements: mockEnrichedData
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'Monitoring Stations Info for Station A - Station B - Station C',
+        measurements: mockEnrichedData
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
-    expect(mockH.code).toHaveBeenCalledWith(200)
+
+    it('should return not-available message when enrichedTempData is empty array', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'There are currently not monitoring stations for that station id.',
+        measurements: []
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should return not-available message when enrichedTempData is null', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue(null)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'There are currently not monitoring stations for that station id.',
+        measurements: null
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should fill missing station names with Not Available when less than 3 items', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [{ name: 'Station A' }]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'Monitoring Stations Info for Station A - Not Available - Not Available',
+        measurements: mockEnrichedData
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should handle 2 items and fill third with Not Available', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [{ name: 'Station A' }, { name: 'Station B' }]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'Monitoring Stations Info for Station A - Station B - Not Available',
+        measurements: mockEnrichedData
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should handle item with no name property and fill with Not Available', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [{ id: 1 }, { name: 'Station B' }, { id: 3 }]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'Monitoring Stations Info for Not Available - Station B - Not Available',
+        measurements: mockEnrichedData
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should call buildEnrichedTempData with correct parameters', async () => {
+      mockRequest.yar.get.mockReturnValue('my-token')
+      mockRequest.query = { site: '123' }
+      const mockDataAll = [{ data: true }]
+      fetchRicardoDataAll.mockResolvedValue(mockDataAll)
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dataAll: mockDataAll,
+          ricardoApiSiteIdUrl: 'http://mock-site-id-url',
+          accessToken: 'my-token'
+        })
+      )
+    })
+
+    it('should call fetchRicardoDataAll with correct parameters', async () => {
+      mockRequest.yar.get.mockReturnValue('my-token')
+      mockRequest.query = { site: '456' }
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ricardoApiAllDataUrl: 'http://mock-all-data-url',
+          requestQuery: mockRequest.query
+        })
+      )
+    })
+
+    it('should set global.requestQuery from request.query', async () => {
+      mockRequest.yar.get.mockReturnValue('token')
+      const queryObj = { site: '789' }
+      mockRequest.query = queryObj
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(global.requestQuery).toBe(queryObj)
+    })
+
+    it('should only use first 3 items for message even when more than 3 exist', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [
+        { name: 'Station A' },
+        { name: 'Station B' },
+        { name: 'Station C' },
+        { name: 'Station D' },
+        { name: 'Station E' }
+      ]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        message:
+          'Monitoring Stations Info for Station A - Station B - Station C',
+        measurements: mockEnrichedData
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should include all measurements even when more than 3 in response', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      const mockEnrichedData = [
+        { name: 'Station A' },
+        { name: 'Station B' },
+        { name: 'Station C' },
+        { name: 'Station D' }
+      ]
+      buildEnrichedTempData.mockResolvedValue(mockEnrichedData)
+
+      await siteController.handler(mockRequest, mockH)
+
+      const callArg = mockH.response.mock.calls[0][0]
+      expect(callArg.measurements).toHaveLength(4)
+    })
+  })
+
+  describe('stream query edge cases', () => {
+    it('should go to enriched path when stream is not "data"', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'other' }
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalled()
+    })
+
+    it('should go to enriched path when query is empty object', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([{ name: 'X' }])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalled()
+    })
+
+    it('should go to enriched path when stream key is absent', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { someOtherKey: 'value' }
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalled()
+    })
+
+    it('should go to enriched path when stream is undefined', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: undefined }
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalled()
+    })
+
+    it('should go to stream path when stream equals exactly "data"', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'data' }
+      const mockDataAll = [{ id: 99 }]
+      fetchRicardoDataAll.mockResolvedValue(mockDataAll)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).not.toHaveBeenCalled()
+      expect(mockH.response).toHaveBeenCalledWith({ measurements: mockDataAll })
+    })
+
+    it('should go to enriched path when stream is "DATA" (case sensitive check)', async () => {
+      mockRequest.yar.get.mockReturnValue('token-abc')
+      mockRequest.query = { stream: 'DATA' }
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(buildEnrichedTempData).toHaveBeenCalled()
+    })
+  })
+
+  describe('OAuth options setup', () => {
+    it('should pass Bearer token in Authorization header to fetchRicardoDataAll', async () => {
+      mockRequest.yar.get.mockReturnValue('bearer-token-xyz')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          optionsOAuthRicardo: expect.objectContaining({
+            method: 'GET',
+            headers: expect.objectContaining({
+              Authorization: 'Bearer bearer-token-xyz',
+              'Content-Type': 'application/json'
+            })
+          })
+        })
+      )
+    })
+
+    it('should always use GET method in OAuth options', async () => {
+      mockRequest.yar.get.mockReturnValue('some-token')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          optionsOAuthRicardo: expect.objectContaining({
+            method: 'GET'
+          })
+        })
+      )
+    })
+
+    it('should always set Content-Type to application/json', async () => {
+      mockRequest.yar.get.mockReturnValue('some-token')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(fetchRicardoDataAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          optionsOAuthRicardo: expect.objectContaining({
+            headers: expect.objectContaining({
+              'Content-Type': 'application/json'
+            })
+          })
+        })
+      )
+    })
+  })
+
+  describe('response code verification', () => {
+    it('should always return 200 on success for enriched path', async () => {
+      mockRequest.yar.get.mockReturnValue('token')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([{ name: 'Station A' }])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should always return 200 on success for stream path', async () => {
+      mockRequest.yar.get.mockReturnValue('token')
+      mockRequest.query = { stream: 'data' }
+      fetchRicardoDataAll.mockResolvedValue([{ id: 1 }])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    })
+
+    it('should call h.response exactly once on success', async () => {
+      mockRequest.yar.get.mockReturnValue('token')
+      mockRequest.query = {}
+      fetchRicardoDataAll.mockResolvedValue([])
+      buildEnrichedTempData.mockResolvedValue([])
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledTimes(1)
+    })
+
+    it('should call h.response exactly once on 500 error', async () => {
+      mockRequest.yar.get.mockReturnValue(null)
+      refreshOAuthToken.mockResolvedValue(null)
+
+      await siteController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledTimes(1)
+    })
   })
 })
