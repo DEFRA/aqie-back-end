@@ -1,4 +1,5 @@
 // Pollutant helpers for locationsite
+import { randomInt } from 'node:crypto'
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
 import {
@@ -99,7 +100,7 @@ function applyMockMode(value, mockMode, originalValue) {
   if (!mockMode) {
     return value
   }
-  const shouldMock = Math.random() < MOCK_PROBABILITY
+  const shouldMock = randomInt(0, 100) < MOCK_PROBABILITY * 100
   if (shouldMock) {
     const invalidValues = [
       INVALID_POLLUTANT_LARGE,
@@ -108,8 +109,7 @@ function applyMockMode(value, mockMode, originalValue) {
       '0',
       0
     ]
-    const mockedValue =
-      invalidValues[Math.floor(Math.random() * invalidValues.length)]
+    const mockedValue = invalidValues[randomInt(0, invalidValues.length)]
     logger.info(`MOCKED: Value changed from ${originalValue} to ${mockedValue}`)
     return mockedValue
   }

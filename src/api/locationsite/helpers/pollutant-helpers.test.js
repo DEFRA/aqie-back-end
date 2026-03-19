@@ -7,6 +7,10 @@ import {
 } from './pollutant-helpers.js'
 import { config } from '../../../config/index.js'
 
+const mockRandomInt = vi.hoisted(() => vi.fn())
+
+vi.mock('node:crypto', () => ({ randomInt: mockRandomInt }))
+
 // Mock the logger before importing the module
 vi.mock('../../../helpers/logging/logger.js', () => ({
   createLogger: () => ({
@@ -216,24 +220,17 @@ describe('#pollutant-helpers', () => {
 
     describe('Mocking functionality in buildPollutantData', () => {
       beforeEach(() => {
-        // Enable mocking for these tests
         config.get.mockReturnValue(true)
-        // Mock Math.random to control the mocking behavior
-        vi.spyOn(Math, 'random')
+        mockRandomInt.mockReset()
       })
 
       afterEach(() => {
-        // Restore Math.random
-        Math.random.mockRestore()
-        // Reset config mock to default
         config.get.mockReturnValue(false)
       })
 
       test('Should mock pollutant values when mockInvalidPollutants is enabled and shouldMock is true', () => {
-        // Make Math.random return 0.5 (< 0.9) to trigger mocking
-        Math.random.mockReturnValue(0.5)
-        // Make Math.floor return index 0 for first invalid value (-9999)
-        vi.spyOn(Math, 'floor').mockReturnValue(0)
+        // randomInt(0,100) returns 50 (<90) → triggers mock; randomInt(0,5) returns 0 → index 0 = -9999
+        mockRandomInt.mockReturnValueOnce(50).mockReturnValueOnce(0)
 
         const siteData = {
           member: [
@@ -251,13 +248,11 @@ describe('#pollutant-helpers', () => {
         // When mocking is enabled and shouldMock=true, value should be -9999
         // and the pollutant should be filtered out
         expect(result).toBeUndefined() // All pollutants filtered out due to -9999
-
-        Math.floor.mockRestore()
       })
 
       test('Should not mock pollutant values when mockInvalidPollutants is enabled but shouldMock is false', () => {
-        // Make Math.random return 0.95 (>= 0.9) to NOT trigger mocking
-        Math.random.mockReturnValue(0.95)
+        // randomInt(0,100) returns a value >= 90 → does NOT trigger mocking
+        mockRandomInt.mockReturnValue(90)
 
         const siteData = {
           member: [
@@ -282,8 +277,9 @@ describe('#pollutant-helpers', () => {
         const invalidValues = [-9999, -99, null, '0', 0]
 
         for (let i = 0; i < invalidValues.length; i++) {
-          Math.random.mockReturnValue(0.5) // Trigger mocking
-          vi.spyOn(Math, 'floor').mockReturnValue(i) // Select different invalid value
+          // randomInt(0,100)=50 triggers mock; randomInt(0,5)=i selects invalid value
+          mockRandomInt.mockReset()
+          mockRandomInt.mockReturnValueOnce(50).mockReturnValueOnce(i)
 
           const siteData = {
             member: [
@@ -300,8 +296,6 @@ describe('#pollutant-helpers', () => {
 
           // All invalid values should cause pollutants to be filtered out
           expect(result).toBeUndefined()
-
-          Math.floor.mockRestore()
         }
       })
     })
