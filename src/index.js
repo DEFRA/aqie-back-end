@@ -20,7 +20,9 @@ async function startServer() {
   )
 }
 
-startServer().catch((error) => {
+try {
+  await startServer()
+} catch (error) {
   logger.info('Server failed to start :(')
   logger.error(error)
-})
+}

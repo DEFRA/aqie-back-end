@@ -12,7 +12,7 @@ import { setupProxy } from '../common/helpers/proxy/setup-proxy.js'
 import { createLogger } from '../helpers/logging/logger.js'
 
 import yar from '@hapi/yar'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const logger = createLogger()
 

@@ -1,10 +1,21 @@
 import tunnel from 'tunnel'
-// import fs from 'fs';
 import { Client } from 'ssh2'
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
 
 const logger = createLogger()
+
+function openSftpSession(conn, resolve, reject) {
+  return (sftpErr, sftp) => {
+    if (sftpErr) {
+      logger.error('[SFTP Error]', sftpErr)
+      reject(sftpErr)
+      return
+    }
+    logger.info('[SFTP] Connection established')
+    resolve({ sftp, conn })
+  }
+}
 
 export async function connectSftpViaProxyTunnel() {
   const proxyUrl = config.get('httpProxy') // Must be http://proxy.dev.cdp-int.defra.cloud:80
@@ -12,7 +23,7 @@ export async function connectSftpViaProxyTunnel() {
   const sftpPort = 22
 
   const proxyHost = new URL(proxyUrl).hostname
-  const proxyPort = parseInt(new URL(proxyUrl).port || '80', 10)
+  const proxyPort = Number.parseInt(new URL(proxyUrl).port || '80', 10)
 
   logger.info(
     `[Proxy] Connecting to ${sftpHost}:${sftpPort} via ${proxyHost}:${proxyPort}`
@@ -30,27 +41,20 @@ export async function connectSftpViaProxyTunnel() {
     agent.createSocket({ host: sftpHost, port: sftpPort }, (err, socket) => {
       if (err) {
         logger.error('[Tunnel Error]', err)
-        return reject(new Error('Failed to create tunnel socket'))
+        reject(new Error('Failed to create tunnel socket'))
+        return
       }
       const privateKey = Buffer.from(
         config.get('sftpPrivateKey'),
         'base64'
       ).toString('utf-8')
-      // const privateKey = fs.readFileSync('C:/Users/486272/.ssh/met_office_rsa_v1');
 
       const conn = new Client()
 
       conn
         .on('ready', () => {
           logger.info('[SSH] Ready. Opening SFTP...')
-          conn.sftp((err, sftp) => {
-            if (err) {
-              logger.error('[SFTP Error]', err)
-              return reject(err)
-            }
-            logger.info('[SFTP] Connection established')
-            resolve({ sftp, conn })
-          })
+          conn.sftp(openSftpSession(conn, resolve, reject))
         })
         .on('error', reject)
         .connect({

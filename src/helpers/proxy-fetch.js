@@ -9,9 +9,7 @@ const nonProxyFetch = (url, opts) => {
 
 const proxyFetch = (url, opts) => {
   const proxy = config.get('httpsProxy') ?? config.get('httpProxy')
-  if (!proxy) {
-    return nonProxyFetch(url, opts)
-  } else {
+  if (proxy) {
     return undiciFetch(url, {
       ...opts,
       dispatcher: new ProxyAgent({
@@ -21,6 +19,7 @@ const proxyFetch = (url, opts) => {
       })
     })
   }
+  return nonProxyFetch(url, opts)
 }
 
 export { proxyFetch }

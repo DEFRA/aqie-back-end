@@ -1,52 +1,51 @@
 // Pollutant helpers for locationsite
+import { randomInt } from 'node:crypto'
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
+import {
+  POLLUTANT_MAP,
+  HOURS_IN_DAY,
+  INVALID_POLLUTANT_LARGE,
+  INVALID_POLLUTANT_SMALL,
+  MOCK_PROBABILITY
+} from '../../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
 
-// Map of short code to full pollutant name
-const pollutantMap = {
-  NO2: 'Nitrogen dioxide',
-  PM10: 'PM10',
-  PM25: 'PM2.5',
-  O3: 'Ozone',
-  SO2: 'Sulphur dioxide'
-}
-const pollutantNames = Object.values(pollutantMap)
+const pollutantNames = Object.values(POLLUTANT_MAP)
 
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
   return name
-    .replace(/<sub>(.*?)<\/sub>/g, (_, sub) => sub)
-    .replace(/\s/g, '')
+    .replaceAll(/<sub>(.*?)<\/sub>/g, (_, sub) => sub)
+    .replaceAll(/\s/g, '')
     .toLowerCase()
 }
 
 // Helper to extract pollutants from site data
 function extractPollutants(siteData) {
-  if (!Array.isArray(siteData?.member)) return undefined
+  if (!Array.isArray(siteData?.member)) {
+    return undefined
+  }
   const pollutants = {}
 
   logger.info(
     `Extracting pollutants from siteData: ${JSON.stringify(siteData)}`
   )
 
-  for (const [shortCode, fullName] of Object.entries(pollutantMap)) {
+  for (const [shortCode, fullName] of Object.entries(POLLUTANT_MAP)) {
     const found = findPollutant(siteData.member, fullName)
     logger.info(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
 
     if (found) {
-      // Build pollutant data first (which includes mocking)
       const pollutantData = buildPollutantData(found)
       logger.info(
         `Built pollutant data for ${shortCode}: value=${pollutantData.value}`
       )
 
-      // Now filter based on the final value (after any mocking)
-      // Exclude -9999, -99, null, and '0' values
       if (
-        pollutantData.value !== -9999 &&
-        pollutantData.value !== -99 &&
+        pollutantData.value !== INVALID_POLLUTANT_LARGE &&
+        pollutantData.value !== INVALID_POLLUTANT_SMALL &&
         pollutantData.value !== null &&
         pollutantData.value !== '0' &&
         pollutantData.value !== 0
@@ -69,26 +68,81 @@ function extractPollutants(siteData) {
 function findPollutant(members, fullName) {
   const normalizedFullName = normalizePollutantName(fullName)
 
-  // Find all matching pollutants
   const matches = members.filter((m) => {
-    if (!m.pollutantName) return false
+    if (!m.pollutantName) {
+      return false
+    }
     return normalizePollutantName(m.pollutantName).startsWith(
       normalizedFullName
     )
   })
 
-  if (matches.length === 0) return undefined
+  if (matches.length === 0) {
+    return undefined
+  }
 
-  // Return the one with the most recent endDateTime
   return matches.reduce((latest, current) => {
-    if (!latest.endDateTime) return current
-    if (!current.endDateTime) return latest
+    if (!latest.endDateTime) {
+      return current
+    }
+    if (!current.endDateTime) {
+      return latest
+    }
 
     const latestDate = new Date(latest.endDateTime)
     const currentDate = new Date(current.endDateTime)
 
     return currentDate > latestDate ? current : latest
   })
+}
+
+function applyMockMode(value, mockMode, originalValue) {
+  if (!mockMode) {
+    return value
+  }
+  const shouldMock = randomInt(0, 100) < MOCK_PROBABILITY * 100
+  if (shouldMock) {
+    const invalidValues = [
+      INVALID_POLLUTANT_LARGE,
+      INVALID_POLLUTANT_SMALL,
+      null,
+      '0',
+      0
+    ]
+    const mockedValue = invalidValues[randomInt(0, invalidValues.length)]
+    logger.info(`MOCKED: Value changed from ${originalValue} to ${mockedValue}`)
+    return mockedValue
+  }
+  logger.info(`NOT MOCKED: Value kept original: ${value}`)
+  return value
+}
+
+function roundValue(value) {
+  if (typeof value === 'number' && !Number.isInteger(value)) {
+    const rounded = Number.parseFloat(value.toFixed(2))
+    if (rounded !== value) {
+      logger.info(`Rounded value from ${value} to ${rounded}`)
+      return rounded
+    }
+  }
+  return value
+}
+
+function getTimeComponents(dateStr) {
+  if (!dateStr) {
+    return {}
+  }
+  const dateObj = new Date(dateStr)
+  let hours = dateObj.getHours()
+  const ampm = hours >= HOURS_IN_DAY ? 'pm' : 'am'
+  hours = hours % HOURS_IN_DAY
+  hours = hours === 0 ? HOURS_IN_DAY : hours
+  return {
+    hour: `${hours}${ampm}`,
+    day: `${dateObj.getDate()}`,
+    month: dateObj.toLocaleString('en-GB', { month: 'long' }),
+    year: `${dateObj.getFullYear()}`
+  }
 }
 
 function buildPollutantData(found) {
@@ -99,60 +153,17 @@ function buildPollutantData(found) {
     ? new Date(found.startDateTime).toISOString().slice(0, 10)
     : undefined
   const unit = getPollutantUnit(found.unit)
-
-  // Use config-based mock mode
   const mockMode = config.get('mockInvalidPollutants')
-  let value = found.value
-
   logger.info(`Mock mode: ${mockMode}, Original value: ${found.value}`)
-
-  if (mockMode) {
-    // 90% chance to mock a pollutant as -9999
-    const shouldMock = Math.random() < 0.9
-    if (shouldMock) {
-      // Randomly choose between different invalid values to test filtering
-      const invalidValues = [-9999, -99, null, '0', 0]
-      value = invalidValues[Math.floor(Math.random() * invalidValues.length)]
-      logger.info(`MOCKED: Value changed from ${found.value} to ${value}`)
-    } else {
-      logger.info(`NOT MOCKED: Value kept original: ${value}`)
-    }
-  }
-
-  // Round value to 2 decimal places if it's a number with more than 2 decimal places
-  if (typeof value === 'number' && !Number.isInteger(value)) {
-    const rounded = Number.parseFloat(value.toFixed(2))
-    if (rounded !== value) {
-      logger.info(`Rounded value from ${value} to ${rounded}`)
-      value = rounded
-    }
-  }
-
-  // Dynamically extract hour, day, month, year from endDateTime
-  let hour, day, month, year
-  if (found.endDateTime) {
-    const dateObj = new Date(found.endDateTime)
-    let hours = dateObj.getHours()
-    const ampm = hours >= 12 ? 'pm' : 'am'
-    hours = hours % 12
-    hours = hours === 0 ? 12 : hours
-    hour = `${hours}${ampm}`
-    day = `${dateObj.getDate()}`
-    month = dateObj.toLocaleString('en-GB', { month: 'long' })
-    year = `${dateObj.getFullYear()}`
-  }
+  const mockedValue = applyMockMode(found.value, mockMode, found.value)
+  const value = roundValue(mockedValue)
+  const { hour, day, month, year } = getTimeComponents(found.endDateTime)
   return {
     value,
     unit,
     startDate: ymdStartDate,
     endDate: isoEndDate,
-    time: {
-      date: isoEndDate,
-      hour,
-      day,
-      month,
-      year
-    }
+    time: { date: isoEndDate, hour, day, month, year }
   }
 }
 
@@ -173,7 +184,7 @@ async function enrichSitesWithPollutants(
   optionsSiteId,
   startDateTime,
   endDateTime,
-  logger,
+  log,
   catchProxyFetchError
 ) {
   const enrichedTempData = []
@@ -184,25 +195,22 @@ async function enrichSitesWithPollutants(
         `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}`,
         optionsSiteId
       )
-      logger.info(
-        `Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`
-      )
+      log.info(`Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`)
     }
 
     const pollutants = extractPollutants(siteData)
-    logger.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
+    log.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
 
-    // Only include sites that have valid pollutants after filtering
     if (pollutants) {
       enrichedTempData.push({
         ...site,
         pollutants
       })
-      logger.info(
+      log.info(
         `✓ Including site ${site.name} with ${Object.keys(pollutants).length} pollutants`
       )
     } else {
-      logger.info(
+      log.info(
         `✗ Excluding site ${site.name} - no valid pollutants after filtering`
       )
     }

@@ -33,7 +33,10 @@ async function getAPIPollutants(region, currentTime) {
       areaType: item.location_type,
       location: {
         type: 'Point',
-        coordinates: [parseFloat(item.latitude), parseFloat(item.longitude)]
+        coordinates: [
+          Number.parseFloat(item.latitude),
+          Number.parseFloat(item.longitude)
+        ]
       },
       updated: currentTime,
       pollutants: { ...newObj }
@@ -46,8 +49,8 @@ async function getAPIPollutants(region, currentTime) {
     return all
   }, [])
   const resulSplit = []
-  for (let i = 0; i < split.length; i++) {
-    resulSplit.push(await pollutantUpdater(split[i]))
+  for (const chunk of split) {
+    resulSplit.push(await pollutantUpdater(chunk))
   }
   return resulSplit
 }

@@ -247,7 +247,7 @@ const config = convict({
   },
   sftpPrivateKey: {
     doc: 'SSH Private Key - To Fetch Met Office Data From SFTP DEFRA Server',
-    format: String, // TODO: maybe custom validate this
+    format: String,
     default: '',
     env: 'SSH_PRIVATE_KEY'
   },

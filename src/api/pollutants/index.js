@@ -1,7 +1,4 @@
-import {
-  pollutantsController,
-  historicalPollutantsController
-} from './controllers/index.js'
+import { pollutantsController } from './controllers/index.js'
 
 const measurements = {
   plugin: {
@@ -18,19 +15,4 @@ const measurements = {
   }
 }
 
-const historicalMeasurements = {
-  plugin: {
-    name: 'historicalMeasurements',
-    register: async (server) => {
-      server.route([
-        {
-          method: 'GET',
-          path: '/historicalMeasurements',
-          ...historicalPollutantsController
-        }
-      ])
-    }
-  }
-}
-
-export { measurements, historicalMeasurements }
+export { measurements }

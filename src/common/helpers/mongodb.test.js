@@ -1,13 +1,13 @@
+import { describe, test, expect, beforeAll, afterAll } from 'vitest'
 import { Db, MongoClient } from 'mongodb'
-
 import { LockManager } from 'mongo-locks'
+import { MONGO_START_TIMEOUT } from '../../api/pollutants/helpers/common/constants.js'
 
 // Suppress unhandled MongoDB shutdown errors in Vitest
 
 process.on('unhandledRejection', (reason) => {
   if (
-    reason &&
-    reason.codeName === 'InterruptedAtShutdown' &&
+    reason?.codeName === 'InterruptedAtShutdown' &&
     (reason.errmsg === 'interrupted at shutdown' ||
       (typeof reason.errmsg === 'string' &&
         reason.errmsg.includes('Index build failed')))
@@ -38,7 +38,7 @@ describe('#mongoDb', () => {
       server = await createServer()
 
       await server.initialize()
-    }, 30000)
+    }, MONGO_START_TIMEOUT)
 
     afterAll(async () => {
       if (server) {
@@ -76,7 +76,7 @@ describe('#mongoDb', () => {
       server = await createServer()
 
       await server.initialize()
-    }, 30000)
+    }, MONGO_START_TIMEOUT)
 
     test('Should close Mongo client on server stop', async () => {
       try {
@@ -88,7 +88,9 @@ describe('#mongoDb', () => {
       } catch (err) {
         // Ignore Mongo shutdown errors
 
-        if (!/interrupted at shutdown/.test(err?.message)) throw err
+        if (!/interrupted at shutdown/.test(err?.message)) {
+          throw err
+        }
       }
 
       // Check that the Mongo client object still exists (driver does not throw on db() after close)

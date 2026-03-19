@@ -1,6 +1,11 @@
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
 import { connectSftpThroughProxy } from './connectSftpViaProxy.js'
+import {
+  HTTP_OK,
+  HTTP_NOT_FOUND,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '../../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
 
@@ -19,7 +24,10 @@ const metOfficeForecastReadController = {
       // List files in the remote directory
       const fileList = await new Promise((resolve, reject) => {
         sftp.readdir(remoteDir, (err, list) => {
-          if (err) return reject(err)
+          if (err) {
+            reject(err)
+            return
+          }
           resolve(list)
         })
       })
@@ -39,13 +47,16 @@ const metOfficeForecastReadController = {
             success: false,
             message: `File ${filename} not found`
           })
-          .code(404)
+          .code(HTTP_NOT_FOUND)
       }
 
       // If found, get the file content and download it into a buffer
       const fileBuffer = await new Promise((resolve, reject) => {
         sftp.readFile(`${remoteDir}${filename}`, (err, buffer) => {
-          if (err) return reject(err)
+          if (err) {
+            reject(err)
+            return
+          }
           resolve(buffer)
         })
       })
@@ -53,14 +64,16 @@ const metOfficeForecastReadController = {
 
       return h
         .response(fileBuffer.toString())
-        .type('application/xml') // or 'text/xml'
-        .code(200)
+        .type('application/xml')
+        .code(HTTP_OK)
         .header('Access-Control-Allow-Origin', allowOriginUrl)
     } catch (error) {
       logger.error(`Error Message listing file: ${error.message}`)
       logger.error(`'Error listing file:' ${error}`)
       logger.error(`'JSON Error listing file:' ${JSON.stringify(error)}`)
-      return h.response({ success: false, error: error.message }).code(500)
+      return h
+        .response({ success: false, error: error.message })
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
   }
 }

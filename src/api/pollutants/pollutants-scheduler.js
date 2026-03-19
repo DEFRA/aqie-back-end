@@ -29,9 +29,10 @@ async function fetchAndSavePollutants(server) {
     try {
       const measurements = await fetchPollutants()
       logger.info(`updating ${measurements.length} measurements`)
-      const result = measurements.filter(function ({ name }) {
-        return !this.has(name) && this.add(name)
-      }, new Set())
+      const seen = new Set()
+      const result = measurements.filter(
+        ({ name }) => !seen.has(name) && seen.add(name)
+      )
       logger.info(`updating ${result.length} result`)
       await savePollutants(server, result)
     } finally {

@@ -1,4 +1,5 @@
 import { config } from '../../../config/index.js'
+import { HTTP_OK } from '../../pollutants/helpers/common/constants.js'
 
 // Helper to fetch OAuth token
 async function fetchOAuthToken(catchProxyFetchError, logger) {
@@ -28,13 +29,13 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
     logger.info(`OAuth response status: ${statusCodeToken}`)
     logger.info(`OAuth response data: ${JSON.stringify(dataToken)}`)
 
-    if (statusCodeToken !== 200) {
+    if (statusCodeToken !== HTTP_OK) {
       throw new Error(
         `Error fetching OAuth token: HTTP ${statusCodeToken} - ${JSON.stringify(dataToken)}`
       )
     }
 
-    if (!dataToken || !dataToken.token) {
+    if (!dataToken?.token) {
       throw new Error(
         `Invalid OAuth response: missing token field in ${JSON.stringify(dataToken)}`
       )
@@ -55,13 +56,13 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
 // Helper to refresh OAuth token and store in session
 async function refreshOAuthToken(
   request,
-  fetchOAuthToken,
+  fetchOAuthTokenFn,
   catchProxyFetchError,
   logger
 ) {
   try {
     logger.info('Attempting to refresh OAuth token')
-    const accessToken = await fetchOAuthToken(catchProxyFetchError, logger)
+    const accessToken = await fetchOAuthTokenFn(catchProxyFetchError, logger)
 
     if (!accessToken) {
       logger.error('Failed to get access token from fetchOAuthToken')

@@ -1,7 +1,4 @@
-import {
-  forecastsController,
-  historicalForecastsController
-} from './controllers/index.js'
+import { forecastsController } from './controllers/index.js'
 
 const forecasts = {
   plugin: {
@@ -18,19 +15,4 @@ const forecasts = {
   }
 }
 
-const historicalForecasts = {
-  plugin: {
-    name: 'historicalForecasts',
-    register: async (server) => {
-      server.route([
-        {
-          method: 'GET',
-          path: '/historicalForecasts',
-          ...historicalForecastsController
-        }
-      ])
-    }
-  }
-}
-
-export { forecasts, historicalForecasts }
+export { forecasts }
