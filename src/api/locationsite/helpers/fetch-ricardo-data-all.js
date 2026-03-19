@@ -26,7 +26,9 @@ function buildqueryparam(base, requestQuery) {
   for (const key of allowedKeys) {
     const value = requestQuery[key]
 
-    if (value === undefined || value === null || value === '') continue
+    if (value === undefined || value === null || value === '') {
+      continue
+    }
 
     if (Array.isArray(value)) {
       appendArrayValues(params, key, value)
@@ -58,7 +60,7 @@ async function fetchRicardoDataAll({
     ;[, dataAll] = await catchProxyFetchError(url, optionsOAuthRicardo)
   } catch (err) {
     console.error('Error fetching Ricardo data:', err)
-    dataAll = undefined
+    dataAll = null
   }
   if (!dataAll || typeof dataAll !== 'object') {
     return {}
