@@ -11,18 +11,14 @@ const currentTime = new Date(momentDate)
 
 const fetchPollutants = async () => {
   const measurements = []
-  let measurementsFinal = []
-  for (let i = 0; i < POLLUTANT_REGIONS.length; i++) {
-    const res = await getAPIPollutants(POLLUTANT_REGIONS[i], currentTime)
+  for (const region of POLLUTANT_REGIONS) {
+    const res = await getAPIPollutants(region, currentTime)
     measurements.push(res)
   }
-  measurementsFinal = measurements.flat().flat()
-  return measurementsFinal
+  return measurements.flat().flat()
 }
 
 const savePollutants = async (server, pollutants) => {
-  // await server.db.collection('measurements').deleteMany({})
-  // await server.db.collection('historicalMeasurements').deleteMany({})
   logger.info(`updating ${pollutants.length} pollutants`)
   logger.info(`pollutantsss ${JSON.stringify(pollutants)}`)
   try {

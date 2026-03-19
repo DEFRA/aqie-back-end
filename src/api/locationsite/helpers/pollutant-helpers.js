@@ -3,7 +3,10 @@ import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
 import {
   POLLUTANT_MAP,
-  HOURS_IN_DAY
+  HOURS_IN_DAY,
+  INVALID_POLLUTANT_LARGE,
+  INVALID_POLLUTANT_SMALL,
+  MOCK_PROBABILITY
 } from '../../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
@@ -20,7 +23,9 @@ function normalizePollutantName(name) {
 
 // Helper to extract pollutants from site data
 function extractPollutants(siteData) {
-  if (!Array.isArray(siteData?.member)) return undefined
+  if (!Array.isArray(siteData?.member)) {
+    return undefined
+  }
   const pollutants = {}
 
   logger.info(
@@ -32,17 +37,14 @@ function extractPollutants(siteData) {
     logger.info(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
 
     if (found) {
-      // Build pollutant data first (which includes mocking)
       const pollutantData = buildPollutantData(found)
       logger.info(
         `Built pollutant data for ${shortCode}: value=${pollutantData.value}`
       )
 
-      // Now filter based on the final value (after any mocking)
-      // Exclude -9999, -99, null, and '0' values
       if (
-        pollutantData.value !== -9999 &&
-        pollutantData.value !== -99 &&
+        pollutantData.value !== INVALID_POLLUTANT_LARGE &&
+        pollutantData.value !== INVALID_POLLUTANT_SMALL &&
         pollutantData.value !== null &&
         pollutantData.value !== '0' &&
         pollutantData.value !== 0
@@ -65,17 +67,19 @@ function extractPollutants(siteData) {
 function findPollutant(members, fullName) {
   const normalizedFullName = normalizePollutantName(fullName)
 
-  // Find all matching pollutants
   const matches = members.filter((m) => {
-    if (!m.pollutantName) return false
+    if (!m.pollutantName) {
+      return false
+    }
     return normalizePollutantName(m.pollutantName).startsWith(
       normalizedFullName
     )
   })
 
-  if (matches.length === 0) return undefined
+  if (matches.length === 0) {
+    return undefined
+  }
 
-  // Return the one with the most recent endDateTime
   return matches.reduce((latest, current) => {
     if (!latest.endDateTime) {
       return current
@@ -95,9 +99,15 @@ function applyMockMode(value, mockMode, originalValue) {
   if (!mockMode) {
     return value
   }
-  const shouldMock = Math.random() < 0.9
+  const shouldMock = Math.random() < MOCK_PROBABILITY
   if (shouldMock) {
-    const invalidValues = [-9999, -99, null, '0', 0]
+    const invalidValues = [
+      INVALID_POLLUTANT_LARGE,
+      INVALID_POLLUTANT_SMALL,
+      null,
+      '0',
+      0
+    ]
     const mockedValue =
       invalidValues[Math.floor(Math.random() * invalidValues.length)]
     logger.info(`MOCKED: Value changed from ${originalValue} to ${mockedValue}`)
@@ -174,7 +184,7 @@ async function enrichSitesWithPollutants(
   optionsSiteId,
   startDateTime,
   endDateTime,
-  logger,
+  log,
   catchProxyFetchError
 ) {
   const enrichedTempData = []
@@ -185,25 +195,22 @@ async function enrichSitesWithPollutants(
         `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}`,
         optionsSiteId
       )
-      logger.info(
-        `Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`
-      )
+      log.info(`Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`)
     }
 
     const pollutants = extractPollutants(siteData)
-    logger.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
+    log.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
 
-    // Only include sites that have valid pollutants after filtering
     if (pollutants) {
       enrichedTempData.push({
         ...site,
         pollutants
       })
-      logger.info(
+      log.info(
         `✓ Including site ${site.name} with ${Object.keys(pollutants).length} pollutants`
       )
     } else {
-      logger.info(
+      log.info(
         `✗ Excluding site ${site.name} - no valid pollutants after filtering`
       )
     }

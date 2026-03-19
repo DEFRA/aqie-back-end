@@ -98,7 +98,7 @@ describe('pollutantUpdater', () => {
 
     await pollutantUpdater(data)
 
-    expect(data[0].pollutants.NO2.value).toBe('0.50')
+    expect(data[0].pollutants.NO2.value).toBe(0.5)
   })
 
   test('sets pollutant value to toFixed(0) when measured is above NEAR_ONE_THRESHOLD', async () => {
@@ -111,7 +111,7 @@ describe('pollutantUpdater', () => {
 
     await pollutantUpdater(data)
 
-    expect(data[0].pollutants.NO2.value).toBe('1')
+    expect(data[0].pollutants.NO2.value).toBe(1)
   })
 
   test('sets pollutant value to null for missingFOI', async () => {

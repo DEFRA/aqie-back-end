@@ -1,13 +1,20 @@
 // Helper to fetch dataAll from Ricardo API
 
+function appendArrayValues(params, key, values) {
+  for (const v of values) {
+    if (v !== undefined && v !== null && v !== '') {
+      params.append(key, String(v))
+    }
+  }
+}
+
 function buildqueryparam(base, requestQuery) {
-  const url = new URL(base) // base URL without query params
+  const url = new URL(base)
   const params = new URLSearchParams()
 
-  // List of keys we accept from the query
   const allowedKeys = [
     'page',
-    'networks[]', // note the square brackets for repeated values
+    'networks[]',
     'with-closed',
     'with-pollutants',
     'start-date',
@@ -19,16 +26,10 @@ function buildqueryparam(base, requestQuery) {
   for (const key of allowedKeys) {
     const value = requestQuery[key]
 
-    // Skip if undefined, null, or empty string
     if (value === undefined || value === null || value === '') continue
 
-    // Handle arrays (or repeated 'networks[]')
     if (Array.isArray(value)) {
-      for (const v of value) {
-        if (v !== undefined && v !== null && v !== '') {
-          params.append(key, String(v))
-        }
-      }
+      appendArrayValues(params, key, value)
     } else {
       params.set(key, String(value))
     }
@@ -47,7 +48,7 @@ async function fetchRicardoDataAll({
   const url = buildqueryparam(ricardoApiAllDataUrl, requestQuery)
 
   if (typeof catchProxyFetchError !== 'function') {
-    throw new Error(
+    throw new TypeError(
       'catchProxyFetchError must be provided as a function dependency'
     )
   }
@@ -56,12 +57,10 @@ async function fetchRicardoDataAll({
   try {
     ;[, dataAll] = await catchProxyFetchError(url, optionsOAuthRicardo)
   } catch (err) {
-    // Log the error for debugging purposes
     console.error('Error fetching Ricardo data:', err)
     dataAll = undefined
   }
   if (!dataAll || typeof dataAll !== 'object') {
-    // Optionally log a warning here
     return {}
   }
   return dataAll

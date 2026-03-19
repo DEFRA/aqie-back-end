@@ -12,7 +12,7 @@ async function lock(db, lockName) {
     logger.info(`lock on ${lockName} claim successfully`)
     return true
   } catch (error) {
-    logger.info(`lock ${lockName} is already claimed`)
+    logger.info(`lock ${lockName} is already claimed: ${error.message}`)
     return false
   }
 }
@@ -23,7 +23,7 @@ async function unlock(db, lockName) {
     logger.info(`attempting to release lock ${lockName}`)
     return (await locks.deleteOne({ _id: lockName }).deletedCount) === 1
   } catch (error) {
-    logger.warn(`failed to release lock ${lockName}`)
+    logger.warn(`failed to release lock ${lockName}: ${error.message}`)
     return false
   }
 }

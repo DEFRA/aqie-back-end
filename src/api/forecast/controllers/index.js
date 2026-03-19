@@ -1,2 +1,1 @@
-import { forecastsController } from './forecasts.js'
-export { forecastsController }
+export { forecastsController } from './forecasts.js'

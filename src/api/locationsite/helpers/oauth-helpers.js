@@ -35,7 +35,7 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
       )
     }
 
-    if (!dataToken || !dataToken.token) {
+    if (!dataToken?.token) {
       throw new Error(
         `Invalid OAuth response: missing token field in ${JSON.stringify(dataToken)}`
       )

@@ -55,19 +55,18 @@ function buildPromises(data, timestamp) {
             }
           ]
         } else {
-          try {
-            promises = [
-              ...promises,
-              {
-                [k]: proxyFetch(
-                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
-                  POLLUTANT_FETCH_OPTIONS
-                )
-              }
-            ]
-          } catch (error) {
-            logger.error(error)
-          }
+          promises = [
+            ...promises,
+            {
+              [k]: proxyFetch(
+                `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
+                POLLUTANT_FETCH_OPTIONS
+              ).catch((error) => {
+                logger.error(error)
+                return null
+              })
+            }
+          ]
         }
       })
     } catch (error) {
@@ -83,8 +82,8 @@ function computePollutantValue(measured) {
   }
   if (measured < 1 && measured > 0) {
     return measured > NEAR_ONE_THRESHOLD
-      ? Number.parseFloat(measured).toFixed(0)
-      : Number.parseFloat(measured).toFixed(2)
+      ? Math.round(measured)
+      : Number.parseFloat(measured.toFixed(2))
   }
   return Math.round(measured)
 }
