@@ -1,36 +1,19 @@
 import { createLogger } from '../../helpers/logging/logger.js'
 import { getAPIPollutants } from './helpers/get-api-pollutants.js'
 import moment from 'moment-timezone'
+import { MAX_LISTENERS, POLLUTANT_REGIONS } from './helpers/common/constants.js'
 
-process.setMaxListeners(500)
+process.setMaxListeners(MAX_LISTENERS)
 
 const logger = createLogger()
 const momentDate = moment().tz('Europe/London')
 const currentTime = new Date(momentDate)
-const regions = [
-  { name: 'North East Scotland', id: 3, split: 12 },
-  { name: 'North Wales', id: 4, split: 2 },
-  { name: 'Highland', id: 5, split: 4 },
-  { name: 'Central Scotland', id: 6, split: 12 },
-  { name: 'Eastern', id: 7, split: 12 },
-  { name: 'South East', id: 8, split: 19 },
-  { name: 'South Wales', id: 9, split: 9 },
-  { name: 'NorthWest And Merseyside', id: 10, split: 19 },
-  { name: 'South West', id: 11, split: 14 },
-  { name: 'East Midlands', id: 12, split: 14 },
-  { name: 'Scottish Borders', id: 13, split: 3 },
-  { name: 'North East', id: 14, split: 9 },
-  { name: 'Greater London', id: 15, split: 16 },
-  { name: 'West Midlands', id: 16, split: 15 },
-  { name: 'Yorkshire And Humberside', id: 17, split: 16 },
-  { name: 'Isle of Man', id: 18, split: 7 }
-]
 
 const fetchPollutants = async () => {
   const measurements = []
   let measurementsFinal = []
-  for (let i = 0; i < regions.length; i++) {
-    const res = await getAPIPollutants(regions[i], currentTime)
+  for (let i = 0; i < POLLUTANT_REGIONS.length; i++) {
+    const res = await getAPIPollutants(POLLUTANT_REGIONS[i], currentTime)
     measurements.push(res)
   }
   measurementsFinal = measurements.flat().flat()

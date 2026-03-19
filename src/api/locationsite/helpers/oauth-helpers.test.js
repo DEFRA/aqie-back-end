@@ -1,5 +1,5 @@
 import { vi, describe, test, expect, beforeEach } from 'vitest'
-import { fetchOAuthToken } from './oauth-helpers.js'
+import { fetchOAuthToken, refreshOAuthToken } from './oauth-helpers.js'
 import { config } from '../../../config/index.js'
 
 // Mock the config module
@@ -148,6 +148,95 @@ describe('#oauth-helpers', () => {
 
       const token = await fetchOAuthToken(mockCatchProxyFetchError, mockLogger)
       expect(token).toBe('token')
+    })
+
+    test('Should return null when dataToken is null', async () => {
+      config.get.mockReturnValue('https://example.com/token')
+      mockCatchProxyFetchError.mockResolvedValue([200, null])
+
+      const token = await fetchOAuthToken(mockCatchProxyFetchError, mockLogger)
+
+      expect(token).toBeNull()
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid OAuth response')
+      )
+    })
+
+    test('Should return null when response has no token field', async () => {
+      config.get.mockReturnValue('https://example.com/token')
+      mockCatchProxyFetchError.mockResolvedValue([200, { someField: 'value' }])
+
+      const token = await fetchOAuthToken(mockCatchProxyFetchError, mockLogger)
+
+      expect(token).toBeNull()
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid OAuth response')
+      )
+    })
+  })
+
+  describe('#refreshOAuthToken', () => {
+    let mockRequest
+    let mockFetchOAuthToken
+
+    beforeEach(() => {
+      mockRequest = {
+        yar: {
+          clear: vi.fn(),
+          set: vi.fn()
+        }
+      }
+      mockFetchOAuthToken = vi.fn()
+    })
+
+    test('Should store token in session and return it when successful', async () => {
+      mockFetchOAuthToken.mockResolvedValue('valid-token-123')
+
+      const result = await refreshOAuthToken(
+        mockRequest,
+        mockFetchOAuthToken,
+        mockCatchProxyFetchError,
+        mockLogger
+      )
+
+      expect(result).toBe('valid-token-123')
+      expect(mockRequest.yar.clear).toHaveBeenCalledWith('savedAccessToken')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'savedAccessToken',
+        'valid-token-123'
+      )
+    })
+
+    test('Should return null and log error when fetchOAuthToken returns null', async () => {
+      mockFetchOAuthToken.mockResolvedValue(null)
+
+      const result = await refreshOAuthToken(
+        mockRequest,
+        mockFetchOAuthToken,
+        mockCatchProxyFetchError,
+        mockLogger
+      )
+
+      expect(result).toBeNull()
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to get access token from fetchOAuthToken'
+      )
+    })
+
+    test('Should return null and log error when fetchOAuthToken throws', async () => {
+      mockFetchOAuthToken.mockRejectedValue(new Error('Token fetch failed'))
+
+      const result = await refreshOAuthToken(
+        mockRequest,
+        mockFetchOAuthToken,
+        mockCatchProxyFetchError,
+        mockLogger
+      )
+
+      expect(result).toBeNull()
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error in refreshOAuthToken')
+      )
     })
   })
 })

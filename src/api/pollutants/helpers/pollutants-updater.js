@@ -9,27 +9,24 @@ import {
   getTempDate,
   getValueMeasured
 } from './body-parser.js'
+import {
+  DAYS_BACK,
+  MAX_LISTENERS,
+  NEAR_ONE_THRESHOLD,
+  OWS_EXCEPTION_REPORT,
+  POLLUTANT_FETCH_OPTIONS
+} from './common/constants.js'
 
-process.setMaxListeners(500)
+process.setMaxListeners(MAX_LISTENERS)
 const logger = createLogger()
 const urlExtra = config.get('pollutantstUrlExtra')
 
-///
 const parser = new XMLParser()
-const options = {
-  headers: {
-    'Cache-Control': 'no-cache'
-  }
-}
 
-export async function pollutantUpdater(data) {
-  logger.info(
-    `pollutants updater running... ${data[0].name} max ${data.length}`
-  )
-  let promises = []
+function buildTimestamp() {
   const startTimeStamp = moment
     .utc()
-    .add(-2, 'days')
+    .add(DAYS_BACK, 'days')
     .set({ hour: 23, minute: 0, second: 0 })
     .format('YYYY-MM-DDTHH:mm:ss[Z]')
   const endTimeStamp = moment
@@ -38,80 +35,87 @@ export async function pollutantUpdater(data) {
     .add(1, 'years')
     .set({ hour: 0, minute: 0, second: 0 })
     .format('YYYY-MM-DDTHH:mm:ss[Z]')
-  const timestamp = `${startTimeStamp}/${endTimeStamp}`
+  return `${startTimeStamp}/${endTimeStamp}`
+}
 
-  data.forEach((site, index) => {
+function buildPromises(data, timestamp) {
+  let promises = []
+  data.forEach((site) => {
     try {
       const { pollutants } = site
-      Object.entries(pollutants).forEach(([k, v], i) => {
+      Object.entries(pollutants).forEach(([k, v]) => {
         logger.info(
           `pollutants url with timestamps... ${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`
         )
-        if (v.featureOfInterest !== 'missingFOI') {
-          try {
-            promises = [
-              ...promises,
-              {
-                [k]: proxyFetch(
-                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
-                  options
-                )
-              }
-            ]
-          } catch (error) {
-            logger.error(error)
-          }
-        } else {
+        if (v.featureOfInterest === 'missingFOI') {
           promises = [
             ...promises,
             {
               [k]: Promise.resolve('missingFOI')
             }
           ]
+        } else {
+          try {
+            promises = [
+              ...promises,
+              {
+                [k]: proxyFetch(
+                  `${urlExtra}${timestamp}&featureOfInterest=${v.featureOfInterest}`,
+                  POLLUTANT_FETCH_OPTIONS
+                )
+              }
+            ]
+          } catch (error) {
+            logger.error(error)
+          }
         }
       })
     } catch (error) {
       logger.error(error)
     }
   })
+  return promises
+}
 
-  const promisesOnly = promises.map((item) => {
-    return Object.entries(item)[0][1]
-  })
-
-  const insertPollutantsValues = (res) => {
-    data.forEach((site, index) => {
-      try {
-        const { pollutants } = site
-        let measuredIndex = 0
-        Object.entries(pollutants).forEach(([k, v], i) => {
-          pollutants[k].value =
-            res[measuredIndex]?.value &&
-            !isNaN(Math.round(res[measuredIndex]?.value))
-              ? res[measuredIndex]?.value < 1 && res[measuredIndex]?.value > 0
-                ? res[measuredIndex]?.value > parseFloat(0.98999)
-                  ? parseFloat(res[measuredIndex]?.value).toFixed(0)
-                  : parseFloat(res[measuredIndex]?.value).toFixed(2)
-                : Math.round(res[measuredIndex]?.value)
-              : null
-          pollutants[k].time.date =
-            res[measuredIndex]?.value && res[measuredIndex]?.time.date
-              ? new Date(
-                  moment(res[measuredIndex]?.time.date).tz('Europe/London')
-                )
-              : null
-          pollutants[k].exception = res[measuredIndex]?.exception
-          measuredIndex++
-        })
-      } catch (error) {
-        logger.info(error)
-      }
-    })
+function computePollutantValue(measured) {
+  if (!measured || Number.isNaN(Math.round(measured))) {
+    return null
   }
+  if (measured < 1 && measured > 0) {
+    return measured > NEAR_ONE_THRESHOLD
+      ? Number.parseFloat(measured).toFixed(0)
+      : Number.parseFloat(measured).toFixed(2)
+  }
+  return Math.round(measured)
+}
 
+function insertPollutantsValues(data, res) {
+  data.forEach((site) => {
+    try {
+      const { pollutants } = site
+      let measuredIndex = 0
+      Object.entries(pollutants).forEach(([k]) => {
+        const measured = res[measuredIndex]?.value
+        pollutants[k].value = computePollutantValue(measured)
+        pollutants[k].time.date =
+          res[measuredIndex]?.value && res[measuredIndex]?.time.date
+            ? new Date(
+                moment(res[measuredIndex]?.time.date).tz('Europe/London')
+              )
+            : null
+        pollutants[k].exception = res[measuredIndex]?.exception
+        measuredIndex++
+      })
+    } catch (error) {
+      logger.info(error)
+    }
+  })
+}
+
+async function processResponses(promisesOnly, data) {
   await reduce(
     promisesOnly,
-    async (accumulator, response, index, array) => {
+    async (accumulator, response) => {
       let valueMeasured = ''
       let dateMeasured = ''
       let tempDate = []
@@ -128,7 +132,7 @@ export async function pollutantUpdater(data) {
           const body = parser.parse(await response.text())
           if (
             body &&
-            !body?.['ows:ExceptionReport'] &&
+            !body?.[OWS_EXCEPTION_REPORT] &&
             !['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
             ]?.['aqd:reportingPeriod']
@@ -136,16 +140,15 @@ export async function pollutantUpdater(data) {
             valueMeasured = getValueMeasured(body)
             tempDate = getTempDate(body)
             dateMeasured = getDateMeasured(body, tempDate)
-            exceptionReport = ''
           }
           if (
             body?.['gml:FeatureCollection']?.['gml:featureMember']?.[
               'aqd:AQD_ReportingHeader'
             ]?.['aqd:reportingPeriod'] ||
-            body?.['ows:ExceptionReport']?.['ows:Exception']?.[
+            body?.[OWS_EXCEPTION_REPORT]?.['ows:Exception']?.[
               'ows:ExceptionText'
             ] ||
-            body?.['ows:ExceptionReport']
+            body?.[OWS_EXCEPTION_REPORT]
           ) {
             valueMeasured = 'N/M'
             exceptionReport = 'N/M'
@@ -163,11 +166,23 @@ export async function pollutantUpdater(data) {
           time: { date: dateMeasured }
         }
       ]
-      await insertPollutantsValues(result)
+      insertPollutantsValues(data, result)
       return result
     },
     []
   )
+}
+
+export async function pollutantUpdater(data) {
+  logger.info(
+    `pollutants updater running... ${data[0].name} max ${data.length}`
+  )
+  const timestamp = buildTimestamp()
+  const promises = buildPromises(data, timestamp)
+  const promisesOnly = promises.map((item) => {
+    return Object.entries(item)[0][1]
+  })
+  await processResponses(promisesOnly, data)
   logger.info(`pollutants updater done! ${JSON.stringify(data)}`)
   return data
 }

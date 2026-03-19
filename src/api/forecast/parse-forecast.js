@@ -48,7 +48,9 @@ function dmsToDecimal(d, m, s, dir) {
   const minutes = parseFloat(m)
   const seconds = parseFloat(s)
   const decimal = degrees + minutes / 60 + seconds / 3600
-  if (dir === 'S' || dir === 'W') return -decimal
+  if (dir === 'S' || dir === 'W') {
+    return -decimal
+  }
   return decimal
 }
 

@@ -1,18 +1,11 @@
 // Pollutant helpers for locationsite
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
+import { POLLUTANT_MAP } from '../../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
 
-// Map of short code to full pollutant name
-const pollutantMap = {
-  NO2: 'Nitrogen dioxide',
-  PM10: 'PM10',
-  PM25: 'PM2.5',
-  O3: 'Ozone',
-  SO2: 'Sulphur dioxide'
-}
-const pollutantNames = Object.values(pollutantMap)
+const pollutantNames = Object.values(POLLUTANT_MAP)
 
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
@@ -31,7 +24,7 @@ function extractPollutants(siteData) {
     `Extracting pollutants from siteData: ${JSON.stringify(siteData)}`
   )
 
-  for (const [shortCode, fullName] of Object.entries(pollutantMap)) {
+  for (const [shortCode, fullName] of Object.entries(POLLUTANT_MAP)) {
     const found = findPollutant(siteData.member, fullName)
     logger.info(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
 
