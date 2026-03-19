@@ -27,10 +27,10 @@ async function buildEnrichedTempData({
   if (Array.isArray(dataAll.member) && dataAll.member.length > 0) {
     let members = dataAll.member
     const totalItems =
-      typeof global.requestQuery === 'object' &&
-      global.requestQuery.totalItems !== undefined &&
-      global.requestQuery.totalItems !== null
-        ? global.requestQuery.totalItems
+      typeof globalThis.requestQuery === 'object' &&
+      globalThis.requestQuery.totalItems !== undefined &&
+      globalThis.requestQuery.totalItems !== null
+        ? globalThis.requestQuery.totalItems
         : undefined
     if (totalItems !== undefined && totalItems !== null) {
       members = members.slice(0, Number(totalItems))

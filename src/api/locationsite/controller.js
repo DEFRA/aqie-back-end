@@ -4,6 +4,10 @@ import { config } from '../../config/index.js'
 import { buildEnrichedTempData } from './helpers/build-enriched-temp-data.js'
 import { fetchRicardoDataAll } from './helpers/fetch-ricardo-data-all.js'
 import { refreshOAuthToken, fetchOAuthToken } from './helpers/oauth-helpers.js'
+import {
+  HTTP_OK,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
 
@@ -22,7 +26,9 @@ const siteController = {
         logger
       ))
     if (!accessToken) {
-      return h.response({ error: 'Failed to fetch access token' }).code(500)
+      return h
+        .response({ error: 'Failed to fetch access token' })
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
     logger.info('Access token fetched successfully')
     const optionsOAuthRicardo = {
@@ -42,8 +48,11 @@ const siteController = {
     })
 
     // Set requestQuery globally for the helper
-    global.requestQuery = request.query
-    if (!global.requestQuery?.stream || global.requestQuery.stream !== 'data') {
+    globalThis.requestQuery = request.query
+    if (
+      !globalThis.requestQuery?.stream ||
+      globalThis.requestQuery.stream !== 'data'
+    ) {
       const enrichedTempData = await buildEnrichedTempData({
         dataAll,
         ricardoApiSiteIdUrl,
@@ -69,14 +78,13 @@ const siteController = {
           message,
           measurements: enrichedTempData
         })
-        .code(200)
+        .code(HTTP_OK)
     } else {
       return h
         .response({
-          // message,
           measurements: dataAll
         })
-        .code(200)
+        .code(HTTP_OK)
     }
   }
 }

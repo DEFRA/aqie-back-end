@@ -1,7 +1,10 @@
 // Pollutant helpers for locationsite
 import { config } from '../../../config/index.js'
 import { createLogger } from '../../../helpers/logging/logger.js'
-import { POLLUTANT_MAP } from '../../pollutants/helpers/common/constants.js'
+import {
+  POLLUTANT_MAP,
+  HOURS_IN_DAY
+} from '../../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
 
@@ -10,8 +13,8 @@ const pollutantNames = Object.values(POLLUTANT_MAP)
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
   return name
-    .replace(/<sub>(.*?)<\/sub>/g, (_, sub) => sub)
-    .replace(/\s/g, '')
+    .replaceAll(/<sub>(.*?)<\/sub>/g, (_, sub) => sub)
+    .replaceAll(/\s/g, '')
     .toLowerCase()
 }
 
@@ -74,14 +77,62 @@ function findPollutant(members, fullName) {
 
   // Return the one with the most recent endDateTime
   return matches.reduce((latest, current) => {
-    if (!latest.endDateTime) return current
-    if (!current.endDateTime) return latest
+    if (!latest.endDateTime) {
+      return current
+    }
+    if (!current.endDateTime) {
+      return latest
+    }
 
     const latestDate = new Date(latest.endDateTime)
     const currentDate = new Date(current.endDateTime)
 
     return currentDate > latestDate ? current : latest
   })
+}
+
+function applyMockMode(value, mockMode, originalValue) {
+  if (!mockMode) {
+    return value
+  }
+  const shouldMock = Math.random() < 0.9
+  if (shouldMock) {
+    const invalidValues = [-9999, -99, null, '0', 0]
+    const mockedValue =
+      invalidValues[Math.floor(Math.random() * invalidValues.length)]
+    logger.info(`MOCKED: Value changed from ${originalValue} to ${mockedValue}`)
+    return mockedValue
+  }
+  logger.info(`NOT MOCKED: Value kept original: ${value}`)
+  return value
+}
+
+function roundValue(value) {
+  if (typeof value === 'number' && !Number.isInteger(value)) {
+    const rounded = Number.parseFloat(value.toFixed(2))
+    if (rounded !== value) {
+      logger.info(`Rounded value from ${value} to ${rounded}`)
+      return rounded
+    }
+  }
+  return value
+}
+
+function getTimeComponents(dateStr) {
+  if (!dateStr) {
+    return {}
+  }
+  const dateObj = new Date(dateStr)
+  let hours = dateObj.getHours()
+  const ampm = hours >= HOURS_IN_DAY ? 'pm' : 'am'
+  hours = hours % HOURS_IN_DAY
+  hours = hours === 0 ? HOURS_IN_DAY : hours
+  return {
+    hour: `${hours}${ampm}`,
+    day: `${dateObj.getDate()}`,
+    month: dateObj.toLocaleString('en-GB', { month: 'long' }),
+    year: `${dateObj.getFullYear()}`
+  }
 }
 
 function buildPollutantData(found) {
@@ -92,60 +143,17 @@ function buildPollutantData(found) {
     ? new Date(found.startDateTime).toISOString().slice(0, 10)
     : undefined
   const unit = getPollutantUnit(found.unit)
-
-  // Use config-based mock mode
   const mockMode = config.get('mockInvalidPollutants')
-  let value = found.value
-
   logger.info(`Mock mode: ${mockMode}, Original value: ${found.value}`)
-
-  if (mockMode) {
-    // 90% chance to mock a pollutant as -9999
-    const shouldMock = Math.random() < 0.9
-    if (shouldMock) {
-      // Randomly choose between different invalid values to test filtering
-      const invalidValues = [-9999, -99, null, '0', 0]
-      value = invalidValues[Math.floor(Math.random() * invalidValues.length)]
-      logger.info(`MOCKED: Value changed from ${found.value} to ${value}`)
-    } else {
-      logger.info(`NOT MOCKED: Value kept original: ${value}`)
-    }
-  }
-
-  // Round value to 2 decimal places if it's a number with more than 2 decimal places
-  if (typeof value === 'number' && !Number.isInteger(value)) {
-    const rounded = Number.parseFloat(value.toFixed(2))
-    if (rounded !== value) {
-      logger.info(`Rounded value from ${value} to ${rounded}`)
-      value = rounded
-    }
-  }
-
-  // Dynamically extract hour, day, month, year from endDateTime
-  let hour, day, month, year
-  if (found.endDateTime) {
-    const dateObj = new Date(found.endDateTime)
-    let hours = dateObj.getHours()
-    const ampm = hours >= 12 ? 'pm' : 'am'
-    hours = hours % 12
-    hours = hours === 0 ? 12 : hours
-    hour = `${hours}${ampm}`
-    day = `${dateObj.getDate()}`
-    month = dateObj.toLocaleString('en-GB', { month: 'long' })
-    year = `${dateObj.getFullYear()}`
-  }
+  const mockedValue = applyMockMode(found.value, mockMode, found.value)
+  const value = roundValue(mockedValue)
+  const { hour, day, month, year } = getTimeComponents(found.endDateTime)
   return {
     value,
     unit,
     startDate: ymdStartDate,
     endDate: isoEndDate,
-    time: {
-      date: isoEndDate,
-      hour,
-      day,
-      month,
-      year
-    }
+    time: { date: isoEndDate, hour, day, month, year }
   }
 }
 

@@ -1,3 +1,8 @@
+import {
+  SECONDS_PER_HOUR,
+  MINUTES_PER_HOUR
+} from '../pollutants/helpers/common/constants.js'
+
 function parseForecast(item) {
   const name = item.title
   const updated = new Date(item.pubDate)
@@ -15,8 +20,8 @@ function parseForecast(item) {
 
   const location = {
     type: 'Point',
-    coordinates: coordinates.slice(0, 2).map((c) => {
-      return dmsToDecimal(c[1], c[2], c[3], c[4])
+    coordinates: coordinates.slice(0, 2).map(([, d, m, s, dir]) => {
+      return dmsToDecimal(d, m, s, dir)
     })
   }
 
@@ -32,7 +37,7 @@ function parseForecast(item) {
   // Reformat the readings
   const forecast = days.map((day, i) => ({
     day,
-    value: parseInt(values[i], 10)
+    value: Number.parseInt(values[i], 10)
   }))
 
   return {
@@ -44,10 +49,11 @@ function parseForecast(item) {
 }
 
 function dmsToDecimal(d, m, s, dir) {
-  const degrees = parseFloat(d)
-  const minutes = parseFloat(m)
-  const seconds = parseFloat(s)
-  const decimal = degrees + minutes / 60 + seconds / 3600
+  const degrees = Number.parseFloat(d)
+  const minutes = Number.parseFloat(m)
+  const seconds = Number.parseFloat(s)
+  const decimal =
+    degrees + minutes / MINUTES_PER_HOUR + seconds / SECONDS_PER_HOUR
   if (dir === 'S' || dir === 'W') {
     return -decimal
   }

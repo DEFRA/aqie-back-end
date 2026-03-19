@@ -1,2 +1,1 @@
-import { pollutantsController } from './pollutants.js'
-export { pollutantsController }
+export { pollutantsController } from './pollutants.js'
