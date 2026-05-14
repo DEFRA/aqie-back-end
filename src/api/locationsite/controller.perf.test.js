@@ -22,9 +22,9 @@ import { getMonitoringStations } from './helpers/get-monitoring-stations.js'
 
 // ─── Tune these to match observed production latencies (ms) ──────────────────
 const DELAYS = {
-  dbRead: 5,          // MongoDB monitoringStations collection read (local/Atlas)
-  oauthLogin: 350,    // Ricardo OAuth login round-trip
-  allDataFetch: 850   // GET ricardoApiAllDataUrl — full station list
+  dbRead: 5, // MongoDB monitoringStations collection read (local/Atlas)
+  oauthLogin: 350, // Ricardo OAuth login round-trip
+  allDataFetch: 850 // GET ricardoApiAllDataUrl — full station list
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -113,170 +113,167 @@ describe('/monitoringStationInfo — pipeline performance characterisation', () 
   })
 
   // ─── Test 1: Cached path ──────────────────────────────────────────────────
-  it(
-    'cached path (default): serves from MongoDB — no Ricardo calls',
-    async () => {
-      const stationCount = 10
-      const timings = []
+  it('cached path (default): serves from MongoDB — no Ricardo calls', async () => {
+    const stationCount = 10
+    const timings = []
 
-      getMonitoringStations.mockImplementation(async () => {
-        const t0 = performance.now()
-        await sleep(DELAYS.dbRead)
-        timings.push({ phase: 'MongoDB read (monitoringStations)', elapsed: performance.now() - t0 })
-        return buildMockStations(stationCount)
+    getMonitoringStations.mockImplementation(async () => {
+      const t0 = performance.now()
+      await sleep(DELAYS.dbRead)
+      timings.push({
+        phase: 'MongoDB read (monitoringStations)',
+        elapsed: performance.now() - t0
       })
+      return buildMockStations(stationCount)
+    })
 
-      const requestStart = performance.now()
-      await siteController.handler(mockRequest, mockH)
-      const totalElapsed = performance.now() - requestStart
+    const requestStart = performance.now()
+    await siteController.handler(mockRequest, mockH)
+    const totalElapsed = performance.now() - requestStart
 
-      const rows = timings.map(({ phase, elapsed }) => ({
-        Phase: phase,
-        'Duration (ms)': elapsed.toFixed(0),
-        '% of total': ((elapsed / totalElapsed) * 100).toFixed(1) + '%'
-      }))
-      rows.push({
-        Phase: '── TOTAL',
-        'Duration (ms)': totalElapsed.toFixed(0),
-        '% of total': '100.0%'
-      })
+    const rows = timings.map(({ phase, elapsed }) => ({
+      Phase: phase,
+      'Duration (ms)': elapsed.toFixed(0),
+      '% of total': ((elapsed / totalElapsed) * 100).toFixed(1) + '%'
+    }))
+    rows.push({
+      Phase: '── TOTAL',
+      'Duration (ms)': totalElapsed.toFixed(0),
+      '% of total': '100.0%'
+    })
 
-      console.log(
-        `\n╔══ Cached path — ${stationCount} stations from MongoDB ══╗`
-      )
-      console.table(rows)
-      console.log(
-        'Ricardo API calls: 0 — stations served from MongoDB cache\n'
-      )
+    console.log(`\n╔══ Cached path — ${stationCount} stations from MongoDB ══╗`)
+    console.table(rows)
+    console.log('Ricardo API calls: 0 — stations served from MongoDB cache\n')
 
-      expect(timings).toHaveLength(1)
-      expect(totalElapsed).toBeGreaterThanOrEqual(DELAYS.dbRead - 5)
-      expect(mockH.response).toHaveBeenCalledOnce()
-      // Confirm no Ricardo calls were made
-      expect(catchProxyFetchError).not.toHaveBeenCalled()
-      expect(refreshOAuthToken).not.toHaveBeenCalled()
-    },
-    10_000
-  )
+    expect(timings).toHaveLength(1)
+    expect(totalElapsed).toBeGreaterThanOrEqual(DELAYS.dbRead - 5)
+    expect(mockH.response).toHaveBeenCalledOnce()
+    // Confirm no Ricardo calls were made
+    expect(catchProxyFetchError).not.toHaveBeenCalled()
+    expect(refreshOAuthToken).not.toHaveBeenCalled()
+  }, 10_000)
 
   // ─── Test 2: Live path (stream=data) ─────────────────────────────────────
-  it(
-    'live path (stream=data): OAuth + all-stations fetch only — no per-site enrichment',
-    async () => {
-      const stationCount = 10
-      const timings = []
-      mockRequest.query = { stream: 'data' }
+  it('live path (stream=data): OAuth + all-stations fetch only — no per-site enrichment', async () => {
+    const stationCount = 10
+    const timings = []
+    mockRequest.query = { stream: 'data' }
 
-      refreshOAuthToken.mockImplementation(async (request) => {
-        const t0 = performance.now()
-        await sleep(DELAYS.oauthLogin)
-        timings.push({ phase: 'OAuth login (Ricardo)', elapsed: performance.now() - t0 })
-        request.yar.set('savedAccessToken', 'mock-token')
-        return 'mock-token'
+    refreshOAuthToken.mockImplementation(async (request) => {
+      const t0 = performance.now()
+      await sleep(DELAYS.oauthLogin)
+      timings.push({
+        phase: 'OAuth login (Ricardo)',
+        elapsed: performance.now() - t0
       })
+      request.yar.set('savedAccessToken', 'mock-token')
+      return 'mock-token'
+    })
 
-      catchProxyFetchError.mockImplementation(async () => {
-        const t0 = performance.now()
-        await sleep(DELAYS.allDataFetch)
-        timings.push({ phase: 'All-stations fetch (Ricardo)', elapsed: performance.now() - t0 })
-        return [200, buildMockDataAll(stationCount)]
+    catchProxyFetchError.mockImplementation(async () => {
+      const t0 = performance.now()
+      await sleep(DELAYS.allDataFetch)
+      timings.push({
+        phase: 'All-stations fetch (Ricardo)',
+        elapsed: performance.now() - t0
       })
+      return [200, buildMockDataAll(stationCount)]
+    })
 
-      const requestStart = performance.now()
-      await siteController.handler(mockRequest, mockH)
-      const totalElapsed = performance.now() - requestStart
+    const requestStart = performance.now()
+    await siteController.handler(mockRequest, mockH)
+    const totalElapsed = performance.now() - requestStart
 
-      const rows = timings.map(({ phase, elapsed }) => ({
-        Phase: phase,
-        'Duration (ms)': elapsed.toFixed(0),
-        '% of total': ((elapsed / totalElapsed) * 100).toFixed(1) + '%'
-      }))
-      rows.push({
-        Phase: '── TOTAL',
-        'Duration (ms)': totalElapsed.toFixed(0),
-        '% of total': '100.0%'
-      })
+    const rows = timings.map(({ phase, elapsed }) => ({
+      Phase: phase,
+      'Duration (ms)': elapsed.toFixed(0),
+      '% of total': ((elapsed / totalElapsed) * 100).toFixed(1) + '%'
+    }))
+    rows.push({
+      Phase: '── TOTAL',
+      'Duration (ms)': totalElapsed.toFixed(0),
+      '% of total': '100.0%'
+    })
 
-      console.log(
-        `\n╔══ Live path (stream=data) — ${stationCount} stations, no per-site enrichment ══╗`
-      )
-      console.table(rows)
-      console.log(
-        `Configured delays  │ OAuth: ${DELAYS.oauthLogin}ms │ All-data: ${DELAYS.allDataFetch}ms\n`
-      )
+    console.log(
+      `\n╔══ Live path (stream=data) — ${stationCount} stations, no per-site enrichment ══╗`
+    )
+    console.table(rows)
+    console.log(
+      `Configured delays  │ OAuth: ${DELAYS.oauthLogin}ms │ All-data: ${DELAYS.allDataFetch}ms\n`
+    )
 
-      // oauth (1) + all-data (1)
-      expect(timings).toHaveLength(2)
-      expect(totalElapsed).toBeGreaterThanOrEqual(DELAYS.oauthLogin + DELAYS.allDataFetch - 100)
-      expect(mockH.response).toHaveBeenCalledOnce()
-    },
-    15_000
-  )
+    // oauth (1) + all-data (1)
+    expect(timings).toHaveLength(2)
+    expect(totalElapsed).toBeGreaterThanOrEqual(
+      DELAYS.oauthLogin + DELAYS.allDataFetch - 100
+    )
+    expect(mockH.response).toHaveBeenCalledOnce()
+  }, 15_000)
 
   // ─── Test 3: Cached vs live comparison ───────────────────────────────────
-  it(
-    'comparison: cached path is dramatically faster than the live path',
-    async () => {
-      const stationCount = 10
+  it('comparison: cached path is dramatically faster than the live path', async () => {
+    const stationCount = 10
 
-      // — Measure cached path —
-      getMonitoringStations.mockImplementation(async () => {
-        await sleep(DELAYS.dbRead)
-        return buildMockStations(stationCount)
-      })
-      const cachedStart = performance.now()
-      await siteController.handler(mockRequest, mockH)
-      const cachedTotal = performance.now() - cachedStart
+    // — Measure cached path —
+    getMonitoringStations.mockImplementation(async () => {
+      await sleep(DELAYS.dbRead)
+      return buildMockStations(stationCount)
+    })
+    const cachedStart = performance.now()
+    await siteController.handler(mockRequest, mockH)
+    const cachedTotal = performance.now() - cachedStart
 
-      vi.clearAllMocks()
-      mockH.response.mockImplementation(() => ({ code: vi.fn().mockReturnThis() }))
+    vi.clearAllMocks()
+    mockH.response.mockImplementation(() => ({
+      code: vi.fn().mockReturnThis()
+    }))
 
-      // — Measure live path (stream=data) —
-      mockRequest.query = { stream: 'data' }
-      mockRequest.yar.get.mockReturnValue(null)
-      refreshOAuthToken.mockImplementation(async (request) => {
-        await sleep(DELAYS.oauthLogin)
-        request.yar.set('savedAccessToken', 'mock-token')
-        return 'mock-token'
-      })
-      catchProxyFetchError.mockImplementation(async () => {
-        await sleep(DELAYS.allDataFetch)
-        return [200, buildMockDataAll(stationCount)]
-      })
+    // — Measure live path (stream=data) —
+    mockRequest.query = { stream: 'data' }
+    mockRequest.yar.get.mockReturnValue(null)
+    refreshOAuthToken.mockImplementation(async (request) => {
+      await sleep(DELAYS.oauthLogin)
+      request.yar.set('savedAccessToken', 'mock-token')
+      return 'mock-token'
+    })
+    catchProxyFetchError.mockImplementation(async () => {
+      await sleep(DELAYS.allDataFetch)
+      return [200, buildMockDataAll(stationCount)]
+    })
 
-      const liveStart = performance.now()
-      await siteController.handler(mockRequest, mockH)
-      const liveTotal = performance.now() - liveStart
+    const liveStart = performance.now()
+    await siteController.handler(mockRequest, mockH)
+    const liveTotal = performance.now() - liveStart
 
-      const estimatedPreCachingMs =
-        DELAYS.oauthLogin + DELAYS.allDataFetch + 300 * stationCount
+    const estimatedPreCachingMs =
+      DELAYS.oauthLogin + DELAYS.allDataFetch + 300 * stationCount
 
-      console.log('\n╔══ Latency comparison ══╗')
-      console.table([
-        {
-          Path: 'Cached (default, DB read)',
-          'Total (ms)': cachedTotal.toFixed(0),
-          'Ricardo calls': 0
-        },
-        {
-          Path: 'Live (stream=data, no enrichment)',
-          'Total (ms)': liveTotal.toFixed(0),
-          'Ricardo calls': 2
-        },
-        {
-          Path: 'Pre-caching estimate (OAuth+allData+enrichment×n)',
-          'Total (ms)': estimatedPreCachingMs.toFixed(0),
-          'Ricardo calls': 2 + stationCount
-        }
-      ])
-      console.log(
-        `Speedup (cached vs live): ${(liveTotal / cachedTotal).toFixed(1)}×\n` +
-          `Speedup (cached vs pre-caching estimate): ${(estimatedPreCachingMs / cachedTotal).toFixed(0)}×\n`
-      )
+    console.log('\n╔══ Latency comparison ══╗')
+    console.table([
+      {
+        Path: 'Cached (default, DB read)',
+        'Total (ms)': cachedTotal.toFixed(0),
+        'Ricardo calls': 0
+      },
+      {
+        Path: 'Live (stream=data, no enrichment)',
+        'Total (ms)': liveTotal.toFixed(0),
+        'Ricardo calls': 2
+      },
+      {
+        Path: 'Pre-caching estimate (OAuth+allData+enrichment×n)',
+        'Total (ms)': estimatedPreCachingMs.toFixed(0),
+        'Ricardo calls': 2 + stationCount
+      }
+    ])
+    console.log(
+      `Speedup (cached vs live): ${(liveTotal / cachedTotal).toFixed(1)}×\n` +
+        `Speedup (cached vs pre-caching estimate): ${(estimatedPreCachingMs / cachedTotal).toFixed(0)}×\n`
+    )
 
-      // Cached path must be substantially faster than the live path
-      expect(cachedTotal).toBeLessThan(liveTotal)
-    },
-    30_000
-  )
+    // Cached path must be substantially faster than the live path
+    expect(cachedTotal).toBeLessThan(liveTotal)
+  }, 30_000)
 })

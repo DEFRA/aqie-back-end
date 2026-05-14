@@ -295,4 +295,3 @@ describe('siteController', () => {
     })
   })
 })
-

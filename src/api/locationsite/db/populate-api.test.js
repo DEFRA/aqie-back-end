@@ -38,8 +38,13 @@ describe('populateMonitoringStationsApi', () => {
     expect(
       mockServer.db.collection.mock.results[0].value.deleteMany
     ).toHaveBeenCalledWith({})
-    expect(mockSaveMonitoringStations).toHaveBeenCalledWith(mockServer, stations)
-    expect(mockLogger.info).toHaveBeenCalledWith('Updated 2 monitoring stations')
+    expect(mockSaveMonitoringStations).toHaveBeenCalledWith(
+      mockServer,
+      stations
+    )
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Updated 2 monitoring stations'
+    )
   })
 
   test('skips delete and save when fetch returns empty array', async () => {

@@ -17,9 +17,7 @@ const monitoringStationsScheduler = {
       schedule(config.get('monitoringStationsSchedule'), async () => {
         await fetchAndSaveMonitoringStations(server)
       })
-      logger.info(
-        'Monitoring Stations Scheduler done! Running every 6 hours'
-      )
+      logger.info('Monitoring Stations Scheduler done! Running every 6 hours')
     }
   }
 }

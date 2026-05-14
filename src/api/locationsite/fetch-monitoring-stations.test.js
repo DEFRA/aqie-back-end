@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchMonitoringStations, saveMonitoringStations } from './fetch-monitoring-stations.js'
+import {
+  fetchMonitoringStations,
+  saveMonitoringStations
+} from './fetch-monitoring-stations.js'
+import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
+import { fetchOAuthToken } from './helpers/oauth-helpers.js'
 
 vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
   catchProxyFetchError: vi.fn()
@@ -22,9 +27,6 @@ vi.mock('../../config/index.js', () => ({
   }
 }))
 
-import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
-import { fetchOAuthToken } from './helpers/oauth-helpers.js'
-
 const mockMember = (n) => ({
   siteName: `Station ${n}`,
   governmentRegion: 'South East',
@@ -43,7 +45,10 @@ describe('fetchMonitoringStations', () => {
 
   it('returns a mapped array of station objects on success', async () => {
     fetchOAuthToken.mockResolvedValue('valid-token')
-    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1), mockMember(2)] }])
+    catchProxyFetchError.mockResolvedValue([
+      200,
+      { member: [mockMember(1), mockMember(2)] }
+    ])
 
     const result = await fetchMonitoringStations()
 
