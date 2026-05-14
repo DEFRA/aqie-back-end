@@ -1,9 +1,9 @@
 import { createLogger } from '../../helpers/logging/logger.js'
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
 import { config } from '../../config/index.js'
-import { buildEnrichedTempData } from './helpers/build-enriched-temp-data.js'
 import { fetchRicardoDataAll } from './helpers/fetch-ricardo-data-all.js'
 import { refreshOAuthToken, fetchOAuthToken } from './helpers/oauth-helpers.js'
+import { getMonitoringStations } from './helpers/get-monitoring-stations.js'
 import {
   HTTP_OK,
   HTTP_INTERNAL_SERVER_ERROR
@@ -13,8 +13,19 @@ const logger = createLogger()
 
 const siteController = {
   handler: async (request, h) => {
+    // Default path: serve basic station metadata from the MongoDB cache.
+    // The cache is populated and periodically refreshed by monitoringStationsScheduler.
+    if (!request.query?.stream || request.query.stream !== 'data') {
+      const stations = await getMonitoringStations(request.db)
+      const message =
+        stations.length === 0
+          ? 'No monitoring stations currently available in cache.'
+          : `Monitoring Stations Info (${stations.length} stations)`
+      return h.response({ message, stations }).code(HTTP_OK)
+    }
+
+    // stream=data path: live pass-through to Ricardo API, bypassing the cache.
     const ricardoApiAllDataUrl = config.get('ricardoApiAllDataUrl')
-    const ricardoApiSiteIdUrl = config.get('ricardoApiSiteIdUrl')
 
     const savedAccessToken = request.yar.get('savedAccessToken')
     const accessToken =
@@ -31,6 +42,7 @@ const siteController = {
         .code(HTTP_INTERNAL_SERVER_ERROR)
     }
     logger.info('Access token fetched successfully')
+
     const optionsOAuthRicardo = {
       method: 'GET',
       headers: {
@@ -39,7 +51,6 @@ const siteController = {
       }
     }
 
-    // Use the new helper to fetch dataAll, passing catchProxyFetchError explicitly
     const dataAll = await fetchRicardoDataAll({
       ricardoApiAllDataUrl,
       optionsOAuthRicardo,
@@ -47,45 +58,8 @@ const siteController = {
       catchProxyFetchError
     })
 
-    // Set requestQuery globally for the helper
-    globalThis.requestQuery = request.query
-    if (
-      !globalThis.requestQuery?.stream ||
-      globalThis.requestQuery.stream !== 'data'
-    ) {
-      const enrichedTempData = await buildEnrichedTempData({
-        dataAll,
-        ricardoApiSiteIdUrl,
-        accessToken,
-        logger,
-        catchProxyFetchError
-      })
-
-      // Build dynamic message for station names
-      let message
-      if (!enrichedTempData || enrichedTempData.length === 0) {
-        message =
-          'There are currently not monitoring stations for that station id.'
-      } else {
-        // Always show 3 slots, fill with 'Not Available' if missing
-        const names = [0, 1, 2].map(
-          (i) => enrichedTempData[i]?.name || 'Not Available'
-        )
-        message = `Monitoring Stations Info for ${names.join(' - ')}`
-      }
-      return h
-        .response({
-          message,
-          measurements: enrichedTempData
-        })
-        .code(HTTP_OK)
-    } else {
-      return h
-        .response({
-          measurements: dataAll
-        })
-        .code(HTTP_OK)
-    }
+    return h.response({ measurements: dataAll }).code(HTTP_OK)
   }
 }
+
 export { siteController }

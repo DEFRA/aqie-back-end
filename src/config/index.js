@@ -220,6 +220,12 @@ const config = convict({
     default: '0 */1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
   },
+  monitoringStationsSchedule: {
+    doc: 'How often to refresh the monitoring stations cache from Ricardo (cron format)',
+    format: String,
+    default: '0 */6 * * *',
+    env: 'MONITORING_STATIONS_SCHEDULE'
+  },
   alertNotifucationUrl: {
     doc: 'URL to the Notify API service',
     format: String,

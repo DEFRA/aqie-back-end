@@ -75,6 +75,7 @@ This project uses [convict](https://github.com/mozilla/node-convict) for configu
 | `ACCESS_CONTROL_ALLOW_ORIGIN_URL` |          | Allowed CORS origin URL                                                              |
 | `FORECAST_SCHEDULE`               |          | Cron expression for forecast data polling (default: `0 05-10 * * *` — hourly 5–10am) |
 | `POLLUTANTS_SCHEDULE`             |          | Cron expression for pollutant data polling (default: `0 */1 * * *` — every hour)     |
+| `MONITORING_STATIONS_SCHEDULE`    |          | Cron expression for monitoring station cache refresh (default: `0 */6 * * *` — every 6 hours) |
 
 All other configuration values have sensible defaults — see [src/config/index.js](src/config/index.js) for the full list.
 
@@ -142,7 +143,7 @@ npm run
 | `GET: /health`                | Health check                                                                 |
 | `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)   |
 | `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                             |
-| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)       |
+| `GET: /monitoringStationInfo` | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Use `?stream=data` for a live pass-through to the Ricardo API (requires credentials). |
 | `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)       |
 | `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key) |
 
@@ -166,8 +167,13 @@ curl http://localhost:3001/forecasts
 # Remember to revert it afterwards so it doesn't hammer the upstream API every minute.
 curl http://localhost:3001/measurements
 
-# Monitoring station info (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
+# Monitoring station info — reads from MongoDB cache, populated on startup and refreshed every 6 hours
+# Returns immediately with no Ricardo API calls
 curl http://localhost:3001/monitoringStationInfo
+
+# Live pass-through to Ricardo API, bypasses the cache (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
+# To force an immediate cache refresh, restart the service.
+curl http://localhost:3001/monitoringStationInfo?stream=data
 
 # List files on Met Office SFTP (requires SSH_PRIVATE_KEY in .env)
 curl http://localhost:3001/sftp/files

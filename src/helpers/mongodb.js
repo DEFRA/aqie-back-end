@@ -50,6 +50,10 @@ async function createIndexes(db) {
   await db
     .collection('historicalMeasurements')
     .createIndex({ location: '2dsphere' })
+  await db.collection('monitoringStations').createIndex({ name: 1 })
+  await db
+    .collection('monitoringStations')
+    .createIndex({ location: '2dsphere' })
 }
 
 export { mongoPlugin }
