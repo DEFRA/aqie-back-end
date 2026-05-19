@@ -44,7 +44,8 @@ const fetchMonitoringStations = async () => {
       type: 'Point',
       coordinates: [Number(item.latitude), Number(item.longitude)]
     },
-    distance: item.distanceFromPoint
+    distance: item.distanceFromPoint,
+    stationStatus: item.stationStatus ?? null
   }))
 }
 

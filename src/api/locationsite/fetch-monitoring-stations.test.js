@@ -35,7 +35,8 @@ const mockMember = (n) => ({
   areaType: 'Background',
   latitude: 51.5 + n * 0.01,
   longitude: -0.1 + n * 0.01,
-  distanceFromPoint: n * 0.5
+  distanceFromPoint: n * 0.5,
+  stationStatus: 'current'
 })
 
 describe('fetchMonitoringStations', () => {
@@ -59,7 +60,8 @@ describe('fetchMonitoringStations', () => {
       localSiteID: 'SITE1',
       areaType: 'Urban Background',
       location: { type: 'Point' },
-      distance: 0.5
+      distance: 0.5,
+      stationStatus: 'current'
     })
     expect(result[0].location.coordinates[0]).toBeCloseTo(51.51, 5)
     expect(result[0].location.coordinates[1]).toBeCloseTo(-0.09, 5)
