@@ -138,15 +138,15 @@ npm run
 
 ## API endpoints
 
-| Endpoint                      | Description                                                                                                                                                                                    |
-| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET: /health`                | Health check                                                                                                                                                                                   |
-| `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)                                                                                                                     |
-| `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                                                                                                                                               |
-| `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request.                                               |
-| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                                                                         |
-| `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)                                                                                                                         |
-| `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                                                                   |
+| Endpoint                      | Description                                                                                                                                      |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET: /health`                | Health check                                                                                                                                     |
+| `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)                                                                       |
+| `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                                                                                                 |
+| `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request. |
+| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                           |
+| `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)                                                                           |
+| `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                     |
 
 ## Calling API endpoints
 
