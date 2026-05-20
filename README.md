@@ -143,7 +143,8 @@ npm run
 | `GET: /health`                | Health check                                                                                                                                                                                   |
 | `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)                                                                                                                     |
 | `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                                                                                                                                               |
-| `GET: /monitoringStationInfo` | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Use `?stream=data` for a live pass-through to the Ricardo API (requires credentials). |
+| `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request.                                               |
+| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                                                                         |
 | `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)                                                                                                                         |
 | `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                                                                   |
 
@@ -167,13 +168,12 @@ curl http://localhost:3001/forecasts
 # Remember to revert it afterwards so it doesn't hammer the upstream API every minute.
 curl http://localhost:3001/measurements
 
-# Monitoring station info — reads from MongoDB cache, populated on startup and refreshed every 6 hours
+# Monitoring stations — reads from MongoDB cache, populated on startup and refreshed every 6 hours
 # Returns immediately with no Ricardo API calls
-curl http://localhost:3001/monitoringStationInfo
+curl http://localhost:3001/monitoringStations
 
-# Live pass-through to Ricardo API, bypasses the cache (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
-# To force an immediate cache refresh, restart the service.
-curl http://localhost:3001/monitoringStationInfo?stream=data
+# Monitoring station info via Ricardo API (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
+curl http://localhost:3001/monitoringStationInfo
 
 # List files on Met Office SFTP (requires SSH_PRIVATE_KEY in .env)
 curl http://localhost:3001/sftp/files
