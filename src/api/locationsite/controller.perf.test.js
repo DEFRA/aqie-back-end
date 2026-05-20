@@ -1,5 +1,5 @@
 /**
- * Performance characterisation test for /monitoringStationInfo
+ * Performance characterisation test for monitoring station endpoints
  *
  * External HTTP calls and the MongoDB read are replaced with configurable
  * simulated delays. Adjust DELAYS to match real observed latencies —
@@ -9,13 +9,14 @@
  *   npx vitest run src/api/locationsite/controller.perf.test.js --reporter=verbose
  *
  * Three tests are included:
- *   1. Cached path (default)   — single DB read, no Ricardo calls
- *   2. Live path (stream=data) — OAuth + all-stations fetch, no per-site enrichment
+ *   1. Cached path (GET /monitoringStations)   — single DB read, no Ricardo calls
+ *   2. Live path (GET /monitoringStationInfo?stream=data) — OAuth + all-stations fetch, no per-site enrichment
  *   3. Cached vs live comparison table
  */
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { siteController } from './controller.js'
+import { cachedStationsController } from './cached-stations-controller.js'
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
 import { refreshOAuthToken } from './helpers/oauth-helpers.js'
 import { getMonitoringStations } from './helpers/get-monitoring-stations.js'
@@ -90,7 +91,7 @@ vi.mock('../../config/index.js', () => ({
 }))
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('/monitoringStationInfo — pipeline performance characterisation', () => {
+describe('monitoring station endpoints — pipeline performance characterisation', () => {
   let mockRequest
   let mockH
 
@@ -113,7 +114,7 @@ describe('/monitoringStationInfo — pipeline performance characterisation', () 
   })
 
   // ─── Test 1: Cached path ──────────────────────────────────────────────────
-  it('cached path (default): serves from MongoDB — no Ricardo calls', async () => {
+  it('cached path (GET /monitoringStations): serves from MongoDB — no Ricardo calls', async () => {
     const stationCount = 10
     const timings = []
 
@@ -128,7 +129,7 @@ describe('/monitoringStationInfo — pipeline performance characterisation', () 
     })
 
     const requestStart = performance.now()
-    await siteController.handler(mockRequest, mockH)
+    await cachedStationsController.handler(mockRequest, mockH)
     const totalElapsed = performance.now() - requestStart
 
     const rows = timings.map(({ phase, elapsed }) => ({
@@ -155,7 +156,7 @@ describe('/monitoringStationInfo — pipeline performance characterisation', () 
   }, 10_000)
 
   // ─── Test 2: Live path (stream=data) ─────────────────────────────────────
-  it('live path (stream=data): OAuth + all-stations fetch only — no per-site enrichment', async () => {
+  it('live path (GET /monitoringStationInfo?stream=data): OAuth + all-stations fetch only — no per-site enrichment', async () => {
     const stationCount = 10
     const timings = []
     mockRequest.query = { stream: 'data' }
@@ -216,13 +217,13 @@ describe('/monitoringStationInfo — pipeline performance characterisation', () 
   it('comparison: cached path is dramatically faster than the live path', async () => {
     const stationCount = 10
 
-    // — Measure cached path —
+    // — Measure cached path (GET /monitoringStations) —
     getMonitoringStations.mockImplementation(async () => {
       await sleep(DELAYS.dbRead)
       return buildMockStations(stationCount)
     })
     const cachedStart = performance.now()
-    await siteController.handler(mockRequest, mockH)
+    await cachedStationsController.handler(mockRequest, mockH)
     const cachedTotal = performance.now() - cachedStart
 
     vi.clearAllMocks()
