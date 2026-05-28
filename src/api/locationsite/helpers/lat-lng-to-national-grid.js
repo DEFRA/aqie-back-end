@@ -32,14 +32,10 @@ function latLngToNationalGrid(lat, lng) {
   const cosLatitude = Math.cos(latRadians)
   const primeVerticalRadius =
     wgs84SemiMajorAxis /
-    Math.sqrt(
-      1 - wgs84EccentricitySquared * sinLatitude * sinLatitude
-    )
+    Math.sqrt(1 - wgs84EccentricitySquared * sinLatitude * sinLatitude)
 
-  const cartesianX =
-    primeVerticalRadius * cosLatitude * Math.cos(lngRadians)
-  const cartesianY =
-    primeVerticalRadius * cosLatitude * Math.sin(lngRadians)
+  const cartesianX = primeVerticalRadius * cosLatitude * Math.cos(lngRadians)
+  const cartesianY = primeVerticalRadius * cosLatitude * Math.sin(lngRadians)
   const cartesianZ =
     primeVerticalRadius * (1 - wgs84EccentricitySquared) * sinLatitude
 
@@ -55,12 +51,10 @@ function latLngToNationalGrid(lat, lng) {
 
   const osgb36CartesianX =
     translationX +
-    scaleFactor *
-      (cartesianX - rotationZ * cartesianY + rotationY * cartesianZ)
+    scaleFactor * (cartesianX - rotationZ * cartesianY + rotationY * cartesianZ)
   const osgb36CartesianY =
     translationY +
-    scaleFactor *
-      (rotationZ * cartesianX + cartesianY - rotationX * cartesianZ)
+    scaleFactor * (rotationZ * cartesianX + cartesianY - rotationX * cartesianZ)
   const osgb36CartesianZ =
     translationZ +
     scaleFactor *
@@ -75,8 +69,7 @@ function latLngToNationalGrid(lat, lng) {
       (osgb36SemiMajorAxis * osgb36SemiMajorAxis)
 
   const horizontalDistance = Math.sqrt(
-    osgb36CartesianX * osgb36CartesianX +
-      osgb36CartesianY * osgb36CartesianY
+    osgb36CartesianX * osgb36CartesianX + osgb36CartesianY * osgb36CartesianY
   )
   let osgb36LatRadians = Math.atan2(
     osgb36CartesianZ,
@@ -123,15 +116,11 @@ function latLngToNationalGrid(lat, lng) {
     (osgb36SemiMajorAxis *
       centralMeridianScaleFactor *
       (1 - osgb36EccentricitySquared)) /
-    Math.pow(
-      1 - osgb36EccentricitySquared * sinLat * sinLat,
-      1.5
-    )
+    Math.pow(1 - osgb36EccentricitySquared * sinLat * sinLat, 1.5)
   const transverseRadius =
     (osgb36SemiMajorAxis * centralMeridianScaleFactor) /
     Math.sqrt(1 - osgb36EccentricitySquared * sinLat * sinLat)
-  const secondEccentricitySquared =
-    transverseRadius / meridionalRadius - 1
+  const secondEccentricitySquared = transverseRadius / meridionalRadius - 1
 
   const arcTermA =
     (1 +
@@ -146,8 +135,7 @@ function latLngToNationalGrid(lat, lng) {
     Math.sin(osgb36LatRadians - trueOriginLatRadians) *
     Math.cos(osgb36LatRadians + trueOriginLatRadians)
   const arcTermC =
-    ((15 / 8) * thirdFlatteningSquared +
-      (15 / 8) * thirdFlatteningCubed) *
+    ((15 / 8) * thirdFlatteningSquared + (15 / 8) * thirdFlatteningCubed) *
     Math.sin(2 * (osgb36LatRadians - trueOriginLatRadians)) *
     Math.cos(2 * (osgb36LatRadians + trueOriginLatRadians))
   const arcTermD =

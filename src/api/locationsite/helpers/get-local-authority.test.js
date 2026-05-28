@@ -12,7 +12,9 @@ vi.mock('../../../config/index.js', () => ({
 }))
 
 vi.mock('./lat-lng-to-national-grid.js', () => ({
-  latLngToNationalGrid: vi.fn().mockReturnValue({ easting: 473468, northing: 173207 })
+  latLngToNationalGrid: vi
+    .fn()
+    .mockReturnValue({ easting: 473468, northing: 173207 })
 }))
 
 const mockFetch = vi.fn()
