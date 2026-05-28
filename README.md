@@ -181,8 +181,8 @@ curl http://localhost:3001/sftp/file/<filename>
 A [Postman](https://www.postman.com/) collection and environment are available for making calls to the Teams and
 Repositories API. Simply import the collection and environment into Postman.
 
-- [CDP Node Backend Template Postman Collection](postman/aqie-back-end.postman_collection.json)
-- [CDP Node Backend Template Postman Environment](postman/aqie-back-end.postman_environment.json)
+- [CDP Node Backend Template Postman Collection](postman/cdp-node-backend-template.postman_collection.json)
+- [CDP Node Backend Template Postman Environment](postman/cdp-node-backend-template.postman_environment.json)
 
 ## Licence
 

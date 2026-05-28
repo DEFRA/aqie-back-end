@@ -12,6 +12,9 @@ const mockProxyFetch = vi.hoisted(() => vi.fn())
 const mockGetValueMeasured = vi.hoisted(() => vi.fn())
 const mockGetTempDate = vi.hoisted(() => vi.fn())
 const mockGetDateMeasured = vi.hoisted(() => vi.fn())
+const mockValidateDataFreshness = vi.hoisted(() =>
+  vi.fn().mockReturnValue(true)
+)
 
 vi.mock('fast-xml-parser', () => ({
   XMLParser: vi.fn().mockImplementation(() => ({ parse: mockParse }))
@@ -29,6 +32,9 @@ vi.mock('./body-parser.js', () => ({
   getValueMeasured: mockGetValueMeasured,
   getTempDate: mockGetTempDate,
   getDateMeasured: mockGetDateMeasured
+}))
+vi.mock('./common/validate-data-freshness.js', () => ({
+  validateDataFreshness: mockValidateDataFreshness
 }))
 vi.mock('moment-timezone', () => {
   const chain = {
@@ -227,6 +233,56 @@ describe('pollutantUpdater', () => {
 
     expect(result).toBe(data)
     expect(mockLogger.error).toHaveBeenCalled()
+  })
+
+  test('calls validateDataFreshness with pollutant key and site name when date is present', async () => {
+    const data = [makeSite({ NO2: 'http://example.com/foi' })]
+    mockGetDateMeasured.mockReturnValue('2023-01-01T00:00:00Z')
+    mockProxyFetch.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('<xml/>')
+    })
+
+    await pollutantUpdater(data)
+
+    expect(mockValidateDataFreshness).toHaveBeenCalledWith(
+      expect.any(Date),
+      'NO2',
+      'Test Site'
+    )
+  })
+
+  test('does not call validateDataFreshness when date is null', async () => {
+    const data = [makeSite({ NO2: 'http://example.com/foi' })]
+    mockGetValueMeasured.mockReturnValue(null)
+    mockGetDateMeasured.mockReturnValue(null)
+    mockProxyFetch.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('<xml/>')
+    })
+
+    await pollutantUpdater(data)
+
+    expect(mockValidateDataFreshness).not.toHaveBeenCalled()
+  })
+
+  test('logs error and continues when a pollutant entry is missing the time field', async () => {
+    const data = [
+      {
+        name: 'Broken Site',
+        pollutants: {
+          NO2: { featureOfInterest: 'http://example.com/foi', exception: '' }
+          // intentionally missing `time` field — triggers catch in insertPollutantsValues
+        }
+      }
+    ]
+    mockProxyFetch.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('<xml/>')
+    })
+
+    await expect(pollutantUpdater(data)).resolves.toBe(data)
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.any(TypeError))
   })
 
   test('sets pollutant value to null when measured is NaN string', async () => {
