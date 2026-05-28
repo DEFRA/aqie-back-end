@@ -5,6 +5,7 @@ import {
 } from './fetch-monitoring-stations.js'
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
 import { fetchOAuthToken } from './helpers/oauth-helpers.js'
+import { getLocalAuthorityForCoords } from './helpers/get-local-authority.js'
 
 vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
   catchProxyFetchError: vi.fn()
@@ -12,6 +13,10 @@ vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
 
 vi.mock('./helpers/oauth-helpers.js', () => ({
   fetchOAuthToken: vi.fn()
+}))
+
+vi.mock('./helpers/get-local-authority.js', () => ({
+  getLocalAuthorityForCoords: vi.fn()
 }))
 
 vi.mock('../../helpers/logging/logger.js', () => ({
@@ -42,6 +47,7 @@ const mockMember = (n) => ({
 describe('fetchMonitoringStations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getLocalAuthorityForCoords.mockResolvedValue('Greater London')
   })
 
   it('returns a mapped array of station objects on success', async () => {
@@ -57,6 +63,7 @@ describe('fetchMonitoringStations', () => {
     expect(result[0]).toMatchObject({
       name: 'Station 1',
       area: 'South East',
+      localAuthority: 'Greater London',
       localSiteID: 'SITE1',
       areaType: 'Urban Background',
       location: { type: 'Point' },
@@ -116,6 +123,28 @@ describe('fetchMonitoringStations', () => {
           Authorization: 'Bearer my-token-abc'
         })
       })
+    )
+  })
+
+  it('sets localAuthority to null when getLocalAuthorityForCoords rejects', async () => {
+    getLocalAuthorityForCoords.mockRejectedValue(new Error('OS Names timeout'))
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].localAuthority).toBeNull()
+  })
+
+  it('calls getLocalAuthorityForCoords with the station lat/lng', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+
+    await fetchMonitoringStations()
+
+    expect(getLocalAuthorityForCoords).toHaveBeenCalledWith(
+      expect.closeTo(51.51, 4),
+      expect.closeTo(-0.09, 4)
     )
   })
 

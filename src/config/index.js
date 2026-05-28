@@ -294,6 +294,19 @@ const config = convict({
     format: Boolean,
     default: false,
     env: 'MOCK_INVALID_POLLUTANTS'
+  },
+  osNamesApiKey: {
+    doc: 'OS Names API key for local authority lookup via /nearest endpoint',
+    format: String,
+    default: '',
+    sensitive: true,
+    env: 'OS_NAMES_API_KEY'
+  },
+  osNamesApiUrl: {
+    doc: 'OS Names API base URL',
+    format: String,
+    default: 'https://api.os.uk/search/names/v1/',
+    env: 'OS_NAMES_API_URL'
   }
 })
 
