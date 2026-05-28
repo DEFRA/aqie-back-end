@@ -8,16 +8,22 @@ import {
 import { config } from '../../../config/index.js'
 
 const mockRandomInt = vi.hoisted(() => vi.fn())
+const mockValidateDataFreshness = vi.hoisted(() =>
+  vi.fn().mockReturnValue(true)
+)
 
 vi.mock('node:crypto', () => ({ randomInt: mockRandomInt }))
 
-// Mock the logger before importing the module
 vi.mock('../../../helpers/logging/logger.js', () => ({
   createLogger: () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn()
   })
+}))
+
+vi.mock('../../pollutants/helpers/common/validate-data-freshness.js', () => ({
+  validateDataFreshness: mockValidateDataFreshness
 }))
 
 // Mock the config module
@@ -218,6 +224,53 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.value).toBe(25.0) // Should use the more recent value
     })
 
+    test('Should keep latest when a subsequent member is missing endDateTime', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 22.0,
+            endDateTime: '2025-01-01T10:00:00Z'
+          },
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 99.0
+            // no endDateTime — reduce should keep the prior latest
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(22.0)
+    })
+
+    test('Should return empty time components when pollutant has no endDateTime', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 25.67
+            // no endDateTime → getTimeComponents returns {}
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(25.67)
+      expect(result.NO2.time.date).toBeUndefined()
+      expect(result.NO2.time.hour).toBeUndefined()
+      expect(result.NO2.time.day).toBeUndefined()
+      expect(result.NO2.time.month).toBeUndefined()
+      expect(result.NO2.time.year).toBeUndefined()
+    })
+
     describe('Mocking functionality in buildPollutantData', () => {
       beforeEach(() => {
         config.get.mockReturnValue(true)
@@ -328,6 +381,7 @@ describe('#pollutant-helpers', () => {
 
     beforeEach(() => {
       vi.clearAllMocks()
+      mockValidateDataFreshness.mockReturnValue(true)
       mockLogger = {
         info: vi.fn(),
         error: vi.fn(),
@@ -606,6 +660,45 @@ describe('#pollutant-helpers', () => {
           mockCatchProxyFetchError
         )
       ).rejects.toThrow('Network error')
+    })
+
+    test('Should pass station name to validateDataFreshness', async () => {
+      const mockSite = {
+        name: 'London Marylebone Road',
+        localSiteID: 'TEST001',
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      const mockPollutantResponse = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 25.67,
+            endDateTime: '2025-01-01T10:00:00Z'
+          }
+        ]
+      }
+      mockCatchProxyFetchError.mockResolvedValue([200, mockPollutantResponse])
+
+      await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(mockValidateDataFreshness).toHaveBeenCalledWith(
+        expect.any(String),
+        'Nitrogen dioxide',
+        'London Marylebone Road'
+      )
     })
 
     test('Should construct correct API URL with site ID and date range', async () => {

@@ -9,6 +9,7 @@ import {
   INVALID_POLLUTANT_SMALL,
   MOCK_PROBABILITY
 } from '../../pollutants/helpers/common/constants.js'
+import { validateDataFreshness } from '../../pollutants/helpers/common/validate-data-freshness.js'
 
 const logger = createLogger()
 
@@ -23,7 +24,7 @@ function normalizePollutantName(name) {
 }
 
 // Helper to extract pollutants from site data
-function extractPollutants(siteData) {
+function extractPollutants(siteData, stationName = 'Unknown') {
   if (!Array.isArray(siteData?.member)) {
     return undefined
   }
@@ -38,7 +39,7 @@ function extractPollutants(siteData) {
     logger.info(`Found pollutant ${shortCode}: ${JSON.stringify(found)}`)
 
     if (found) {
-      const pollutantData = buildPollutantData(found)
+      const pollutantData = buildPollutantData(found, stationName)
       logger.info(
         `Built pollutant data for ${shortCode}: value=${pollutantData.value}`
       )
@@ -145,7 +146,12 @@ function getTimeComponents(dateStr) {
   }
 }
 
-function buildPollutantData(found) {
+function buildPollutantData(found, stationName = 'Unknown') {
+  // Validate data freshness
+  if (found.endDateTime) {
+    validateDataFreshness(found.endDateTime, found.pollutantName, stationName)
+  }
+
   const isoEndDate = found.endDateTime
     ? new Date(found.endDateTime).toISOString()
     : undefined
@@ -198,7 +204,7 @@ async function enrichSitesWithPollutants(
       log.info(`Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`)
     }
 
-    const pollutants = extractPollutants(siteData)
+    const pollutants = extractPollutants(siteData, site.name)
     log.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
 
     if (pollutants) {

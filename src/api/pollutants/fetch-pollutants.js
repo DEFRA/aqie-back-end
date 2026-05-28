@@ -19,8 +19,6 @@ const fetchPollutants = async () => {
 }
 
 const savePollutants = async (server, pollutants) => {
-  logger.info(`updating ${pollutants.length} pollutants`)
-  logger.info(`pollutantsss ${JSON.stringify(pollutants)}`)
   try {
     await server.db
       .collection('measurements')

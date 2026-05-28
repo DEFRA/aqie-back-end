@@ -16,6 +16,7 @@ import {
   OWS_EXCEPTION_REPORT,
   POLLUTANT_FETCH_OPTIONS
 } from './common/constants.js'
+import { validateDataFreshness } from './common/validate-data-freshness.js'
 
 process.setMaxListeners(MAX_LISTENERS)
 const logger = createLogger()
@@ -102,6 +103,10 @@ function insertPollutantsValues(data, res) {
                 moment(res[measuredIndex]?.time.date).tz('Europe/London')
               )
             : null
+        // Validate data freshness
+        if (pollutants[k].time.date) {
+          validateDataFreshness(pollutants[k].time.date, k, site.name)
+        }
         pollutants[k].exception = res[measuredIndex]?.exception
         measuredIndex++
       })
