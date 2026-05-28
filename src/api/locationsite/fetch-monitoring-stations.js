@@ -45,8 +45,11 @@ async function fetchMonitoringStations() {
     }
   }
 
+  const url = new URL(ricardoApiAllDataUrl)
+  url.searchParams.set('with-closed', 'true')
+
   const [statusCode, dataAll] = await catchProxyFetchError(
-    ricardoApiAllDataUrl,
+    url.toString(),
     options
   )
 

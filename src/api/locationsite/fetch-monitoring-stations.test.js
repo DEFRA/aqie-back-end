@@ -117,7 +117,7 @@ describe('fetchMonitoringStations', () => {
     await fetchMonitoringStations()
 
     expect(catchProxyFetchError).toHaveBeenCalledWith(
-      'https://mock-ricardo/all-data',
+      'https://mock-ricardo/all-data?with-closed=true',
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer my-token-abc'
@@ -155,6 +155,36 @@ describe('fetchMonitoringStations', () => {
     const result = await fetchMonitoringStations()
 
     expect(result).toEqual([])
+  })
+
+  it('includes closed stations in the returned array', async () => {
+    const closedMember = {
+      ...mockMember(3),
+      stationStatus: 'closed'
+    }
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([
+      200,
+      { member: [mockMember(1), closedMember] }
+    ])
+
+    const result = await fetchMonitoringStations()
+
+    expect(result).toHaveLength(2)
+    expect(result.find((s) => s.stationStatus === 'closed')).toBeDefined()
+    expect(result.find((s) => s.localSiteID === 'SITE3')).toMatchObject({
+      stationStatus: 'closed'
+    })
+  })
+
+  it('requests with-closed=true in the URL', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [] }])
+
+    await fetchMonitoringStations()
+
+    const calledUrl = catchProxyFetchError.mock.calls[0][0]
+    expect(calledUrl).toContain('with-closed=true')
   })
 })
 
