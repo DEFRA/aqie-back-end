@@ -16,7 +16,8 @@
  * @returns {{ easting: number, northing: number }} BNG easting and northing in metres
  */
 
-const toRadians = (degrees) => (degrees * Math.PI) / 180
+const DEGREES_IN_HALF_CIRCLE = 180
+const toRadians = (degrees) => (degrees * Math.PI) / DEGREES_IN_HALF_CIRCLE
 
 // ── Algorithm constants ───────────────────────────────────────────────────
 const ARCSECONDS_PER_DEGREE = 3600
@@ -33,17 +34,19 @@ const OSGB36_ECCENTRICITY_SQUARED =
 
 // BNG Transverse Mercator projection parameters
 const CENTRAL_MERIDIAN_SCALE_FACTOR = 0.9996012717
-const TRUE_ORIGIN_LAT_RADIANS = toRadians(49) // 49° N
-const TRUE_ORIGIN_LNG_RADIANS = toRadians(-2) // 2° W
+const TRUE_ORIGIN_LAT_DEGREES = 49 // 49° N
+const TRUE_ORIGIN_LNG_DEGREES = -2 // 2° W
+const TRUE_ORIGIN_LAT_RADIANS = toRadians(TRUE_ORIGIN_LAT_DEGREES)
+const TRUE_ORIGIN_LNG_RADIANS = toRadians(TRUE_ORIGIN_LNG_DEGREES)
 const FALSE_EASTING = 400000 // metres
 const FALSE_NORTHING = -100000 // metres
 
 // Meridian arc series coefficients (OS Guide to coordinate systems, Appendix C)
-const ARC_COEFF_5_4 = 5 / 4
+const ARC_COEFF_5_4 = 1.25
 const ARC_COEFF_3 = 3
-const ARC_COEFF_21_8 = 21 / 8
-const ARC_COEFF_15_8 = 15 / 8
-const ARC_COEFF_35_24 = 35 / 24
+const ARC_COEFF_21_8 = 2.625
+const ARC_COEFF_15_8 = 1.875
+const ARC_COEFF_35_24 = 1.4583333333333333
 
 // Transverse Mercator northing/easting polynomial coefficients
 const TM_N3_DIVISOR = 24
@@ -64,9 +67,15 @@ const POLY_POWER_5 = 5
 const POLY_POWER_6 = 6
 const MERIDIONAL_RADIUS_POWER = 1.5 // (1 - e²sin²φ)^(3/2) for meridional radius
 
+// Helmert 7-parameter transformation rotation and scale constants (OS document, Table 1)
+const HELMERT_ROTATION_X_ARCSEC = -0.1502 // arcseconds
+const HELMERT_ROTATION_Y_ARCSEC = -0.247 // arcseconds
+const HELMERT_ROTATION_Z_ARCSEC = -0.8421 // arcseconds
+const HELMERT_SCALE_PPM = 20.4894e-6
+
 // ── Step 1: WGS84 lat/lng → WGS84 Cartesian (X, Y, Z) ──────────────────
 function wgs84ToCartesian(lat, lng) {
-  const wgs84SemiMajorAxis = 6378137.0 // metres
+  const wgs84SemiMajorAxis = 6378137 // metres
   const wgs84SemiMinorAxis = 6356752.3141 // metres
   const wgs84EccentricitySquared =
     1 -
@@ -95,10 +104,10 @@ function applyHelmertTransform(cartesianX, cartesianY, cartesianZ) {
   const translationX = -446.448 // metres
   const translationY = 125.157
   const translationZ = -542.06
-  const rotationX = toRadians(-0.1502 / ARCSECONDS_PER_DEGREE) // arcseconds → radians
-  const rotationY = toRadians(-0.247 / ARCSECONDS_PER_DEGREE)
-  const rotationZ = toRadians(-0.8421 / ARCSECONDS_PER_DEGREE)
-  const scaleFactor = 1 + 20.4894e-6
+  const rotationX = toRadians(HELMERT_ROTATION_X_ARCSEC / ARCSECONDS_PER_DEGREE) // arcseconds → radians
+  const rotationY = toRadians(HELMERT_ROTATION_Y_ARCSEC / ARCSECONDS_PER_DEGREE)
+  const rotationZ = toRadians(HELMERT_ROTATION_Z_ARCSEC / ARCSECONDS_PER_DEGREE)
+  const scaleFactor = 1 + HELMERT_SCALE_PPM
 
   const osgb36CartesianX =
     translationX +
@@ -116,7 +125,7 @@ function applyHelmertTransform(cartesianX, cartesianY, cartesianZ) {
 
 // ── Step 3: OSGB36 Cartesian → OSGB36 lat/lng (iterative) ───────────────
 function osgb36CartesianToLatLng(x, y, z) {
-  const horizontalDistance = Math.sqrt(x * x + y * y)
+  const horizontalDistance = Math.hypot(x, y)
   let latRadians = Math.atan2(
     z,
     horizontalDistance * (1 - OSGB36_ECCENTRICITY_SQUARED)
@@ -264,6 +273,11 @@ function osgb36ToEastingNorthing(osgb36LatRadians, osgb36LngRadians) {
 
 // ── Public entry point ────────────────────────────────────────────────────
 function latLngToNationalGrid(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new RangeError(
+      `latLngToNationalGrid requires finite numeric coordinates (lat=${lat}, lng=${lng})`
+    )
+  }
   const { cartesianX, cartesianY, cartesianZ } = wgs84ToCartesian(lat, lng)
   const { osgb36CartesianX, osgb36CartesianY, osgb36CartesianZ } =
     applyHelmertTransform(cartesianX, cartesianY, cartesianZ)

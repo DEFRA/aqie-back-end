@@ -3,7 +3,7 @@ async function getMonitoringStations(db) {
     .collection('monitoringStations')
     .find({}, { projection: { _id: 0 } })
 
-  return await cursor.toArray()
+  return cursor.toArray()
 }
 
 export { getMonitoringStations }
