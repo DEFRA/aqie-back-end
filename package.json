@@ -49,7 +49,7 @@
     "hapi-pulse": "3.0.1",
     "https-proxy-agent": "7.0.6",
     "joi": "17.13.3",
-    "lodash": "4.17.21",
+    "lodash": "4.18.1",
     "lru-cache": "11.1.0",
     "moment": "2.30.1",
     "moment-timezone": "0.5.45",
