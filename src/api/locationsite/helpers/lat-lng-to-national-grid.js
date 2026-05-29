@@ -15,10 +15,57 @@
  * @param {number} lng - WGS84 longitude in decimal degrees (e.g. -0.1278)
  * @returns {{ easting: number, northing: number }} BNG easting and northing in metres
  */
-function latLngToNationalGrid(lat, lng) {
-  const toRadians = (degrees) => (degrees * Math.PI) / 180
 
-  // ── Step 1: WGS84 lat/lng → WGS84 Cartesian (X, Y, Z) ──────────────────
+const toRadians = (degrees) => (degrees * Math.PI) / 180
+
+// ── Algorithm constants ───────────────────────────────────────────────────
+const ARCSECONDS_PER_DEGREE = 3600
+const MAX_ITERATIONS = 10
+const COORD_ROUNDING_FACTOR = 100
+
+// OSGB36 ellipsoid parameters (shared between steps 3 and 4)
+const OSGB36_SEMI_MAJOR_AXIS = 6377563.396 // metres
+const OSGB36_SEMI_MINOR_AXIS = 6356256.909 // metres
+const OSGB36_ECCENTRICITY_SQUARED =
+  1 -
+  (OSGB36_SEMI_MINOR_AXIS * OSGB36_SEMI_MINOR_AXIS) /
+    (OSGB36_SEMI_MAJOR_AXIS * OSGB36_SEMI_MAJOR_AXIS)
+
+// BNG Transverse Mercator projection parameters
+const CENTRAL_MERIDIAN_SCALE_FACTOR = 0.9996012717
+const TRUE_ORIGIN_LAT_RADIANS = toRadians(49) // 49° N
+const TRUE_ORIGIN_LNG_RADIANS = toRadians(-2) // 2° W
+const FALSE_EASTING = 400000 // metres
+const FALSE_NORTHING = -100000 // metres
+
+// Meridian arc series coefficients (OS Guide to coordinate systems, Appendix C)
+const ARC_COEFF_5_4 = 5 / 4
+const ARC_COEFF_3 = 3
+const ARC_COEFF_21_8 = 21 / 8
+const ARC_COEFF_15_8 = 15 / 8
+const ARC_COEFF_35_24 = 35 / 24
+
+// Transverse Mercator northing/easting polynomial coefficients
+const TM_N3_DIVISOR = 24
+const TM_N4_DIVISOR = 720
+const TM_COEFF_5 = 5
+const TM_COEFF_9 = 9
+const TM_COEFF_14 = 14
+const TM_COEFF_18 = 18
+const TM_COEFF_58 = 58
+const TM_COEFF_61 = 61
+const TM_E2_DIVISOR = 6
+const TM_E3_DIVISOR = 120
+
+// Polynomial power exponents
+const POLY_POWER_3 = 3
+const POLY_POWER_4 = 4
+const POLY_POWER_5 = 5
+const POLY_POWER_6 = 6
+const MERIDIONAL_RADIUS_POWER = 1.5 // (1 - e²sin²φ)^(3/2) for meridional radius
+
+// ── Step 1: WGS84 lat/lng → WGS84 Cartesian (X, Y, Z) ──────────────────
+function wgs84ToCartesian(lat, lng) {
   const wgs84SemiMajorAxis = 6378137.0 // metres
   const wgs84SemiMinorAxis = 6356752.3141 // metres
   const wgs84EccentricitySquared =
@@ -39,14 +86,18 @@ function latLngToNationalGrid(lat, lng) {
   const cartesianZ =
     primeVerticalRadius * (1 - wgs84EccentricitySquared) * sinLatitude
 
-  // ── Step 2: Helmert 7-parameter transformation WGS84 → OSGB36 ───────────
+  return { cartesianX, cartesianY, cartesianZ }
+}
+
+// ── Step 2: Helmert 7-parameter transformation WGS84 → OSGB36 ───────────
+function applyHelmertTransform(cartesianX, cartesianY, cartesianZ) {
   // Parameters from OS document, Table 1
   const translationX = -446.448 // metres
   const translationY = 125.157
   const translationZ = -542.06
-  const rotationX = toRadians(-0.1502 / 3600) // arcseconds → radians
-  const rotationY = toRadians(-0.247 / 3600)
-  const rotationZ = toRadians(-0.8421 / 3600)
+  const rotationX = toRadians(-0.1502 / ARCSECONDS_PER_DEGREE) // arcseconds → radians
+  const rotationY = toRadians(-0.247 / ARCSECONDS_PER_DEGREE)
+  const rotationZ = toRadians(-0.8421 / ARCSECONDS_PER_DEGREE)
   const scaleFactor = 1 + 20.4894e-6
 
   const osgb36CartesianX =
@@ -60,139 +111,168 @@ function latLngToNationalGrid(lat, lng) {
     scaleFactor *
       (-rotationY * cartesianX + rotationX * cartesianY + cartesianZ)
 
-  // ── Step 3: OSGB36 Cartesian → OSGB36 lat/lng (iterative) ───────────────
-  const osgb36SemiMajorAxis = 6377563.396 // metres
-  const osgb36SemiMinorAxis = 6356256.909 // metres
-  const osgb36EccentricitySquared =
-    1 -
-    (osgb36SemiMinorAxis * osgb36SemiMinorAxis) /
-      (osgb36SemiMajorAxis * osgb36SemiMajorAxis)
+  return { osgb36CartesianX, osgb36CartesianY, osgb36CartesianZ }
+}
 
-  const horizontalDistance = Math.sqrt(
-    osgb36CartesianX * osgb36CartesianX + osgb36CartesianY * osgb36CartesianY
+// ── Step 3: OSGB36 Cartesian → OSGB36 lat/lng (iterative) ───────────────
+function osgb36CartesianToLatLng(x, y, z) {
+  const horizontalDistance = Math.sqrt(x * x + y * y)
+  let latRadians = Math.atan2(
+    z,
+    horizontalDistance * (1 - OSGB36_ECCENTRICITY_SQUARED)
   )
-  let osgb36LatRadians = Math.atan2(
-    osgb36CartesianZ,
-    horizontalDistance * (1 - osgb36EccentricitySquared)
-  )
-  for (let iteration = 0; iteration < 10; iteration++) {
+
+  for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     const iterativePrimeVerticalRadius =
-      osgb36SemiMajorAxis /
+      OSGB36_SEMI_MAJOR_AXIS /
       Math.sqrt(
         1 -
-          osgb36EccentricitySquared *
-            Math.sin(osgb36LatRadians) *
-            Math.sin(osgb36LatRadians)
+          OSGB36_ECCENTRICITY_SQUARED *
+            Math.sin(latRadians) *
+            Math.sin(latRadians)
       )
-    osgb36LatRadians = Math.atan2(
-      osgb36CartesianZ +
-        osgb36EccentricitySquared *
+    latRadians = Math.atan2(
+      z +
+        OSGB36_ECCENTRICITY_SQUARED *
           iterativePrimeVerticalRadius *
-          Math.sin(osgb36LatRadians),
+          Math.sin(latRadians),
       horizontalDistance
     )
   }
-  const osgb36LngRadians = Math.atan2(osgb36CartesianY, osgb36CartesianX)
 
-  // ── Step 4: OSGB36 lat/lng → BNG Transverse Mercator easting/northing ───
-  const centralMeridianScaleFactor = 0.9996012717
-  const trueOriginLatRadians = toRadians(49) // 49° N
-  const trueOriginLngRadians = toRadians(-2) // 2° W
-  const falseEasting = 400000 // metres
-  const falseNorthing = -100000 // metres
+  const lngRadians = Math.atan2(y, x)
+  return { osgb36LatRadians: latRadians, osgb36LngRadians: lngRadians }
+}
 
-  const thirdFlattening =
-    (osgb36SemiMajorAxis - osgb36SemiMinorAxis) /
-    (osgb36SemiMajorAxis + osgb36SemiMinorAxis)
+// ── Step 4 helper: meridian arc length along the OSGB36 ellipsoid ────────
+function computeMeridianArcLength(
+  thirdFlattening,
+  latRadians,
+  originLatRadians
+) {
   const thirdFlatteningSquared = thirdFlattening * thirdFlattening
   const thirdFlatteningCubed =
     thirdFlattening * thirdFlattening * thirdFlattening
+
+  const arcTermA =
+    (1 +
+      thirdFlattening +
+      ARC_COEFF_5_4 * thirdFlatteningSquared +
+      ARC_COEFF_5_4 * thirdFlatteningCubed) *
+    (latRadians - originLatRadians)
+  const arcTermB =
+    (ARC_COEFF_3 * thirdFlattening +
+      ARC_COEFF_3 * thirdFlatteningSquared +
+      ARC_COEFF_21_8 * thirdFlatteningCubed) *
+    Math.sin(latRadians - originLatRadians) *
+    Math.cos(latRadians + originLatRadians)
+  const arcTermC =
+    (ARC_COEFF_15_8 * thirdFlatteningSquared +
+      ARC_COEFF_15_8 * thirdFlatteningCubed) *
+    Math.sin(2 * (latRadians - originLatRadians)) *
+    Math.cos(2 * (latRadians + originLatRadians))
+  const arcTermD =
+    ARC_COEFF_35_24 *
+    thirdFlatteningCubed *
+    Math.sin(ARC_COEFF_3 * (latRadians - originLatRadians)) *
+    Math.cos(ARC_COEFF_3 * (latRadians + originLatRadians))
+
+  return (
+    OSGB36_SEMI_MINOR_AXIS *
+    CENTRAL_MERIDIAN_SCALE_FACTOR *
+    (arcTermA - arcTermB + arcTermC - arcTermD)
+  )
+}
+
+// ── Step 4: OSGB36 lat/lng → BNG Transverse Mercator easting/northing ───
+function osgb36ToEastingNorthing(osgb36LatRadians, osgb36LngRadians) {
+  const thirdFlattening =
+    (OSGB36_SEMI_MAJOR_AXIS - OSGB36_SEMI_MINOR_AXIS) /
+    (OSGB36_SEMI_MAJOR_AXIS + OSGB36_SEMI_MINOR_AXIS)
 
   const sinLat = Math.sin(osgb36LatRadians)
   const cosLat = Math.cos(osgb36LatRadians)
   const tanLat = Math.tan(osgb36LatRadians)
 
   const meridionalRadius =
-    (osgb36SemiMajorAxis *
-      centralMeridianScaleFactor *
-      (1 - osgb36EccentricitySquared)) /
-    Math.pow(1 - osgb36EccentricitySquared * sinLat * sinLat, 1.5)
+    (OSGB36_SEMI_MAJOR_AXIS *
+      CENTRAL_MERIDIAN_SCALE_FACTOR *
+      (1 - OSGB36_ECCENTRICITY_SQUARED)) /
+    Math.pow(
+      1 - OSGB36_ECCENTRICITY_SQUARED * sinLat * sinLat,
+      MERIDIONAL_RADIUS_POWER
+    )
   const transverseRadius =
-    (osgb36SemiMajorAxis * centralMeridianScaleFactor) /
-    Math.sqrt(1 - osgb36EccentricitySquared * sinLat * sinLat)
+    (OSGB36_SEMI_MAJOR_AXIS * CENTRAL_MERIDIAN_SCALE_FACTOR) /
+    Math.sqrt(1 - OSGB36_ECCENTRICITY_SQUARED * sinLat * sinLat)
   const secondEccentricitySquared = transverseRadius / meridionalRadius - 1
 
-  const arcTermA =
-    (1 +
-      thirdFlattening +
-      (5 / 4) * thirdFlatteningSquared +
-      (5 / 4) * thirdFlatteningCubed) *
-    (osgb36LatRadians - trueOriginLatRadians)
-  const arcTermB =
-    (3 * thirdFlattening +
-      3 * thirdFlatteningSquared +
-      (21 / 8) * thirdFlatteningCubed) *
-    Math.sin(osgb36LatRadians - trueOriginLatRadians) *
-    Math.cos(osgb36LatRadians + trueOriginLatRadians)
-  const arcTermC =
-    ((15 / 8) * thirdFlatteningSquared + (15 / 8) * thirdFlatteningCubed) *
-    Math.sin(2 * (osgb36LatRadians - trueOriginLatRadians)) *
-    Math.cos(2 * (osgb36LatRadians + trueOriginLatRadians))
-  const arcTermD =
-    (35 / 24) *
-    thirdFlatteningCubed *
-    Math.sin(3 * (osgb36LatRadians - trueOriginLatRadians)) *
-    Math.cos(3 * (osgb36LatRadians + trueOriginLatRadians))
-  const meridianArcLength =
-    osgb36SemiMinorAxis *
-    centralMeridianScaleFactor *
-    (arcTermA - arcTermB + arcTermC - arcTermD)
+  const meridianArcLength = computeMeridianArcLength(
+    thirdFlattening,
+    osgb36LatRadians,
+    TRUE_ORIGIN_LAT_RADIANS
+  )
 
-  const longitudeDelta = osgb36LngRadians - trueOriginLngRadians
-  const northingCoeff1 = meridianArcLength + falseNorthing
+  const longitudeDelta = osgb36LngRadians - TRUE_ORIGIN_LNG_RADIANS
+  const northingCoeff1 = meridianArcLength + FALSE_NORTHING
   const northingCoeff2 = (transverseRadius / 2) * sinLat * cosLat
   const northingCoeff3 =
-    (transverseRadius / 24) *
+    (transverseRadius / TM_N3_DIVISOR) *
     sinLat *
-    Math.pow(cosLat, 3) *
-    (5 - tanLat * tanLat + 9 * secondEccentricitySquared)
+    Math.pow(cosLat, POLY_POWER_3) *
+    (TM_COEFF_5 - tanLat * tanLat + TM_COEFF_9 * secondEccentricitySquared)
   const northingCoeff4 =
-    (transverseRadius / 720) *
+    (transverseRadius / TM_N4_DIVISOR) *
     sinLat *
-    Math.pow(cosLat, 5) *
-    (61 - 58 * tanLat * tanLat + Math.pow(tanLat, 4))
+    Math.pow(cosLat, POLY_POWER_5) *
+    (TM_COEFF_61 -
+      TM_COEFF_58 * tanLat * tanLat +
+      Math.pow(tanLat, POLY_POWER_4))
   const eastingCoeff1 = transverseRadius * cosLat
   const eastingCoeff2 =
-    (transverseRadius / 6) *
-    Math.pow(cosLat, 3) *
+    (transverseRadius / TM_E2_DIVISOR) *
+    Math.pow(cosLat, POLY_POWER_3) *
     (transverseRadius / meridionalRadius - tanLat * tanLat)
   const eastingCoeff3 =
-    (transverseRadius / 120) *
-    Math.pow(cosLat, 5) *
-    (5 -
-      18 * tanLat * tanLat +
-      Math.pow(tanLat, 4) +
-      14 * secondEccentricitySquared -
-      58 * tanLat * tanLat * secondEccentricitySquared)
+    (transverseRadius / TM_E3_DIVISOR) *
+    Math.pow(cosLat, POLY_POWER_5) *
+    (TM_COEFF_5 -
+      TM_COEFF_18 * tanLat * tanLat +
+      Math.pow(tanLat, POLY_POWER_4) +
+      TM_COEFF_14 * secondEccentricitySquared -
+      TM_COEFF_58 * tanLat * tanLat * secondEccentricitySquared)
 
   const easting =
     Math.round(
-      (falseEasting +
+      (FALSE_EASTING +
         eastingCoeff1 * longitudeDelta +
-        eastingCoeff2 * Math.pow(longitudeDelta, 3) +
-        eastingCoeff3 * Math.pow(longitudeDelta, 5)) *
-        100
-    ) / 100
+        eastingCoeff2 * Math.pow(longitudeDelta, POLY_POWER_3) +
+        eastingCoeff3 * Math.pow(longitudeDelta, POLY_POWER_5)) *
+        COORD_ROUNDING_FACTOR
+    ) / COORD_ROUNDING_FACTOR
   const northing =
     Math.round(
       (northingCoeff1 +
         northingCoeff2 * longitudeDelta * longitudeDelta +
-        northingCoeff3 * Math.pow(longitudeDelta, 4) +
-        northingCoeff4 * Math.pow(longitudeDelta, 6)) *
-        100
-    ) / 100
+        northingCoeff3 * Math.pow(longitudeDelta, POLY_POWER_4) +
+        northingCoeff4 * Math.pow(longitudeDelta, POLY_POWER_6)) *
+        COORD_ROUNDING_FACTOR
+    ) / COORD_ROUNDING_FACTOR
 
   return { easting, northing }
+}
+
+// ── Public entry point ────────────────────────────────────────────────────
+function latLngToNationalGrid(lat, lng) {
+  const { cartesianX, cartesianY, cartesianZ } = wgs84ToCartesian(lat, lng)
+  const { osgb36CartesianX, osgb36CartesianY, osgb36CartesianZ } =
+    applyHelmertTransform(cartesianX, cartesianY, cartesianZ)
+  const { osgb36LatRadians, osgb36LngRadians } = osgb36CartesianToLatLng(
+    osgb36CartesianX,
+    osgb36CartesianY,
+    osgb36CartesianZ
+  )
+  return osgb36ToEastingNorthing(osgb36LatRadians, osgb36LngRadians)
 }
 
 export { latLngToNationalGrid }
