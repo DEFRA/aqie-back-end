@@ -63,18 +63,19 @@ This project uses [convict](https://github.com/mozilla/node-convict) for configu
 - **Via Docker Compose:** the `.env` file is loaded automatically via the `env_file` directive in `compose.yml` — no extra steps needed.
 - **Via npm (without Docker):** the `.env` file is _not_ loaded automatically. Variables must be exported in your shell before starting the app, e.g. `export $(cat .env | xargs)`, or set individually.
 
-| Variable                          | Required | Description                                                                          |
-| :-------------------------------- | :------: | :----------------------------------------------------------------------------------- |
-| `RICARDO_API_EMAIL`               |    ✅    | Email for Ricardo API OAuth login (needed by `/monitoringStationInfo`)               |
-| `RICARDO_API_PASSWORD`            |    ✅    | Password for Ricardo API OAuth login (needed by `/monitoringStationInfo`)            |
-| `SSH_PRIVATE_KEY`                 |    ✅    | SSH private key for Met Office SFTP access (needed by `/sftp/*`)                     |
-| `HTTP_PROXY`                      |          | HTTP proxy URL                                                                       |
-| `HTTPS_PROXY`                     |          | HTTPS proxy URL                                                                      |
-| `SQUID_USERNAME`                  |          | Squid proxy username                                                                 |
-| `SQUID_PASSWORD`                  |          | Squid proxy password                                                                 |
-| `ACCESS_CONTROL_ALLOW_ORIGIN_URL` |          | Allowed CORS origin URL                                                              |
-| `FORECAST_SCHEDULE`               |          | Cron expression for forecast data polling (default: `0 05-10 * * *` — hourly 5–10am) |
-| `POLLUTANTS_SCHEDULE`             |          | Cron expression for pollutant data polling (default: `0 */1 * * *` — every hour)     |
+| Variable                          | Required | Description                                                                                   |
+| :-------------------------------- | :------: | :-------------------------------------------------------------------------------------------- |
+| `RICARDO_API_EMAIL`               |    ✅    | Email for Ricardo API OAuth login (needed by `/monitoringStationInfo`)                        |
+| `RICARDO_API_PASSWORD`            |    ✅    | Password for Ricardo API OAuth login (needed by `/monitoringStationInfo`)                     |
+| `SSH_PRIVATE_KEY`                 |    ✅    | SSH private key for Met Office SFTP access (needed by `/sftp/*`)                              |
+| `HTTP_PROXY`                      |          | HTTP proxy URL                                                                                |
+| `HTTPS_PROXY`                     |          | HTTPS proxy URL                                                                               |
+| `SQUID_USERNAME`                  |          | Squid proxy username                                                                          |
+| `SQUID_PASSWORD`                  |          | Squid proxy password                                                                          |
+| `ACCESS_CONTROL_ALLOW_ORIGIN_URL` |          | Allowed CORS origin URL                                                                       |
+| `FORECAST_SCHEDULE`               |          | Cron expression for forecast data polling (default: `0 05-10 * * *` — hourly 5–10am)          |
+| `POLLUTANTS_SCHEDULE`             |          | Cron expression for pollutant data polling (default: `0 */1 * * *` — every hour)              |
+| `MONITORING_STATIONS_SCHEDULE`    |          | Cron expression for monitoring station cache refresh (default: `0 */6 * * *` — every 6 hours) |
 
 All other configuration values have sensible defaults — see [src/config/index.js](src/config/index.js) for the full list.
 
@@ -137,14 +138,15 @@ npm run
 
 ## API endpoints
 
-| Endpoint                      | Description                                                                  |
-| :---------------------------- | :--------------------------------------------------------------------------- |
-| `GET: /health`                | Health check                                                                 |
-| `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)   |
-| `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                             |
-| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)       |
-| `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)       |
-| `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key) |
+| Endpoint                      | Description                                                                                                                                      |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET: /health`                | Health check                                                                                                                                     |
+| `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)                                                                       |
+| `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                                                                                                 |
+| `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request. |
+| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                           |
+| `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)                                                                           |
+| `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                     |
 
 ## Calling API endpoints
 
@@ -166,7 +168,11 @@ curl http://localhost:3001/forecasts
 # Remember to revert it afterwards so it doesn't hammer the upstream API every minute.
 curl http://localhost:3001/measurements
 
-# Monitoring station info (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
+# Monitoring stations — reads from MongoDB cache, populated on startup and refreshed every 6 hours
+# Returns immediately with no Ricardo API calls
+curl http://localhost:3001/monitoringStations
+
+# Monitoring station info via Ricardo API (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
 curl http://localhost:3001/monitoringStationInfo
 
 # List files on Met Office SFTP (requires SSH_PRIVATE_KEY in .env)

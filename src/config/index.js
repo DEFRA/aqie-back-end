@@ -220,6 +220,12 @@ const config = convict({
     default: '0 */1 * * *',
     env: 'POLLUTANTS_SCHEDULE'
   },
+  monitoringStationsSchedule: {
+    doc: 'How often to refresh the monitoring stations cache from Ricardo (cron format)',
+    format: String,
+    default: '0 */6 * * *',
+    env: 'MONITORING_STATIONS_SCHEDULE'
+  },
   alertNotifucationUrl: {
     doc: 'URL to the Notify API service',
     format: String,
@@ -288,6 +294,19 @@ const config = convict({
     format: Boolean,
     default: false,
     env: 'MOCK_INVALID_POLLUTANTS'
+  },
+  osNamesApiKey: {
+    doc: 'OS Names API key for local authority lookup via /nearest endpoint',
+    format: String,
+    default: '',
+    sensitive: true,
+    env: 'OS_NAMES_API_KEY'
+  },
+  osNamesApiUrl: {
+    doc: 'OS Names API base URL',
+    format: String,
+    default: 'https://api.os.uk/search/names/v1/',
+    env: 'OS_NAMES_API_URL'
   }
 })
 

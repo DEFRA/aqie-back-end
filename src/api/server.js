@@ -7,6 +7,8 @@ import { mongoPlugin } from '../helpers/mongodb.js'
 import { failAction } from '../helpers/fail-action.js'
 import { forecastScheduler } from './forecast/forecast-scheduler.js'
 import { pollutantsScheduler } from './pollutants/pollutants-scheduler.js'
+import { monitoringStationsScheduler } from './locationsite/monitoring-stations-scheduler.js'
+import { populateMonitoringStationsDb } from './locationsite/db/populate-db.js'
 import { secureContext } from '../helpers/secure-context/index.js'
 import { setupProxy } from '../common/helpers/proxy/setup-proxy.js'
 import { createLogger } from '../helpers/logging/logger.js'
@@ -73,6 +75,10 @@ async function createServer() {
   await server.register(forecastScheduler)
 
   await server.register(pollutantsScheduler)
+
+  await server.register(monitoringStationsScheduler)
+
+  await server.register(populateMonitoringStationsDb)
 
   return server
 }
