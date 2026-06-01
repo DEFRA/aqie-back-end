@@ -13,7 +13,7 @@ const forecastScheduler = {
     name: 'Forecast Scheduler',
     register: async (server) => {
       // Start the scheduler
-      // await fetchAndSaveForecasts(server)
+      await fetchAndSaveForecasts(server)
       logger.info('starting forecasts Scheduler')
       schedule(config.get('forecastSchedule'), async () => {
         await fetchAndSaveForecasts(server)
