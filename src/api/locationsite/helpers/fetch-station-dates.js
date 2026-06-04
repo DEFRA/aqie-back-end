@@ -3,6 +3,10 @@ import { createLogger } from '../../../helpers/logging/logger.js'
 
 const logger = createLogger()
 
+const POLLUTANT_METADATA_PAGE_SIZE = 30
+const POLLUTANT_METADATA_FALLBACK_MAX_PAGES = 600
+const POLLUTANT_METADATA_PAGE_COUNT_BUFFER = 1.2
+
 /**
  * Maps a Ricardo pollutant name to a short DAQI code.
  * Returns null for pollutants not relevant to DAQI filtering.
@@ -48,7 +52,9 @@ function pollutantNameToCode(name) {
 function resolveMaxPages(firstPageData, fallbackMaxPages, pageSize) {
   const totalItems = firstPageData.totalItems
   if (typeof totalItems === 'number' && totalItems > 0) {
-    const pages = Math.ceil((totalItems / pageSize) * 1.2)
+    const pages = Math.ceil(
+      (totalItems / pageSize) * POLLUTANT_METADATA_PAGE_COUNT_BUFFER
+    )
     logger.info(
       `Fetching pollutant metadata: ${totalItems} total items, max pages set to ${pages}`
     )
@@ -61,6 +67,26 @@ function resolveMaxPages(firstPageData, fallbackMaxPages, pageSize) {
 }
 
 /**
+ * Fetches a single page of pollutant metadata records.
+ * Returns null and logs a warning if the response is not ok.
+ *
+ * @param {string} baseUrl
+ * @param {Record<string, string>} headers
+ * @param {number} page
+ * @returns {Promise<object|null>}
+ */
+async function fetchPollutantMetadataPage(baseUrl, headers, page) {
+  const response = await fetch(`${baseUrl}?page=${page}`, { headers })
+  if (!response.ok) {
+    logger.warn(
+      `pollutant_metadatas page ${page} returned HTTP ${response.status} — stopping pagination`
+    )
+    return null
+  }
+  return response.json()
+}
+
+/**
  * Fetches all pages of /api/pollutant_metadatas from the Ricardo API and
  * returns the raw array of records.
  *
@@ -69,36 +95,29 @@ function resolveMaxPages(firstPageData, fallbackMaxPages, pageSize) {
  * @returns {Promise<Array<object>>} All pollutant metadata records across all pages.
  */
 async function fetchAllPollutantMetadataRecords(baseUrl, headers) {
-  const PAGE_SIZE = 30
-  const FALLBACK_MAX_PAGES = 600
-  let maxPages = FALLBACK_MAX_PAGES
+  let maxPages = POLLUTANT_METADATA_FALLBACK_MAX_PAGES
   let page = 1
   const records = []
 
   while (page <= maxPages) {
-    const response = await fetch(`${baseUrl}?page=${page}`, { headers })
+    const data = await fetchPollutantMetadataPage(baseUrl, headers, page)
 
-    if (!response.ok) {
-      logger.warn(
-        `pollutant_metadatas page ${page} returned HTTP ${response.status} — stopping pagination`
+    if (page === 1 && data) {
+      maxPages = resolveMaxPages(
+        data,
+        POLLUTANT_METADATA_FALLBACK_MAX_PAGES,
+        POLLUTANT_METADATA_PAGE_SIZE
       )
-      break
     }
 
-    const data = await response.json()
-
-    if (page === 1) {
-      maxPages = resolveMaxPages(data, FALLBACK_MAX_PAGES, PAGE_SIZE)
-    }
-
-    const pageRecords = data.member ?? []
-    if (pageRecords.length === 0) {
-      break
-    }
-
+    const pageRecords = data?.member ?? []
     records.push(...pageRecords)
 
-    if (pageRecords.length < PAGE_SIZE) {
+    const isLastPage =
+      !data ||
+      pageRecords.length === 0 ||
+      pageRecords.length < POLLUTANT_METADATA_PAGE_SIZE
+    if (isLastPage) {
       break
     }
 
@@ -119,7 +138,10 @@ function updateOpenDate(openDates, record) {
     return
   }
   const existing = openDates.get(record.siteId)
-  if (!existing || record.startDate < existing) {
+  const isEarlier =
+    !existing ||
+    new Date(record.startDate).getTime() < new Date(existing).getTime()
+  if (isEarlier) {
     openDates.set(record.siteId, record.startDate)
   }
 }
@@ -135,7 +157,10 @@ function updateCloseDate(closeDates, record) {
     return
   }
   const existing = closeDates.get(record.siteId)
-  if (!existing || record.endDate > existing) {
+  const isLater =
+    !existing ||
+    new Date(record.endDate).getTime() > new Date(existing).getTime()
+  if (isLater) {
     closeDates.set(record.siteId, record.endDate)
   }
 }
