@@ -276,6 +276,12 @@ const config = convict({
       'https://uk-air-api.staging.rcdo.co.uk/api/pollutant_measurement_datas?',
     env: 'RICARDO_API_SITE_ID_URL'
   },
+  ricardoApiPollutantMetadataUrl: {
+    doc: 'Ricardo API pollutant metadata url (used to derive station establishment dates)',
+    format: String,
+    default: 'https://uk-air-api.staging.rcdo.co.uk/api/pollutant_metadatas',
+    env: 'RICARDO_API_POLLUTANT_METADATA_URL'
+  },
   ricardoApiEmail: {
     doc: 'Ricardo API email',
     format: String,

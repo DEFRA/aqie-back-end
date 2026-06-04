@@ -6,6 +6,7 @@ import {
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
 import { fetchOAuthToken } from './helpers/oauth-helpers.js'
 import { getLocalAuthorityForCoords } from './helpers/get-local-authority.js'
+import { fetchStationDates } from './helpers/fetch-station-dates.js'
 
 vi.mock('./helpers/catch-proxy-fetch-error.js', () => ({
   catchProxyFetchError: vi.fn()
@@ -17,6 +18,10 @@ vi.mock('./helpers/oauth-helpers.js', () => ({
 
 vi.mock('./helpers/get-local-authority.js', () => ({
   getLocalAuthorityForCoords: vi.fn()
+}))
+
+vi.mock('./helpers/fetch-station-dates.js', () => ({
+  fetchStationDates: vi.fn()
 }))
 
 vi.mock('../../helpers/logging/logger.js', () => ({
@@ -48,6 +53,11 @@ describe('fetchMonitoringStations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getLocalAuthorityForCoords.mockResolvedValue('Greater London')
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map(),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    })
   })
 
   it('returns a mapped array of station objects on success', async () => {
@@ -185,6 +195,145 @@ describe('fetchMonitoringStations', () => {
 
     const calledUrl = catchProxyFetchError.mock.calls[0][0]
     expect(calledUrl).toContain('with-closed=true')
+  })
+
+  it('sets openDate from fetchStationDates when a matching siteId is found', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map([['SITE1', '2006-06-15T00:00:00+01:00']]),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].openDate).toBe('2006-06-15')
+  })
+
+  it('sets openDate using the date portion of the raw value without UTC conversion', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map([['SITE1', '2006-06-15T00:00:00+01:00']]),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    // Must be the calendar date from the source string, not UTC-shifted
+    expect(result[0].openDate).not.toBe('2006-06-14')
+  })
+
+  it('sets openDate to null when no matching siteId in the open dates map', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map(),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].openDate).toBeNull()
+  })
+
+  it('sets openDate and closeDate to null for all stations when fetchStationDates rejects', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([
+      200,
+      { member: [mockMember(1), mockMember(2)] }
+    ])
+    fetchStationDates.mockRejectedValue(new Error('Ricardo timeout'))
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].openDate).toBeNull()
+    expect(result[0].closeDate).toBeNull()
+    expect(result[1].openDate).toBeNull()
+    expect(result[1].closeDate).toBeNull()
+  })
+
+  it('sets closeDate for closed stations when a matching siteId is found', async () => {
+    const closedMember = { ...mockMember(1), stationStatus: 'closed' }
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [closedMember] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map([['SITE1', '2006-06-15T00:00:00+01:00']]),
+      closeDates: new Map([['SITE1', '2018-03-20T00:00:00+00:00']]),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].closeDate).toBe('2018-03-20')
+  })
+
+  it('sets closeDate to null for active stations even when closeDates map has an entry', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map(),
+      closeDates: new Map([['SITE1', '2018-03-20T00:00:00+00:00']]),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].closeDate).toBeNull()
+  })
+
+  it('passes the access token to fetchStationDates', async () => {
+    fetchOAuthToken.mockResolvedValue('my-access-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [] }])
+
+    await fetchMonitoringStations()
+
+    expect(fetchStationDates).toHaveBeenCalledWith('my-access-token')
+  })
+
+  it('sets pollutants from currentPollutants map for matching siteId', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map(),
+      closeDates: new Map(),
+      currentPollutants: new Map([['SITE1', new Set(['NO2', 'O3'])]])
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].pollutants).toEqual(['NO2', 'O3'])
+  })
+
+  it('sets pollutants to empty array when no entry in currentPollutants', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
+    fetchStationDates.mockResolvedValue({
+      openDates: new Map(),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    })
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].pollutants).toEqual([])
+  })
+
+  it('sets pollutants to empty array for all stations when fetchStationDates rejects', async () => {
+    fetchOAuthToken.mockResolvedValue('valid-token')
+    catchProxyFetchError.mockResolvedValue([
+      200,
+      { member: [mockMember(1), mockMember(2)] }
+    ])
+    fetchStationDates.mockRejectedValue(new Error('Ricardo timeout'))
+
+    const result = await fetchMonitoringStations()
+
+    expect(result[0].pollutants).toEqual([])
+    expect(result[1].pollutants).toEqual([])
   })
 })
 
