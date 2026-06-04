@@ -18,16 +18,46 @@ function pollutantNameToCode(name) {
     .replaceAll('<sub>', '')
     .replaceAll('</sub>', '')
     .trim()
-  if (n.includes('2.5')) return 'PM25'
-  if (n.includes('pm10') || n.includes('pm 10')) return 'PM10'
+  if (n.includes('2.5')) {
+    return 'PM25'
+  }
+  if (n.includes('pm10') || n.includes('pm 10')) {
+    return 'PM10'
+  }
   if (n.includes('nitrogen dioxide') && !n.includes('nitrogen oxides')) {
     return 'NO2'
   }
-  if (n.includes('ozone')) return 'O3'
+  if (n.includes('ozone')) {
+    return 'O3'
+  }
   if (n.includes('sulphur dioxide') || n.includes('sulfur dioxide')) {
     return 'SO2'
   }
   return null
+}
+
+/**
+ * Derives the maximum number of pages to fetch from page 1 response data.
+ * Adds a 20% buffer above the calculated page count to handle data growth.
+ *
+ * @param {object} firstPageData - Parsed JSON from the first page response.
+ * @param {number} fallbackMaxPages - Cap to use when totalItems is missing.
+ * @param {number} pageSize - Number of records per page.
+ * @returns {number}
+ */
+function resolveMaxPages(firstPageData, fallbackMaxPages, pageSize) {
+  const totalItems = firstPageData.totalItems
+  if (typeof totalItems === 'number' && totalItems > 0) {
+    const pages = Math.ceil((totalItems / pageSize) * 1.2)
+    logger.info(
+      `Fetching pollutant metadata: ${totalItems} total items, max pages set to ${pages}`
+    )
+    return pages
+  }
+  logger.warn(
+    `pollutant_metadatas totalItems missing or invalid — using fallback cap of ${fallbackMaxPages} pages`
+  )
+  return fallbackMaxPages
 }
 
 /**
@@ -58,30 +88,76 @@ async function fetchAllPollutantMetadataRecords(baseUrl, headers) {
     const data = await response.json()
 
     if (page === 1) {
-      const totalItems = data.totalItems
-      if (typeof totalItems === 'number' && totalItems > 0) {
-        maxPages = Math.ceil((totalItems / PAGE_SIZE) * 1.2)
-        logger.info(
-          `Fetching pollutant metadata: ${totalItems} total items, max pages set to ${maxPages}`
-        )
-      } else {
-        logger.warn(
-          `pollutant_metadatas totalItems missing or invalid — using fallback cap of ${FALLBACK_MAX_PAGES} pages`
-        )
-      }
+      maxPages = resolveMaxPages(data, FALLBACK_MAX_PAGES, PAGE_SIZE)
     }
 
     const pageRecords = data.member ?? []
-    if (pageRecords.length === 0) break
+    if (pageRecords.length === 0) {
+      break
+    }
 
     records.push(...pageRecords)
 
-    if (pageRecords.length < PAGE_SIZE) break
+    if (pageRecords.length < PAGE_SIZE) {
+      break
+    }
 
     page++
   }
 
   return records
+}
+
+/**
+ * Updates the openDates map with the earliest startDate for a station.
+ *
+ * @param {Map<string, string>} openDates
+ * @param {{ siteId: string, startDate?: string }} record
+ */
+function updateOpenDate(openDates, record) {
+  if (!record.startDate) {
+    return
+  }
+  const existing = openDates.get(record.siteId)
+  if (!existing || record.startDate < existing) {
+    openDates.set(record.siteId, record.startDate)
+  }
+}
+
+/**
+ * Updates the closeDates map with the latest endDate for closed stations.
+ *
+ * @param {Map<string, string>} closeDates
+ * @param {{ siteId: string, endDate?: string, measurementStatus?: string }} record
+ */
+function updateCloseDate(closeDates, record) {
+  if (!record.endDate || record.measurementStatus !== 'closed') {
+    return
+  }
+  const existing = closeDates.get(record.siteId)
+  if (!existing || record.endDate > existing) {
+    closeDates.set(record.siteId, record.endDate)
+  }
+}
+
+/**
+ * Updates the currentPollutants map with DAQI codes for active instruments.
+ *
+ * @param {Map<string, Set<string>>} currentPollutants
+ * @param {{ siteId: string, measurementStatus?: string, pollutantName?: string }} record
+ */
+function updateCurrentPollutants(currentPollutants, record) {
+  if (record.measurementStatus !== 'current' || !record.pollutantName) {
+    return
+  }
+  const code = pollutantNameToCode(record.pollutantName)
+  if (!code) {
+    return
+  }
+  if (!currentPollutants.has(record.siteId)) {
+    currentPollutants.set(record.siteId, new Set())
+  }
+  currentPollutants.get(record.siteId).add(code)
 }
 
 /**
@@ -104,31 +180,12 @@ function buildStationDatesMap(records) {
   const currentPollutants = new Map()
 
   for (const record of records) {
-    if (!record.siteId) continue
-
-    if (record.startDate) {
-      const existing = openDates.get(record.siteId)
-      if (!existing || record.startDate < existing) {
-        openDates.set(record.siteId, record.startDate)
-      }
+    if (!record.siteId) {
+      continue
     }
-
-    if (record.endDate && record.measurementStatus === 'closed') {
-      const existing = closeDates.get(record.siteId)
-      if (!existing || record.endDate > existing) {
-        closeDates.set(record.siteId, record.endDate)
-      }
-    }
-
-    if (record.measurementStatus === 'current' && record.pollutantName) {
-      const code = pollutantNameToCode(record.pollutantName)
-      if (code) {
-        if (!currentPollutants.has(record.siteId)) {
-          currentPollutants.set(record.siteId, new Set())
-        }
-        currentPollutants.get(record.siteId).add(code)
-      }
-    }
+    updateOpenDate(openDates, record)
+    updateCloseDate(closeDates, record)
+    updateCurrentPollutants(currentPollutants, record)
   }
 
   return { openDates, closeDates, currentPollutants }
