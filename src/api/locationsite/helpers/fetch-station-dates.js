@@ -15,7 +15,8 @@ const logger = createLogger()
 function pollutantNameToCode(name) {
   const n = name
     .toLowerCase()
-    .replace(/<[^>]*>/g, '')
+    .replaceAll('<sub>', '')
+    .replaceAll('</sub>', '')
     .trim()
   if (n.includes('2.5')) return 'PM25'
   if (n.includes('pm10') || n.includes('pm 10')) return 'PM10'
