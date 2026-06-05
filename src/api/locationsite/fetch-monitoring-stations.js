@@ -3,6 +3,7 @@ import { config } from '../../config/index.js'
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
 import { fetchOAuthToken } from './helpers/oauth-helpers.js'
 import { getLocalAuthorityForCoords } from './helpers/get-local-authority.js'
+import { fetchStationDates } from './helpers/fetch-station-dates.js'
 
 const logger = createLogger()
 
@@ -22,7 +23,10 @@ const logger = createLogger()
  *   areaType: string,
  *   location: { type: 'Point', coordinates: [number, number] },
  *   distance: number|null,
- *   stationStatus: string|null
+ *   stationStatus: string|null,
+ *   openDate: string|null,
+ *   closeDate: string|null,
+ *   pollutants: string[]
  * }>>} Resolves to an array of enriched station objects, or an empty array if
  *   the Ricardo API response is missing or malformed.
  * @throws {Error} If the OAuth token fetch fails.
@@ -62,6 +66,19 @@ async function fetchMonitoringStations() {
 
   const { member: stations } = dataAll
 
+  const { openDates, closeDates, currentPollutants } = await fetchStationDates(
+    accessToken
+  ).catch((err) => {
+    logger.warn(
+      `Failed to fetch station dates: ${err.message} — openDate/closeDate will be null for all stations`
+    )
+    return {
+      openDates: new Map(),
+      closeDates: new Map(),
+      currentPollutants: new Map()
+    }
+  })
+
   return Promise.all(
     stations.map(async (item) => {
       const lat = Number(item.latitude)
@@ -69,6 +86,14 @@ async function fetchMonitoringStations() {
       const localAuthority = await getLocalAuthorityForCoords(lat, lng).catch(
         () => null
       )
+      const stationStatus = item.stationStatus ?? null
+      const rawOpenDate = openDates.get(item.siteId) ?? null
+      const openDate = rawOpenDate ? rawOpenDate.slice(0, 10) : null
+      const rawCloseDate =
+        stationStatus === 'closed'
+          ? (closeDates.get(item.siteId) ?? null)
+          : null
+      const closeDate = rawCloseDate ? rawCloseDate.slice(0, 10) : null
       return {
         name: item.siteName,
         area: item.governmentRegion,
@@ -80,7 +105,10 @@ async function fetchMonitoringStations() {
           coordinates: [lat, lng]
         },
         distance: item.distanceFromPoint,
-        stationStatus: item.stationStatus ?? null
+        stationStatus,
+        openDate,
+        closeDate,
+        pollutants: Array.from(currentPollutants.get(item.siteId) ?? [])
       }
     })
   )
