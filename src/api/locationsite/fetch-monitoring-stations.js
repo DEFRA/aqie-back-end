@@ -9,11 +9,11 @@ const logger = createLogger()
 
 /**
  * Fetches all monitoring stations from the Ricardo API, enriches each with a
- * local authority name via the OS Names API, and returns the shaped array.
+ * local authority name via the Postcodes.io API, and returns the shaped array.
  *
- * Each station's local authority lookup is performed concurrently. If the OS
- * Names API call fails for an individual station, that station's localAuthority
- * is set to null rather than failing the entire batch.
+ * Each station's local authority lookup is performed concurrently. If the
+ * Postcodes.io API call fails for an individual station, that station's
+ * localAuthority is set to null rather than failing the entire batch.
  *
  * @returns {Promise<Array<{
  *   name: string,
