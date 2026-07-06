@@ -137,7 +137,9 @@ describe('fetchMonitoringStations', () => {
   })
 
   it('sets localAuthority to null when getLocalAuthorityForCoords rejects', async () => {
-    getLocalAuthorityForCoords.mockRejectedValue(new Error('OS Names timeout'))
+    getLocalAuthorityForCoords.mockRejectedValue(
+      new Error('postcodes.io timeout')
+    )
     fetchOAuthToken.mockResolvedValue('valid-token')
     catchProxyFetchError.mockResolvedValue([200, { member: [mockMember(1)] }])
 
