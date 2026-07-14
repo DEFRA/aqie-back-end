@@ -405,6 +405,30 @@ describe('#pollutant-helpers', () => {
       expect(mockCatchProxyFetchError).not.toHaveBeenCalled()
     })
 
+    test('Should skip site with no localSiteID', async () => {
+      const mockSite = {
+        name: 'Site Without ID',
+        localSiteID: null,
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(0)
+      expect(mockCatchProxyFetchError).not.toHaveBeenCalled()
+    })
+
     test('Should handle site with no pollutant data', async () => {
       const mockSite = {
         name: 'Empty Site',
@@ -485,7 +509,7 @@ describe('#pollutant-helpers', () => {
           }
         }
       })
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(1)
+      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(5)
     })
 
     test('Should handle API error responses', async () => {
@@ -618,8 +642,16 @@ describe('#pollutant-helpers', () => {
       const mockEmptyResponse = { member: [] }
 
       mockCatchProxyFetchError
-        .mockResolvedValueOnce([200, mockValidResponse]) // First site has data
-        .mockResolvedValueOnce([200, mockEmptyResponse]) // Second site has no data
+        .mockResolvedValueOnce([200, mockValidResponse]) // Site 1, pollutant 1
+        .mockResolvedValueOnce([200, mockValidResponse]) // Site 1, pollutant 2
+        .mockResolvedValueOnce([200, mockValidResponse]) // Site 1, pollutant 3
+        .mockResolvedValueOnce([200, mockValidResponse]) // Site 1, pollutant 4
+        .mockResolvedValueOnce([200, mockValidResponse]) // Site 1, pollutant 5
+        .mockResolvedValueOnce([200, mockEmptyResponse]) // Site 2, pollutant 1
+        .mockResolvedValueOnce([200, mockEmptyResponse]) // Site 2, pollutant 2
+        .mockResolvedValueOnce([200, mockEmptyResponse]) // Site 2, pollutant 3
+        .mockResolvedValueOnce([200, mockEmptyResponse]) // Site 2, pollutant 4
+        .mockResolvedValueOnce([200, mockEmptyResponse]) // Site 2, pollutant 5
 
       const result = await enrichSitesWithPollutants(
         mockSites,
@@ -634,7 +666,7 @@ describe('#pollutant-helpers', () => {
       expect(result).toHaveLength(1) // Only first site has valid data
       expect(result[0].name).toBe('Site 1')
       expect(result[0].pollutants.NO2.value).toBe(25.67)
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(2)
+      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(10)
     })
 
     test('Should handle fetch errors gracefully', async () => {
@@ -649,17 +681,17 @@ describe('#pollutant-helpers', () => {
 
       mockCatchProxyFetchError.mockRejectedValue(new Error('Network error'))
 
-      await expect(
-        enrichSitesWithPollutants(
-          [mockSite],
-          'https://api.example.com',
-          { method: 'GET' },
-          '2025-01-01 00:00:00',
-          '2025-01-01 23:59:00',
-          mockLogger,
-          mockCatchProxyFetchError
-        )
-      ).rejects.toThrow('Network error')
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(0) // Error caught per-pollutant, site filtered out
     })
 
     test('Should pass station name to validateDataFreshness', async () => {
@@ -723,8 +755,25 @@ describe('#pollutant-helpers', () => {
         mockCatchProxyFetchError
       )
 
+      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(5)
       expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00',
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=NO2',
+        { method: 'GET' }
+      )
+      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM10&data-type=24',
+        { method: 'GET' }
+      )
+      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM25&data-type=24',
+        { method: 'GET' }
+      )
+      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=O3&data-type=23',
+        { method: 'GET' }
+      )
+      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=SO2',
         { method: 'GET' }
       )
     })
