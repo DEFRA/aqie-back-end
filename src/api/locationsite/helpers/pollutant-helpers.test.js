@@ -405,6 +405,30 @@ describe('#pollutant-helpers', () => {
       expect(mockCatchProxyFetchError).not.toHaveBeenCalled()
     })
 
+    test('Should skip site with no localSiteID', async () => {
+      const mockSite = {
+        name: 'Site Without ID',
+        localSiteID: null,
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(0)
+      expect(mockCatchProxyFetchError).not.toHaveBeenCalled()
+    })
+
     test('Should handle site with no pollutant data', async () => {
       const mockSite = {
         name: 'Empty Site',
