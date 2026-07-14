@@ -15,6 +15,8 @@ const logger = createLogger()
 
 const pollutantNames = Object.values(POLLUTANT_MAP)
 
+const POLLUTANT_DATA_TYPE = { PM10: 24, PM25: 24, O3: 23 }
+
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
   return name
@@ -195,23 +197,36 @@ async function enrichSitesWithPollutants(
 ) {
   const enrichedTempData = []
   for (const site of tempData) {
-    let siteData = null
-    if (site.localSiteID) {
-      ;[, siteData] = await catchProxyFetchError(
-        `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}`,
-        optionsSiteId
-      )
-      log.info(`Site ID ${site.localSiteID} data: ${JSON.stringify(siteData)}`)
+    if (!site.localSiteID) {
+      log.info(`Skipping site ${site.name} - no localSiteID`)
+      continue
     }
 
-    const pollutants = extractPollutants(siteData, site.name)
+    const pollutantResults = await Promise.all(
+      Object.keys(POLLUTANT_MAP).map(async (shortCode) => {
+        const dataType = POLLUTANT_DATA_TYPE[shortCode]
+        let url = `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&pollutant-name=${shortCode}`
+        if (dataType !== undefined) {
+          url += `&data-type=${dataType}`
+        }
+        let siteData = null
+        try {
+          ;[, siteData] = await catchProxyFetchError(url, optionsSiteId)
+        } catch (err) {
+          log.info(`Error fetching ${shortCode} for site ${site.name}: ${err}`)
+        }
+        log.info(
+          `Site ${site.name} ${shortCode} data: ${JSON.stringify(siteData)}`
+        )
+        return extractPollutants(siteData, site.name)
+      })
+    )
+
+    const pollutants = Object.assign({}, ...pollutantResults.filter(Boolean))
     log.info(`Site ${site.name}: pollutants = ${JSON.stringify(pollutants)}`)
 
-    if (pollutants) {
-      enrichedTempData.push({
-        ...site,
-        pollutants
-      })
+    if (Object.keys(pollutants).length > 0) {
+      enrichedTempData.push({ ...site, pollutants })
       log.info(
         `✓ Including site ${site.name} with ${Object.keys(pollutants).length} pollutants`
       )
