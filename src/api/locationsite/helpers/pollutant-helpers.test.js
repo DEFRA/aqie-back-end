@@ -761,7 +761,7 @@ describe('#pollutant-helpers', () => {
         { method: 'GET' }
       )
       expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM10&data-type=24',
+        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=GE10&data-type=24',
         { method: 'GET' }
       )
       expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
