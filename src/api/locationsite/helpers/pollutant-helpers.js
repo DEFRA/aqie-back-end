@@ -205,7 +205,8 @@ async function enrichSitesWithPollutants(
     const pollutantResults = await Promise.all(
       Object.keys(POLLUTANT_MAP).map(async (shortCode) => {
         const dataType = POLLUTANT_DATA_TYPE[shortCode]
-        let url = `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&pollutant-name=${shortCode}`
+        const ricardoPollutantName = shortCode === 'PM10' ? 'GE10' : shortCode
+        let url = `${ricardoApiSiteIdUrl}station-id=${site.localSiteID}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&pollutant-name=${ricardoPollutantName}`
         if (dataType !== undefined) {
           url += `&data-type=${dataType}`
         }
