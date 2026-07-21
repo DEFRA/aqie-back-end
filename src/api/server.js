@@ -9,6 +9,7 @@ import { forecastScheduler } from './forecast/forecast-scheduler.js'
 import { pollutantsScheduler } from './pollutants/pollutants-scheduler.js'
 import { monitoringStationsScheduler } from './locationsite/monitoring-stations-scheduler.js'
 import { populateMonitoringStationsDb } from './locationsite/db/populate-db.js'
+import { aurnScheduler } from './aurn/aurn-scheduler.js'
 import { secureContext } from '../helpers/secure-context/index.js'
 import { setupProxy } from '../common/helpers/proxy/setup-proxy.js'
 import { createLogger } from '../helpers/logging/logger.js'
@@ -79,6 +80,8 @@ async function createServer() {
   await server.register(monitoringStationsScheduler)
 
   await server.register(populateMonitoringStationsDb)
+
+  await server.register(aurnScheduler)
 
   return server
 }

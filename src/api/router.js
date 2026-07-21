@@ -8,6 +8,7 @@ import {
 } from './metOfficeForecast/index.js'
 import { monitoringStationInfo } from './locationsite/index.js'
 import { monitoringStations } from './locationsite/cached-stations-index.js'
+import { aurnData } from './aurn/index.js'
 
 const allowOriginUrl = config.get('allowOriginUrl')
 const router = {
@@ -21,7 +22,8 @@ const router = {
         metOfficeForecastRead,
         metOfficeForecastList,
         monitoringStationInfo,
-        monitoringStations
+        monitoringStations,
+        aurnData
       ])
     }
   },
