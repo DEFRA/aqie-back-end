@@ -86,7 +86,7 @@ describe('#oauth-helpers', () => {
 
       expect(token).toBeNull()
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching OAuth token: Error fetching OAuth token: HTTP 401 - {"error":"invalid_credentials"}'
+        'Error fetching OAuth token: Error fetching OAuth token: HTTP 401'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Completed fetchOAuthTokenNewRicardoAPI execution'
@@ -137,7 +137,7 @@ describe('#oauth-helpers', () => {
 
       expect(token).toBeNull()
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error fetching OAuth token: Error fetching OAuth token: HTTP 500 - {"error":"server_error"}'
+        'Error fetching OAuth token: Error fetching OAuth token: HTTP 500'
       )
     })
 
@@ -172,6 +172,36 @@ describe('#oauth-helpers', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid OAuth response')
       )
+    })
+  })
+
+  describe('#secret logging safeguard', () => {
+    test('Should never write the bearer token value to any log', async () => {
+      config.get.mockImplementation((key) => {
+        const configMap = {
+          ricardoApiLoginUrl: 'https://example.com/token',
+          ricardoApiEmail: 'test@example.com',
+          ricardoApiPassword: 'password123'
+        }
+        return configMap[key]
+      })
+
+      const secretToken = 'super-secret-bearer-token-should-not-be-logged'
+      mockCatchProxyFetchError.mockResolvedValue([200, { token: secretToken }])
+
+      const token = await fetchOAuthToken(mockCatchProxyFetchError, mockLogger)
+
+      expect(token).toBe(secretToken)
+
+      const allLoggedText = [
+        ...mockLogger.info.mock.calls,
+        ...mockLogger.error.mock.calls,
+        ...mockLogger.warn.mock.calls
+      ]
+        .flat()
+        .join('\n')
+
+      expect(allLoggedText).not.toContain(secretToken)
     })
   })
 
