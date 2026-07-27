@@ -17,6 +17,8 @@ const pollutantNames = Object.values(POLLUTANT_MAP)
 
 const POLLUTANT_DATA_TYPE = { PM10: 24, PM25: 24, O3: 23 }
 
+const LONDON_TIME_ZONE = 'Europe/London'
+
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
   return name
@@ -131,20 +133,34 @@ function roundValue(value) {
   return value
 }
 
+// Timezone-aware time extraction (fixes BST/GMT server-local-time bug)
 function getTimeComponents(dateStr) {
   if (!dateStr) {
     return {}
   }
   const dateObj = new Date(dateStr)
-  let hours = dateObj.getHours()
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: LONDON_TIME_ZONE,
+    hour: 'numeric',
+    hour12: false,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).formatToParts(dateObj)
+
+  const partMap = Object.fromEntries(parts.map((p) => [p.type, p.value]))
+
+  let hours = Number.parseInt(partMap.hour, 10) % 24
   const ampm = hours >= HOURS_IN_DAY ? 'pm' : 'am'
   hours = hours % HOURS_IN_DAY
   hours = hours === 0 ? HOURS_IN_DAY : hours
+
   return {
     hour: `${hours}${ampm}`,
-    day: `${dateObj.getDate()}`,
-    month: dateObj.toLocaleString('en-GB', { month: 'long' }),
-    year: `${dateObj.getFullYear()}`
+    day: `${partMap.day}`,
+    month: partMap.month,
+    year: `${partMap.year}`
   }
 }
 

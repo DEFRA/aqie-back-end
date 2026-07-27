@@ -271,6 +271,107 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.time.year).toBeUndefined()
     })
 
+    describe('Timezone-aware time components (BST/GMT)', () => {
+      test('Should convert to BST (UTC+1) hour during summer time', () => {
+        // 2026-07-24T13:00:00Z is 2pm in London during BST
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T13:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('2pm')
+        expect(result.NO2.time.day).toBe('24')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should match UTC hour during GMT (winter time, no offset)', () => {
+        // 2026-01-15T12:00:00Z is 12pm in London during GMT (no offset)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T12:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12pm')
+        expect(result.NO2.time.day).toBe('15')
+        expect(result.NO2.time.month).toBe('January')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should roll over to the next day when BST pushes past midnight UTC', () => {
+        // 2026-07-24T23:30:00Z → 2026-07-25T00:30 BST (next day, 12am)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T23:30:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12am')
+        expect(result.NO2.time.day).toBe('25')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should format midday correctly as 12pm (not 0pm)', () => {
+        // 2026-07-24T11:00:00Z is 12pm London time (BST)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T11:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12pm')
+      })
+
+      test('Should format midnight correctly as 12am (not 0am)', () => {
+        // 2026-01-15T00:00:00Z is 12am London time (GMT, no offset)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T00:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12am')
+      })
+    })
+
     describe('Mocking functionality in buildPollutantData', () => {
       beforeEach(() => {
         config.get.mockReturnValue(true)
