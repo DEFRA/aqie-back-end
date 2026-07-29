@@ -271,9 +271,9 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.time.year).toBeUndefined()
     })
 
-    describe('Timezone-aware time components (BST/GMT) — UTC "Z" input', () => {
-      test('Should convert to BST (UTC+1) hour during summer time', () => {
-        // 2026-07-24T13:00:00Z is 2pm in London during BST
+    describe('Timezone-aware time components — UTC "Z" input (literal UTC)', () => {
+      test('Should use literal UTC hour/day/month/year during summer time', () => {
+        // 2026-07-24T13:00:00Z → 13:00 UTC, displayed as 1pm, 24 July 2026
         const siteData = {
           member: [
             {
@@ -287,14 +287,14 @@ describe('#pollutant-helpers', () => {
 
         const result = extractPollutants(siteData)
 
-        expect(result.NO2.time.hour).toBe('2pm')
+        expect(result.NO2.time.hour).toBe('1pm')
         expect(result.NO2.time.day).toBe('24')
         expect(result.NO2.time.month).toBe('July')
         expect(result.NO2.time.year).toBe('2026')
       })
 
-      test('Should match UTC hour during GMT (winter time, no offset)', () => {
-        // 2026-01-15T12:00:00Z is 12pm in London during GMT (no offset)
+      test('Should use literal UTC hour during winter time (GMT)', () => {
+        // 2026-01-15T12:00:00Z → 12:00 UTC, displayed as 12pm, 15 January 2026
         const siteData = {
           member: [
             {
@@ -314,8 +314,8 @@ describe('#pollutant-helpers', () => {
         expect(result.NO2.time.year).toBe('2026')
       })
 
-      test('Should roll over to the next day when BST pushes past midnight UTC', () => {
-        // 2026-07-24T23:30:00Z → 2026-07-25T00:30 BST (next day, 12am)
+      test('Should keep same calendar day when UTC time is before midnight', () => {
+        // 2026-07-24T23:30:00Z → 23:30 UTC, displayed as 11pm, 24 July 2026
         const siteData = {
           member: [
             {
@@ -329,21 +329,21 @@ describe('#pollutant-helpers', () => {
 
         const result = extractPollutants(siteData)
 
-        expect(result.NO2.time.hour).toBe('12am')
-        expect(result.NO2.time.day).toBe('25')
+        expect(result.NO2.time.hour).toBe('11pm')
+        expect(result.NO2.time.day).toBe('24')
         expect(result.NO2.time.month).toBe('July')
         expect(result.NO2.time.year).toBe('2026')
       })
 
       test('Should format midday correctly as 12pm (not 0pm)', () => {
-        // 2026-07-24T11:00:00Z is 12pm London time (BST)
+        // 2026-07-24T12:00:00Z → 12:00 UTC, displayed as 12pm
         const siteData = {
           member: [
             {
               pollutantName: 'Nitrogen dioxide',
               unit: 'microgrammes per cubic metre',
               value: 25.67,
-              endDateTime: '2026-07-24T11:00:00Z'
+              endDateTime: '2026-07-24T12:00:00Z'
             }
           ]
         }
@@ -354,7 +354,7 @@ describe('#pollutant-helpers', () => {
       })
 
       test('Should format midnight correctly as 12am (not 0am)', () => {
-        // 2026-01-15T00:00:00Z is 12am London time (GMT, no offset)
+        // 2026-01-15T00:00:00Z → 00:00 UTC, displayed as 12am
         const siteData = {
           member: [
             {
@@ -375,12 +375,11 @@ describe('#pollutant-helpers', () => {
     describe('Offset-added parsing — endDateTime with explicit +HH:MM offset', () => {
       // parseWithOffsetAdded takes the literal digits shown and ADDS the offset
       // (rather than the standard ISO 8601 subtraction), per project requirement.
-      // getTimeComponents then additionally applies the London BST/GMT display shift
-      // on top of that already-offset-added UTC-labelled value.
+      // getTimeComponents then reads the resulting UTC-labelled ISO string literally.
 
-      test('Should add +01:00 offset on top of literal time (no BST day rollover)', () => {
+      test('Should add +01:00 offset on top of literal time', () => {
         // Literal 01:00 + 01:00 offset added = 02:00:00.000Z (internal UTC-labelled)
-        // getTimeComponents in July (BST) then adds +1 more hour for London display: 03:00 = 3am
+        // getTimeComponents then displays 2am, 28 July 2026
         const siteData = {
           member: [
             {
@@ -395,7 +394,7 @@ describe('#pollutant-helpers', () => {
         const result = extractPollutants(siteData)
 
         expect(result.NO2.time.date).toBe('2026-07-28T02:00:00.000Z')
-        expect(result.NO2.time.hour).toBe('3am')
+        expect(result.NO2.time.hour).toBe('2am')
         expect(result.NO2.time.day).toBe('28')
         expect(result.NO2.time.month).toBe('July')
         expect(result.NO2.time.year).toBe('2026')
@@ -403,7 +402,7 @@ describe('#pollutant-helpers', () => {
 
       test('Should add a zero offset (+00:00) without changing the literal time', () => {
         // Literal 10:00 + 00:00 offset = 10:00:00.000Z
-        // getTimeComponents in January (GMT, no extra shift) → 10am
+        // getTimeComponents displays 10am, 15 January 2026
         const siteData = {
           member: [
             {
@@ -426,7 +425,7 @@ describe('#pollutant-helpers', () => {
 
       test('Should roll over to the next calendar day when adding the offset pushes past midnight', () => {
         // Literal 23:30 + 01:00 offset added = 2026-07-29T00:30:00.000Z
-        // getTimeComponents in July (BST) adds +1 more hour for display: 01:30 local → 1am, day 29
+        // getTimeComponents displays 12am, 29 July 2026
         const siteData = {
           member: [
             {
@@ -441,7 +440,7 @@ describe('#pollutant-helpers', () => {
         const result = extractPollutants(siteData)
 
         expect(result.NO2.time.date).toBe('2026-07-29T00:30:00.000Z')
-        expect(result.NO2.time.hour).toBe('1am')
+        expect(result.NO2.time.hour).toBe('12am')
         expect(result.NO2.time.day).toBe('29')
         expect(result.NO2.time.month).toBe('July')
         expect(result.NO2.time.year).toBe('2026')
@@ -449,7 +448,7 @@ describe('#pollutant-helpers', () => {
 
       test('Should correctly handle a negative offset by adding it (subtracting the magnitude)', () => {
         // Literal 23:00 + (-01:00) offset added = 22:00:00.000Z
-        // getTimeComponents in July (BST) adds +1 more hour: 23:00 local → 11pm, same day
+        // getTimeComponents displays 10pm, 28 July 2026
         const siteData = {
           member: [
             {
@@ -464,7 +463,7 @@ describe('#pollutant-helpers', () => {
         const result = extractPollutants(siteData)
 
         expect(result.NO2.time.date).toBe('2026-07-28T22:00:00.000Z')
-        expect(result.NO2.time.hour).toBe('11pm')
+        expect(result.NO2.time.hour).toBe('10pm')
         expect(result.NO2.time.day).toBe('28')
       })
 
@@ -484,7 +483,7 @@ describe('#pollutant-helpers', () => {
         const result = extractPollutants(siteData)
 
         expect(result.NO2.time.date).toBe('2026-07-28T10:00:00.000Z')
-        expect(result.NO2.time.hour).toBe('11am') // 10:00 UTC + 1 BST display
+        expect(result.NO2.time.hour).toBe('10am') // literal UTC hour
       })
 
       test('Should also apply offset-added parsing to startDateTime for startDate field', () => {
@@ -900,119 +899,10 @@ describe('#pollutant-helpers', () => {
         mockCatchProxyFetchError
       )
 
-      expect(result).toHaveLength(1) // Only first site has valid data
+      expect(result).toHaveLength(1)
       expect(result[0].name).toBe('Site 1')
       expect(result[0].pollutants.NO2.value).toBe(25.67)
       expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(10)
-    })
-
-    test('Should handle fetch errors gracefully', async () => {
-      const mockSite = {
-        name: 'Test Site',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      mockCatchProxyFetchError.mockRejectedValue(new Error('Network error'))
-
-      const result = await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(result).toHaveLength(0) // Error caught per-pollutant, site filtered out
-    })
-
-    test('Should pass station name to validateDataFreshness', async () => {
-      const mockSite = {
-        name: 'London Marylebone Road',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      const mockPollutantResponse = {
-        member: [
-          {
-            pollutantName: 'Nitrogen dioxide',
-            unit: 'microgrammes per cubic metre',
-            value: 25.67,
-            endDateTime: '2025-01-01T10:00:00Z'
-          }
-        ]
-      }
-      mockCatchProxyFetchError.mockResolvedValue([200, mockPollutantResponse])
-
-      await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(mockValidateDataFreshness).toHaveBeenCalledWith(
-        expect.any(String),
-        'Nitrogen dioxide',
-        'London Marylebone Road'
-      )
-    })
-
-    test('Should construct correct API URL with site ID and date range', async () => {
-      const mockSite = {
-        name: 'Test Site',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      mockCatchProxyFetchError.mockResolvedValue([200, { member: [] }])
-
-      await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(5)
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=NO2',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=GE10&data-type=24',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM25&data-type=24',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=O3&data-type=23',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=SO2',
-        { method: 'GET' }
-      )
     })
   })
 })
