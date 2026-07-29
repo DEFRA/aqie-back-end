@@ -80,11 +80,8 @@ function extractLatestPerPollutant(members) {
   const best = {}
   for (const record of members) {
     const code = pollutantNameToCode(record.pollutantName ?? '')
-    if (!code) {
-      continue
-    }
     const value = Number(record.value)
-    if (!Number.isFinite(value) || value < 0) {
+    if (!code || !Number.isFinite(value) || value < 0) {
       continue
     }
     const existing = best[code]
