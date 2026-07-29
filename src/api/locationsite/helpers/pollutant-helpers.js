@@ -27,6 +27,54 @@ function normalizePollutantName(name) {
     .toLowerCase()
 }
 
+/**
+ * Parses an ISO 8601 timestamp with an offset (e.g. "2026-07-28T01:00:00+01:00")
+ * by taking the literal date/time digits shown and ADDING the offset on top,
+ * rather than doing a standard UTC subtraction.
+ *
+ * Example: "2026-07-28T01:00:00+01:00" → literal 01:00, +01:00 added → 02:00:00
+ *
+ * Returns a JS Date object representing that shifted time (internally labelled
+ * as UTC so that .toISOString() / Intl formatting downstream doesn't apply
+ * any further shift).
+ */
+function parseWithOffsetAdded(dateStr) {
+  if (!dateStr) {
+    return undefined
+  }
+
+  const match = dateStr.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?([+-])(\d{2}):?(\d{2})$/
+  )
+
+  if (!match) {
+    // No offset present (e.g. already has Z, or no timezone info) — fall back to normal parsing
+    return new Date(dateStr)
+  }
+
+  const [, y, mo, d, h, mi, s, sign, offH, offM] = match
+
+  // Build a Date using the literal digits, labelled as UTC (no shift yet)
+  const literalAsUtc = new Date(
+    Date.UTC(
+      Number(y),
+      Number(mo) - 1,
+      Number(d),
+      Number(h),
+      Number(mi),
+      Number(s)
+    )
+  )
+
+  // Add the offset on top, as requested (not subtract)
+  const offsetMinutes =
+    (sign === '-' ? -1 : 1) * (Number(offH) * 60 + Number(offM))
+
+  literalAsUtc.setUTCMinutes(literalAsUtc.getUTCMinutes() + offsetMinutes)
+
+  return literalAsUtc
+}
+
 // Helper to extract pollutants from site data
 function extractPollutants(siteData, stationName = 'Unknown') {
   if (!Array.isArray(siteData?.member)) {
@@ -94,8 +142,8 @@ function findPollutant(members, fullName) {
       return latest
     }
 
-    const latestDate = new Date(latest.endDateTime)
-    const currentDate = new Date(current.endDateTime)
+    const latestDate = parseWithOffsetAdded(latest.endDateTime)
+    const currentDate = parseWithOffsetAdded(current.endDateTime)
 
     return currentDate > latestDate ? current : latest
   })
@@ -133,7 +181,9 @@ function roundValue(value) {
   return value
 }
 
-// Timezone-aware time extraction (fixes BST/GMT server-local-time bug)
+// Timezone-aware time extraction.
+// dateStr is expected to already be a UTC-labelled ISO string (post parseWithOffsetAdded),
+// this formats it into London calendar/hour parts for display.
 function getTimeComponents(dateStr) {
   if (!dateStr) {
     return {}
@@ -170,18 +220,24 @@ function buildPollutantData(found, stationName = 'Unknown') {
     validateDataFreshness(found.endDateTime, found.pollutantName, stationName)
   }
 
-  const isoEndDate = found.endDateTime
-    ? new Date(found.endDateTime).toISOString()
+  const parsedEndDate = found.endDateTime
+    ? parseWithOffsetAdded(found.endDateTime)
     : undefined
-  const ymdStartDate = found.startDateTime
-    ? new Date(found.startDateTime).toISOString().slice(0, 10)
+  const isoEndDate = parsedEndDate ? parsedEndDate.toISOString() : undefined
+
+  const parsedStartDate = found.startDateTime
+    ? parseWithOffsetAdded(found.startDateTime)
     : undefined
+  const ymdStartDate = parsedStartDate
+    ? parsedStartDate.toISOString().slice(0, 10)
+    : undefined
+
   const unit = getPollutantUnit(found.unit)
   const mockMode = config.get('mockInvalidPollutants')
   logger.info(`Mock mode: ${mockMode}, Original value: ${found.value}`)
   const mockedValue = applyMockMode(found.value, mockMode, found.value)
   const value = roundValue(mockedValue)
-  const { hour, day, month, year } = getTimeComponents(found.endDateTime)
+  const { hour, day, month, year } = getTimeComponents(isoEndDate)
   return {
     value,
     unit,

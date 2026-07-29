@@ -271,7 +271,7 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.time.year).toBeUndefined()
     })
 
-    describe('Timezone-aware time components (BST/GMT)', () => {
+    describe('Timezone-aware time components (BST/GMT) — UTC "Z" input', () => {
       test('Should convert to BST (UTC+1) hour during summer time', () => {
         // 2026-07-24T13:00:00Z is 2pm in London during BST
         const siteData = {
@@ -369,6 +369,142 @@ describe('#pollutant-helpers', () => {
         const result = extractPollutants(siteData)
 
         expect(result.NO2.time.hour).toBe('12am')
+      })
+    })
+
+    describe('Offset-added parsing — endDateTime with explicit +HH:MM offset', () => {
+      // parseWithOffsetAdded takes the literal digits shown and ADDS the offset
+      // (rather than the standard ISO 8601 subtraction), per project requirement.
+      // getTimeComponents then additionally applies the London BST/GMT display shift
+      // on top of that already-offset-added UTC-labelled value.
+
+      test('Should add +01:00 offset on top of literal time (no BST day rollover)', () => {
+        // Literal 01:00 + 01:00 offset added = 02:00:00.000Z (internal UTC-labelled)
+        // getTimeComponents in July (BST) then adds +1 more hour for London display: 03:00 = 3am
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T01:00:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T02:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('3am')
+        expect(result.NO2.time.day).toBe('28')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should add a zero offset (+00:00) without changing the literal time', () => {
+        // Literal 10:00 + 00:00 offset = 10:00:00.000Z
+        // getTimeComponents in January (GMT, no extra shift) → 10am
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T10:00:00+00:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-01-15T10:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('10am')
+        expect(result.NO2.time.day).toBe('15')
+        expect(result.NO2.time.month).toBe('January')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should roll over to the next calendar day when adding the offset pushes past midnight', () => {
+        // Literal 23:30 + 01:00 offset added = 2026-07-29T00:30:00.000Z
+        // getTimeComponents in July (BST) adds +1 more hour for display: 01:30 local → 1am, day 29
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T23:30:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-29T00:30:00.000Z')
+        expect(result.NO2.time.hour).toBe('1am')
+        expect(result.NO2.time.day).toBe('29')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should correctly handle a negative offset by adding it (subtracting the magnitude)', () => {
+        // Literal 23:00 + (-01:00) offset added = 22:00:00.000Z
+        // getTimeComponents in July (BST) adds +1 more hour: 23:00 local → 11pm, same day
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T23:00:00-01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T22:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('11pm')
+        expect(result.NO2.time.day).toBe('28')
+      })
+
+      test('Should fall back to standard parsing when no offset is present (Z suffix)', () => {
+        // No +HH:MM offset present → parseWithOffsetAdded falls back to new Date(dateStr)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T10:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T10:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('11am') // 10:00 UTC + 1 BST display
+      })
+
+      test('Should also apply offset-added parsing to startDateTime for startDate field', () => {
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              startDateTime: '2026-07-28T23:30:00+01:00', // literal+offset rolls to next day
+              endDateTime: '2026-07-28T10:00:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        // startDateTime literal 23:30 + 01:00 offset added = 2026-07-29T00:30:00.000Z
+        // sliced to date-only
+        expect(result.NO2.startDate).toBe('2026-07-29')
       })
     })
 
