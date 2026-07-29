@@ -21,19 +21,19 @@ const DAQI_BAND_OFFSET = 1
  * Band 10 applies to any value exceeding the band 9 threshold.
  * Source: https://uk-air.defra.gov.uk/air-pollution/daqi
  */
-const NO2_THRESHOLDS = [67, 134, 200, 267, 334, 400, 467, 534, 600]
+const NO2_THRESHOLDS = [67, 134, 200, 267, 334, 400, 467, 534, 600] // NOSONAR S109
 
 /** Upper µg/m³ thresholds for PM10 DAQI bands 1–9 (24-hour running mean). */
-const PM10_THRESHOLDS = [16, 33, 50, 58, 66, 75, 83, 91, 100]
+const PM10_THRESHOLDS = [16, 33, 50, 58, 66, 75, 83, 91, 100] // NOSONAR S109
 
 /** Upper µg/m³ thresholds for PM2.5 DAQI bands 1–9 (24-hour running mean). */
-const PM25_THRESHOLDS = [11, 23, 35, 41, 47, 53, 58, 64, 70]
+const PM25_THRESHOLDS = [11, 23, 35, 41, 47, 53, 58, 64, 70] // NOSONAR S109
 
 /** Upper µg/m³ thresholds for O3 DAQI bands 1–9 (8-hour running mean). */
-const O3_THRESHOLDS = [33, 66, 100, 120, 140, 160, 187, 213, 240]
+const O3_THRESHOLDS = [33, 66, 100, 120, 140, 160, 187, 213, 240] // NOSONAR S109
 
 /** Upper µg/m³ thresholds for SO2 DAQI bands 1–9 (15-minute mean). */
-const SO2_THRESHOLDS = [88, 177, 266, 354, 443, 532, 710, 887, 1064]
+const SO2_THRESHOLDS = [88, 177, 266, 354, 443, 532, 710, 887, 1064] // NOSONAR S109
 
 const DAQI_BREAKPOINTS = {
   NO2: NO2_THRESHOLDS,
