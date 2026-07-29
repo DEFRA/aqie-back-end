@@ -257,7 +257,7 @@ function getPollutantUnit(unit) {
   return 'NA'
 }
 
-// Helper to enrich site data with pollutants
+// Helper to enrich site data with pollutant
 async function enrichSitesWithPollutants(
   tempData,
   ricardoApiSiteIdUrl,
