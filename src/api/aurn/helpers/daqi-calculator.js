@@ -10,6 +10,12 @@
  *   O3   — 8-hour running mean  (data-type=23)
  *   SO2  — 15-minute mean
  */
+/** The highest possible DAQI index value. */
+const DAQI_MAX_INDEX = 10
+
+/** DAQI band index starts at 1; this offset converts a 0-based array index to a band number. */
+const DAQI_BAND_OFFSET = 1
+
 const DAQI_BREAKPOINTS = {
   NO2: [67, 134, 200, 267, 334, 400, 467, 534, 600],
   PM10: [16, 33, 50, 58, 66, 75, 83, 91, 100],
@@ -32,10 +38,10 @@ function daqiIndexForPollutant(pollutantCode, value) {
   }
   for (let i = 0; i < thresholds.length; i++) {
     if (value <= thresholds[i]) {
-      return i + 1
+      return i + DAQI_BAND_OFFSET
     }
   }
-  return 10
+  return DAQI_MAX_INDEX
 }
 
 /**
@@ -56,4 +62,9 @@ function calculateDaqiIndex(pollutantValues) {
   return maxDaqi
 }
 
-export { daqiIndexForPollutant, calculateDaqiIndex, DAQI_BREAKPOINTS }
+export {
+  daqiIndexForPollutant,
+  calculateDaqiIndex,
+  DAQI_BREAKPOINTS,
+  DAQI_MAX_INDEX
+}

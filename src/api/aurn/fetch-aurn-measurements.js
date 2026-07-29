@@ -11,6 +11,15 @@ const MAX_PAGES_PER_STATION = 10
 
 const STATION_BATCH_SIZE = 5
 
+/** HTTP 200 OK status code. */
+const HTTP_STATUS_OK = 200
+
+/** Start of day time component used in Ricardo API date-time parameters. */
+const DAY_START_TIME = '00:00:00'
+
+/** End of day time component used in Ricardo API date-time parameters. */
+const DAY_END_TIME = '23:59:00'
+
 /**
  * Maps a pollutantName value from the Ricardo API response to a DAQI short code.
  * Strips HTML subscript tags before matching (e.g. PM<sub>10</sub> → pm10).
@@ -25,12 +34,18 @@ function pollutantNameToCode(name) {
     .replaceAll('<sub>', '')
     .replaceAll('</sub>', '')
     .trim()
-  if (n.includes('2.5')) return 'PM25'
-  if (n.includes('pm10') || n.includes('pm 10')) return 'PM10'
+  if (n.includes('2.5')) {
+    return 'PM25'
+  }
+  if (n.includes('pm10') || n.includes('pm 10')) {
+    return 'PM10'
+  }
   if (n.includes('nitrogen dioxide') && !n.includes('nitrogen oxides')) {
     return 'NO2'
   }
-  if (n.includes('ozone')) return 'O3'
+  if (n.includes('ozone')) {
+    return 'O3'
+  }
   if (n.includes('sulphur dioxide') || n.includes('sulfur dioxide')) {
     return 'SO2'
   }
@@ -49,8 +64,8 @@ function todayDateRange() {
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
   return {
-    startDateTime: `${yyyy}-${mm}-${dd} 00:00:00`,
-    endDateTime: `${yyyy}-${mm}-${dd} 23:59:00`
+    startDateTime: `${yyyy}-${mm}-${dd} ${DAY_START_TIME}`,
+    endDateTime: `${yyyy}-${mm}-${dd} ${DAY_END_TIME}`
   }
 }
 
@@ -65,9 +80,13 @@ function extractLatestPerPollutant(members) {
   const best = {}
   for (const record of members) {
     const code = pollutantNameToCode(record.pollutantName ?? '')
-    if (!code) continue
+    if (!code) {
+      continue
+    }
     const value = Number(record.value)
-    if (!Number.isFinite(value) || value < 0) continue
+    if (!Number.isFinite(value) || value < 0) {
+      continue
+    }
     const existing = best[code]
     const isNewer =
       !existing ||
@@ -103,7 +122,9 @@ async function fetchAllRecordsForStation(
       method: 'GET',
       headers
     })
-    if (statusCode !== 200 || !Array.isArray(data?.member)) break
+    if (statusCode !== HTTP_STATUS_OK || !Array.isArray(data?.member)) {
+      break
+    }
     records.push(...data.member)
     hasMore = Boolean(data.view?.next) && data.member.length > 0
     page++
@@ -131,7 +152,9 @@ async function fetchStationDaqi(
     startDateTime,
     endDateTime
   )
-  if (!records.length) return null
+  if (!records.length) {
+    return null
+  }
 
   const pollutantValues = {}
   let latestMeasuredAt = null
@@ -149,7 +172,9 @@ async function fetchStationDaqi(
   }
 
   const daqiIndex = calculateDaqiIndex(pollutantValues)
-  if (daqiIndex === null) return null
+  if (daqiIndex === null) {
+    return null
+  }
 
   return {
     localSiteID: siteId,
