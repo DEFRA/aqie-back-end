@@ -48,13 +48,12 @@ function parseWithOffsetAdded(dateStr) {
   )
 
   if (!match) {
-    // No offset present (e.g. already has Z, or no timezone info) — fall back to normal parsing
+    // No offset present (e.g. ends with Z or no timezone info)
     return new Date(dateStr)
   }
 
   const [, y, mo, d, h, mi, s, sign, offH, offM] = match
 
-  // Build a Date using the literal digits, labelled as UTC (no shift yet)
   const literalAsUtc = new Date(
     Date.UTC(
       Number(y),
@@ -66,7 +65,6 @@ function parseWithOffsetAdded(dateStr) {
     )
   )
 
-  // Add the offset on top, as requested (not subtract)
   const offsetMinutes =
     (sign === '-' ? -1 : 1) * (Number(offH) * 60 + Number(offM))
 
@@ -181,15 +179,47 @@ function roundValue(value) {
   return value
 }
 
-// Timezone-aware time extraction.
-// dateStr is expected to already be a UTC-labelled ISO string (post parseWithOffsetAdded),
-// this formats it into London calendar/hour parts for display.
+/**
+ * Timezone-aware time extraction.
+ *
+ * NEW BEHAVIOUR (Option A):
+ * - If the timestamp ends with "Z", we DO NOT apply London timezone conversion.
+ *   We extract the literal UTC hour/day/month/year exactly as written.
+ *
+ * - If the timestamp has an offset, we use the existing logic:
+ *   offset added → UTC → London timezone formatting.
+ */
 function getTimeComponents(dateStr) {
   if (!dateStr) {
     return {}
   }
+
+  const isUtcLiteral = dateStr.endsWith('Z')
+
   const dateObj = new Date(dateStr)
 
+  if (isUtcLiteral) {
+    // Extract literal UTC components
+    const hours = dateObj.getUTCHours()
+    const day = dateObj.getUTCDate()
+    const month = dateObj.toLocaleString('en-GB', {
+      month: 'long',
+      timeZone: 'UTC'
+    })
+    const year = dateObj.getUTCFullYear()
+
+    const hour12 = hours % 12 === 0 ? 12 : hours % 12
+    const ampm = hours < 12 ? 'am' : 'pm'
+
+    return {
+      hour: `${hour12}${ampm}`,
+      day: `${day}`,
+      month,
+      year: `${year}`
+    }
+  }
+
+  // Existing London timezone logic for offset timestamps
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: LONDON_TIME_ZONE,
     hour: 'numeric',
@@ -215,7 +245,6 @@ function getTimeComponents(dateStr) {
 }
 
 function buildPollutantData(found, stationName = 'Unknown') {
-  // Validate data freshness
   if (found.endDateTime) {
     validateDataFreshness(found.endDateTime, found.pollutantName, stationName)
   }
@@ -237,7 +266,9 @@ function buildPollutantData(found, stationName = 'Unknown') {
   logger.info(`Mock mode: ${mockMode}, Original value: ${found.value}`)
   const mockedValue = applyMockMode(found.value, mockMode, found.value)
   const value = roundValue(mockedValue)
+
   const { hour, day, month, year } = getTimeComponents(isoEndDate)
+
   return {
     value,
     unit,
