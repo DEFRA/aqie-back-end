@@ -1,5 +1,9 @@
+const HTTP_OK = 200
+
 const healthController = {
-  handler: (request, h) => h.response({ message: 'success' }).code(200)
+  handler(_request, h) {
+    return h.response({ message: 'success' }).code(HTTP_OK)
+  }
 }
 
 export { healthController }

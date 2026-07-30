@@ -6,7 +6,7 @@ describe('failAction', () => {
     const mockRequest = { logger: { error: () => {} } }
     const mockError = new Error('Validation failed')
 
-    expect(() => failAction(mockRequest, {}, mockError)).toThrow(
+    expect(() => failAction(mockRequest, mockError)).toThrow(
       'Validation failed'
     )
   })
@@ -16,7 +16,7 @@ describe('failAction', () => {
     const mockRequest = { logger: logSpy }
     const mockError = new Error('Bad input')
 
-    expect(() => failAction(mockRequest, {}, mockError)).toThrow()
+    expect(() => failAction(mockRequest, mockError)).toThrow()
 
     expect(logSpy.error).toHaveBeenCalledWith(mockError, mockError.message)
   })
