@@ -1,7 +1,7 @@
 /**
  * DAQI breakpoint thresholds per pollutant.
  * Each array contains the upper µg/m³ limit for bands 1–9; band 10 is anything above band 9.
- * Source: https://uk-air.defra.gov.uk/air-pollution/daqi
+ * Source: https://uk-air.defra.gov.uk/air-pollution/daqi?view=more-info
  *
  * Averaging periods used by the Ricardo API (via data-type param):
  *   NO2  — hourly mean
@@ -19,7 +19,7 @@ const DAQI_BAND_OFFSET = 1
 /**
  * Upper µg/m³ thresholds for DAQI bands 1–9 per pollutant (hourly mean).
  * Band 10 applies to any value exceeding the band 9 threshold.
- * Source: https://uk-air.defra.gov.uk/air-pollution/daqi
+ * Source: https://uk-air.defra.gov.uk/air-pollution/daqi?view=more-info
  */
 const NO2_THRESHOLDS = [67, 134, 200, 267, 334, 400, 467, 534, 600] // NOSONAR S109
 
