@@ -73,6 +73,13 @@ describe('#pollutant-helpers', () => {
       )
       expect(normalizePollutantName('  Extra  Spaces  ')).toBe('extraspaces')
     })
+
+    test('Should strip <sub> tags and keep their inner content', () => {
+      expect(normalizePollutantName('PM2.5<sub>test</sub>')).toBe('pm2.5test')
+      expect(normalizePollutantName('Nitrogen di<sub>ox</sub>ide')).toBe(
+        'nitrogendioxide'
+      )
+    })
   })
 
   describe('#extractPollutants', () => {
@@ -246,6 +253,54 @@ describe('#pollutant-helpers', () => {
 
       expect(result).toBeDefined()
       expect(result.NO2.value).toBe(22.0)
+    })
+
+    test('Should select the dated member when the first (accumulator) member has no endDateTime', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 10.0
+            // no endDateTime — this becomes the initial accumulator in reduce
+          },
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 30.0,
+            endDateTime: '2025-01-01T10:00:00Z'
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(30.0)
+    })
+
+    test('Should keep the latest member when a later-listed member is chronologically earlier', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 40.0,
+            endDateTime: '2025-01-01T10:00:00Z' // later time, listed first
+          },
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 15.0,
+            endDateTime: '2025-01-01T09:00:00Z' // earlier time, listed second
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(40.0) // earlier-listed, later timestamp wins
     })
 
     test('Should return empty time components when pollutant has no endDateTime', () => {
@@ -773,6 +828,73 @@ describe('#pollutant-helpers', () => {
       expect(result).toHaveLength(0) // Site filtered out due to no pollutants
       // The function doesn't explicitly log errors for non-200 responses
       // It just gets null data and handles it gracefully
+    })
+
+    test('Should handle catchProxyFetchError rejecting for a pollutant fetch', async () => {
+      const mockSite = {
+        name: 'Test Site',
+        localSiteID: 'TEST001',
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      mockCatchProxyFetchError.mockRejectedValue(new Error('network error'))
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(0) // no siteData retrieved → no pollutants
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching')
+      )
+    })
+
+    test('Should still enrich a site when one pollutant fetch rejects but others succeed', async () => {
+      const mockSite = {
+        name: 'Test Site',
+        localSiteID: 'TEST001',
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      const mockValidResponse = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 12.5,
+            endDateTime: '2025-01-01T10:00:00Z'
+          }
+        ]
+      }
+
+      mockCatchProxyFetchError
+        .mockRejectedValueOnce(new Error('network error')) // one pollutant fetch fails
+        .mockResolvedValue([200, mockValidResponse]) // remaining fetches succeed
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].pollutants.NO2.value).toBe(12.5)
     })
 
     test('Should handle sites with invalid pollutant values', async () => {
