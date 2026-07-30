@@ -8,22 +8,20 @@ async function getAPIPollutants(region, currentTime) {
   const res = await proxyFetch(url + region.id)
   const respose = await res.json()
   const obj = respose.map((item) => {
-    let newObj = {}
+    const newObj = {}
     item.parameter_ids.forEach((el) => {
       if (
         ['O3', 'NO2', 'GE10', 'GR10', 'PM10', 'PM25', 'GR25', 'SO2'].includes(
           el.parameter_id
         )
       ) {
-        newObj = Object.assign({}, newObj, {
-          [el.parameter_id]: {
-            featureOfInterest: el.feature_of_interest[0].featureOfInterset,
-            startDate: el.feature_of_interest[0].start_date,
-            endDate: el.feature_of_interest[0].ended_date,
-            time: { date: '' },
-            exception: ''
-          }
-        })
+        newObj[el.parameter_id] = {
+          featureOfInterest: el.feature_of_interest[0].featureOfInterset,
+          startDate: el.feature_of_interest[0].start_date,
+          endDate: el.feature_of_interest[0].ended_date,
+          time: { date: '' },
+          exception: ''
+        }
       }
     })
     return {

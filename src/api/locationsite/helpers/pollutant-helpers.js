@@ -19,6 +19,9 @@ const POLLUTANT_DATA_TYPE = { PM10: 24, PM25: 24, O3: 23 }
 
 const LONDON_TIME_ZONE = 'Europe/London'
 
+const TWELVE_HOUR_CLOCK = 12
+const MIDNIGHT_HOUR = 0
+
 // Helper to normalize pollutant names
 function normalizePollutantName(name) {
   return name
@@ -208,8 +211,12 @@ function getTimeComponents(dateStr) {
     })
     const year = dateObj.getUTCFullYear()
 
-    const hour12 = hours % 12 === 0 ? 12 : hours % 12
-    const ampm = hours < 12 ? 'am' : 'pm'
+    const hour12 =
+      hours % TWELVE_HOUR_CLOCK === MIDNIGHT_HOUR
+        ? TWELVE_HOUR_CLOCK
+        : hours % TWELVE_HOUR_CLOCK
+
+    const ampm = hours < TWELVE_HOUR_CLOCK ? 'am' : 'pm'
 
     return {
       hour: `${hour12}${ampm}`,
@@ -231,13 +238,17 @@ function getTimeComponents(dateStr) {
 
   const partMap = Object.fromEntries(parts.map((p) => [p.type, p.value]))
 
-  let hours = Number.parseInt(partMap.hour, 10) % 24
-  const ampm = hours >= HOURS_IN_DAY ? 'pm' : 'am'
-  hours = hours % HOURS_IN_DAY
-  hours = hours === 0 ? HOURS_IN_DAY : hours
+  const hours = Number.parseInt(partMap.hour, 10) % HOURS_IN_DAY
+
+  const ampm = hours < TWELVE_HOUR_CLOCK ? 'am' : 'pm'
+
+  const hour12 =
+    hours % TWELVE_HOUR_CLOCK === MIDNIGHT_HOUR
+      ? TWELVE_HOUR_CLOCK
+      : hours % TWELVE_HOUR_CLOCK
 
   return {
-    hour: `${hours}${ampm}`,
+    hour: `${hour12}${ampm}`,
     day: `${partMap.day}`,
     month: partMap.month,
     year: `${partMap.year}`
