@@ -188,6 +188,67 @@ async function fetchLatestAveragedValue(
   }
 }
 
+function buildHourlyReadings(records) {
+  const pollutantValues = {}
+  const pollutants = {}
+  let latestMeasuredAt = null
+
+  for (const [pollutantCode, { value, measuredAt }] of Object.entries(
+    extractLatestPerPollutant(records)
+  )) {
+    pollutantValues[pollutantCode] = value
+    pollutants[pollutantCode] = { value, measuredAt }
+    if (
+      measuredAt &&
+      (!latestMeasuredAt || new Date(measuredAt) > new Date(latestMeasuredAt))
+    ) {
+      latestMeasuredAt = measuredAt
+    }
+  }
+
+  return { pollutantValues, pollutants, latestMeasuredAt }
+}
+
+async function applyAveragedReadings(
+  pollutantValues,
+  pollutants,
+  latestMeasuredAt,
+  baseUrl,
+  headers,
+  siteId,
+  startDateTime,
+  endDateTime
+) {
+  let updatedMeasuredAt = latestMeasuredAt
+
+  for (const [pollutantCode, { ricardoDataType }] of Object.entries(
+    DAQI_AVERAGING_WINDOWS
+  )) {
+    const averagedReading = await fetchLatestAveragedValue(
+      baseUrl,
+      headers,
+      siteId,
+      startDateTime,
+      endDateTime,
+      pollutantCode,
+      ricardoDataType
+    )
+    if (averagedReading) {
+      pollutantValues[pollutantCode] = averagedReading.value
+      pollutants[pollutantCode] = averagedReading
+      if (
+        averagedReading.measuredAt &&
+        (!updatedMeasuredAt ||
+          new Date(averagedReading.measuredAt) > new Date(updatedMeasuredAt))
+      ) {
+        updatedMeasuredAt = averagedReading.measuredAt
+      }
+    }
+  }
+
+  return updatedMeasuredAt
+}
+
 /**
  * Fetches all pollutant measurements for a single station, extracts the most
  * recent value per DAQI pollutant, and returns a station DAQI result.
@@ -211,48 +272,19 @@ async function fetchStationDaqi(
     return null
   }
 
-  const pollutantValues = {}
-  const pollutants = {}
-  let latestMeasuredAt = null
+  const { pollutantValues, pollutants, latestMeasuredAt } =
+    buildHourlyReadings(records)
 
-  for (const [pollutantCode, { value, measuredAt }] of Object.entries(
-    extractLatestPerPollutant(records)
-  )) {
-    pollutantValues[pollutantCode] = value
-    pollutants[pollutantCode] = { value, measuredAt }
-    if (
-      measuredAt &&
-      (!latestMeasuredAt || new Date(measuredAt) > new Date(latestMeasuredAt))
-    ) {
-      latestMeasuredAt = measuredAt
-    }
-  }
-
-  // Override hourly readings with correctly-averaged values where Ricardo has them
-  for (const [pollutantCode, { ricardoDataType }] of Object.entries(
-    DAQI_AVERAGING_WINDOWS
-  )) {
-    const averagedReading = await fetchLatestAveragedValue(
-      baseUrl,
-      headers,
-      siteId,
-      startDateTime,
-      endDateTime,
-      pollutantCode,
-      ricardoDataType
-    )
-    if (averagedReading) {
-      pollutantValues[pollutantCode] = averagedReading.value
-      pollutants[pollutantCode] = averagedReading
-      if (
-        averagedReading.measuredAt &&
-        (!latestMeasuredAt ||
-          new Date(averagedReading.measuredAt) > new Date(latestMeasuredAt))
-      ) {
-        latestMeasuredAt = averagedReading.measuredAt
-      }
-    }
-  }
+  const measuredAt = await applyAveragedReadings(
+    pollutantValues,
+    pollutants,
+    latestMeasuredAt,
+    baseUrl,
+    headers,
+    siteId,
+    startDateTime,
+    endDateTime
+  )
 
   const daqiIndex = calculateDaqiIndex(pollutantValues)
   if (daqiIndex === null) {
@@ -262,7 +294,7 @@ async function fetchStationDaqi(
   return {
     localSiteID: siteId,
     daqiIndex,
-    measuredAt: latestMeasuredAt,
+    measuredAt,
     updatedAt: new Date(),
     pollutants
   }
