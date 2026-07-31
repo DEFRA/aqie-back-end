@@ -216,8 +216,7 @@ async function applyAveragedReadings(
   baseUrl,
   headers,
   siteId,
-  startDateTime,
-  endDateTime
+  dateRange
 ) {
   let updatedMeasuredAt = latestMeasuredAt
 
@@ -228,8 +227,8 @@ async function applyAveragedReadings(
       baseUrl,
       headers,
       siteId,
-      startDateTime,
-      endDateTime,
+      dateRange.startDateTime,
+      dateRange.endDateTime,
       pollutantCode,
       ricardoDataType
     )
@@ -254,19 +253,13 @@ async function applyAveragedReadings(
  * recent value per DAQI pollutant, and returns a station DAQI result.
  * Returns null if no DAQI index can be calculated.
  */
-async function fetchStationDaqi(
-  siteId,
-  baseUrl,
-  headers,
-  startDateTime,
-  endDateTime
-) {
+async function fetchStationDaqi(siteId, baseUrl, headers, dateRange) {
   const records = await fetchAllRecordsForStation(
     baseUrl,
     headers,
     siteId,
-    startDateTime,
-    endDateTime
+    dateRange.startDateTime,
+    dateRange.endDateTime
   )
   if (!records.length) {
     return null
@@ -282,8 +275,7 @@ async function fetchStationDaqi(
     baseUrl,
     headers,
     siteId,
-    startDateTime,
-    endDateTime
+    dateRange
   )
 
   const daqiIndex = calculateDaqiIndex(pollutantValues)
@@ -321,7 +313,7 @@ async function fetchAurnMeasurements(stationIds) {
     'Content-Type': 'application/json'
   }
   const baseUrl = config.get('ricardoApiSiteIdUrl')
-  const { startDateTime, endDateTime } = todayDateRange()
+  const dateRange = todayDateRange()
 
   logger.info(
     `AURN: fetching measurements for ${stationIds.length} stations (batch size ${STATION_BATCH_SIZE})`
@@ -332,7 +324,7 @@ async function fetchAurnMeasurements(stationIds) {
     const batch = stationIds.slice(i, i + STATION_BATCH_SIZE)
     const batchResults = await Promise.all(
       batch.map((siteId) =>
-        fetchStationDaqi(siteId, baseUrl, headers, startDateTime, endDateTime)
+        fetchStationDaqi(siteId, baseUrl, headers, dateRange)
       )
     )
     results.push(...batchResults.filter(Boolean))
