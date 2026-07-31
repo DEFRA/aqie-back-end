@@ -53,13 +53,19 @@ function pollutantNameToCode(name) {
   if (normalised.includes('pm10') || normalised.includes('pm 10')) {
     return 'PM10'
   }
-  if (normalised.includes('nitrogen dioxide') && !normalised.includes('nitrogen oxides')) {
+  if (
+    normalised.includes('nitrogen dioxide') &&
+    !normalised.includes('nitrogen oxides')
+  ) {
     return 'NO2'
   }
   if (normalised.includes('ozone')) {
     return 'O3'
   }
-  if (normalised.includes('sulphur dioxide') || normalised.includes('sulfur dioxide')) {
+  if (
+    normalised.includes('sulphur dioxide') ||
+    normalised.includes('sulfur dioxide')
+  ) {
     return 'SO2'
   }
   return null
@@ -176,7 +182,10 @@ async function fetchLatestAveragedValue(
       ? record
       : latest
   )
-  return { value: Number(mostRecent.value), measuredAt: mostRecent.endDateTime ?? null }
+  return {
+    value: Number(mostRecent.value),
+    measuredAt: mostRecent.endDateTime ?? null
+  }
 }
 
 /**
@@ -220,7 +229,9 @@ async function fetchStationDaqi(
   }
 
   // Override hourly readings with correctly-averaged values where Ricardo has them
-  for (const [pollutantCode, { ricardoDataType }] of Object.entries(DAQI_AVERAGING_WINDOWS)) {
+  for (const [pollutantCode, { ricardoDataType }] of Object.entries(
+    DAQI_AVERAGING_WINDOWS
+  )) {
     const averagedReading = await fetchLatestAveragedValue(
       baseUrl,
       headers,
