@@ -9,6 +9,19 @@ const logger = createLogger()
 /** Maximum pages to fetch per station to guard against runaway pagination. */
 const MAX_PAGES_PER_STATION = 10
 
+/**
+ * Ricardo data-type codes that select the correct averaging window for each
+ * DAQI pollutant. Without these, the API returns hourly spot readings, which
+ * do not match the averaging periods the DAQI breakpoints are defined for.
+ *   data-type=23 → 8-hour running mean  (required for O3)
+ *   data-type=24 → 24-hour running mean (required for PM10 and PM25)
+ */
+const DAQI_AVERAGING_WINDOWS = {
+  O3: { ricardoDataType: 23, averagingPeriod: '8-hour running mean' },
+  PM10: { ricardoDataType: 24, averagingPeriod: '24-hour running mean' },
+  PM25: { ricardoDataType: 24, averagingPeriod: '24-hour running mean' }
+}
+
 const STATION_BATCH_SIZE = 5
 
 /** HTTP 200 OK status code. */
@@ -29,24 +42,24 @@ const DAY_END_TIME = '23:59:00'
  * @returns {string|null}
  */
 function pollutantNameToCode(name) {
-  const n = name
+  const normalised = name
     .toLowerCase()
     .replaceAll('<sub>', '')
     .replaceAll('</sub>', '')
     .trim()
-  if (n.includes('2.5')) {
+  if (normalised.includes('2.5')) {
     return 'PM25'
   }
-  if (n.includes('pm10') || n.includes('pm 10')) {
+  if (normalised.includes('pm10') || normalised.includes('pm 10')) {
     return 'PM10'
   }
-  if (n.includes('nitrogen dioxide') && !n.includes('nitrogen oxides')) {
+  if (normalised.includes('nitrogen dioxide') && !normalised.includes('nitrogen oxides')) {
     return 'NO2'
   }
-  if (n.includes('ozone')) {
+  if (normalised.includes('ozone')) {
     return 'O3'
   }
-  if (n.includes('sulphur dioxide') || n.includes('sulfur dioxide')) {
+  if (normalised.includes('sulphur dioxide') || normalised.includes('sulfur dioxide')) {
     return 'SO2'
   }
   return null
@@ -131,6 +144,42 @@ async function fetchAllRecordsForStation(
 }
 
 /**
+ * Fetches the most recent value for one pollutant using a specific data-type
+ * (averaging period). Returns null if no records are available.
+ */
+async function fetchLatestAveragedValue(
+  baseUrl,
+  headers,
+  siteId,
+  startDateTime,
+  endDateTime,
+  pollutantCode,
+  dataType
+) {
+  const url = `${baseUrl}station-id=${siteId}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&pollutant-name=${pollutantCode}&data-type=${dataType}&page=1`
+  const [statusCode, data] = await catchProxyFetchError(url, {
+    method: 'GET',
+    headers
+  })
+  if (statusCode !== HTTP_STATUS_OK || !Array.isArray(data?.member)) {
+    return null
+  }
+  const validRecords = data.member.filter((record) => {
+    const numericValue = Number(record.value)
+    return Number.isFinite(numericValue) && numericValue >= 0
+  })
+  if (!validRecords.length) {
+    return null
+  }
+  const mostRecent = validRecords.reduce((latest, record) =>
+    !latest || new Date(record.endDateTime) > new Date(latest.endDateTime)
+      ? record
+      : latest
+  )
+  return { value: Number(mostRecent.value), measuredAt: mostRecent.endDateTime ?? null }
+}
+
+/**
  * Fetches all pollutant measurements for a single station, extracts the most
  * recent value per DAQI pollutant, and returns a station DAQI result.
  * Returns null if no DAQI index can be calculated.
@@ -154,17 +203,43 @@ async function fetchStationDaqi(
   }
 
   const pollutantValues = {}
+  const pollutants = {}
   let latestMeasuredAt = null
 
-  for (const [code, { value, measuredAt }] of Object.entries(
+  for (const [pollutantCode, { value, measuredAt }] of Object.entries(
     extractLatestPerPollutant(records)
   )) {
-    pollutantValues[code] = value
+    pollutantValues[pollutantCode] = value
+    pollutants[pollutantCode] = { value, measuredAt }
     if (
       measuredAt &&
       (!latestMeasuredAt || new Date(measuredAt) > new Date(latestMeasuredAt))
     ) {
       latestMeasuredAt = measuredAt
+    }
+  }
+
+  // Override hourly readings with correctly-averaged values where Ricardo has them
+  for (const [pollutantCode, { ricardoDataType }] of Object.entries(DAQI_AVERAGING_WINDOWS)) {
+    const averagedReading = await fetchLatestAveragedValue(
+      baseUrl,
+      headers,
+      siteId,
+      startDateTime,
+      endDateTime,
+      pollutantCode,
+      ricardoDataType
+    )
+    if (averagedReading) {
+      pollutantValues[pollutantCode] = averagedReading.value
+      pollutants[pollutantCode] = averagedReading
+      if (
+        averagedReading.measuredAt &&
+        (!latestMeasuredAt ||
+          new Date(averagedReading.measuredAt) > new Date(latestMeasuredAt))
+      ) {
+        latestMeasuredAt = averagedReading.measuredAt
+      }
     }
   }
 
@@ -177,7 +252,8 @@ async function fetchStationDaqi(
     localSiteID: siteId,
     daqiIndex,
     measuredAt: latestMeasuredAt,
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    pollutants
   }
 }
 
@@ -189,7 +265,7 @@ async function fetchStationDaqi(
  * one call per pollutant per station.
  *
  * @param {string[]} stationIds
- * @returns {Promise<Array<{ localSiteID: string, daqiIndex: number, measuredAt: string|null, updatedAt: Date }>>}
+ * @returns {Promise<Array<{ localSiteID: string, daqiIndex: number, measuredAt: string|null, updatedAt: Date, pollutants: { [code: string]: { value: number, measuredAt: string|null } } }>>}
  */
 async function fetchAurnMeasurements(stationIds) {
   const accessToken = await fetchOAuthToken(catchProxyFetchError, logger)

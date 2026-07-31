@@ -119,19 +119,22 @@ describe('fetch-aurn-measurements', () => {
     })
 
     it('ignores Nitric oxide (not a DAQI pollutant)', async () => {
-      mockCatchProxyFetchError.mockResolvedValue([
-        200,
-        {
-          member: [
-            {
-              pollutantName: 'Nitric oxide',
-              value: 100,
-              endDateTime: '2026-07-29T10:00:00+01:00'
-            }
-          ],
-          view: {}
-        }
-      ])
+      // First call is the bulk fetch; data-type override calls return empty to avoid false positives
+      mockCatchProxyFetchError
+        .mockResolvedValueOnce([
+          200,
+          {
+            member: [
+              {
+                pollutantName: 'Nitric oxide',
+                value: 100,
+                endDateTime: '2026-07-29T10:00:00+01:00'
+              }
+            ],
+            view: {}
+          }
+        ])
+        .mockResolvedValue([200, { member: [], view: {} }])
       mockCalculateDaqiIndex.mockReturnValue(null)
 
       const { fetchAurnMeasurements } = await import(
@@ -292,7 +295,8 @@ describe('fetch-aurn-measurements', () => {
       ])
 
       expect(result).toHaveLength(3)
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(3)
+      // 1 bulk call + 3 data-type override calls (O3, PM10, PM25) per station
+      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(12)
     })
   })
 })
