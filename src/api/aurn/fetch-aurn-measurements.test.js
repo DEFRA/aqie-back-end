@@ -295,8 +295,8 @@ describe('fetch-aurn-measurements', () => {
       ])
 
       expect(result).toHaveLength(3)
-      // 1 bulk call + 3 data-type override calls (O3, PM10, PM25) per station
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(12)
+      // 1 bulk all-pollutants call per station × 3 stations = 3
+      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(3)
     })
   })
 })

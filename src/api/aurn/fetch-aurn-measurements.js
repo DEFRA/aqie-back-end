@@ -9,19 +9,13 @@ const logger = createLogger()
 /** Maximum pages to fetch per station to guard against runaway pagination. */
 const MAX_PAGES_PER_STATION = 10
 
-/**
- * Ricardo data-type codes that select the correct averaging window for each
- * DAQI pollutant. Without these, the API returns hourly spot readings, which
- * do not match the averaging periods the DAQI breakpoints are defined for.
- *   data-type=23 → 8-hour running mean  (required for O3)
- *   data-type=24 → 24-hour running mean (required for PM10 and PM25)
- */
-const DAQI_AVERAGING_WINDOWS = {
-  O3: { ricardoDataType: 23, averagingPeriod: '8-hour running mean' },
-  PM10: { ricardoDataType: 24, averagingPeriod: '24-hour running mean' },
-  PM25: { ricardoDataType: 24, averagingPeriod: '24-hour running mean' }
-}
+/** Hours of data used for the O3 8-hour running mean. */
+const O3_AVERAGING_HOURS = 8
 
+/** Hours of data used for the PM10 and PM2.5 24-hour running mean. */
+const PM_AVERAGING_HOURS = 24
+
+/** Number of stations processed concurrently per scheduler batch. */
 const STATION_BATCH_SIZE = 5
 
 /** HTTP 200 OK status code. */
@@ -34,7 +28,7 @@ const DAY_START_TIME = '00:00:00'
 const DAY_END_TIME = '23:59:00'
 
 /**
- * Maps a pollutantName value from the Ricardo API response to a DAQI short code.
+ * Maps a pollutantName value from the Ricardo API response to a pollutant code.
  * Strips HTML subscript tags before matching (e.g. PM<sub>10</sub> → pm10).
  * Returns null for pollutants not relevant to DAQI (e.g. Nitric oxide, NOx).
  *
@@ -74,52 +68,178 @@ function pollutantNameToCode(name) {
 // --- end of pollutant name mapping ---
 
 /**
- * Builds today's date range strings in the format the Ricardo API expects.
+ * Builds a date range covering yesterday and today so the scheduler always
+ * has at least 24 hours of hourly records, regardless of what time of day
+ * it runs. This is required to compute the 24-hour PM mean and 8-hour O3 mean.
+ *
  * @returns {{ startDateTime: string, endDateTime: string }}
  */
-function todayDateRange() {
+function dataFetchRange() {
   const now = new Date()
   const yyyy = now.getFullYear()
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const prevYyyy = yesterday.getFullYear()
+  const prevMm = String(yesterday.getMonth() + 1).padStart(2, '0')
+  const prevDd = String(yesterday.getDate()).padStart(2, '0')
   return {
-    startDateTime: `${yyyy}-${mm}-${dd} ${DAY_START_TIME}`,
+    startDateTime: `${prevYyyy}-${prevMm}-${prevDd} ${DAY_START_TIME}`,
     endDateTime: `${yyyy}-${mm}-${dd} ${DAY_END_TIME}`
   }
 }
 
 /**
- * From a flat array of measurement records, picks the most recent value for
- * each DAQI-relevant pollutant code.
+ * Groups valid hourly records by pollutant code, sorted oldest-first.
  *
- * @param {Array<object>} members - Raw measurement records from the API.
- * @returns {{ [code: string]: { value: number, measuredAt: string|null } }}
+ * @param {Array<object>} records
+ * @returns {{ [code: string]: Array<{ value: number, endDateTime: string }> }}
  */
-function extractLatestPerPollutant(members) {
-  const best = {}
-  for (const record of members) {
+function groupRecordsByPollutant(records) {
+  const grouped = {}
+  for (const record of records) {
     const code = pollutantNameToCode(record.pollutantName ?? '')
     const value = Number(record.value)
-    if (!code || !Number.isFinite(value) || value < 0) {
+    if (!code || !Number.isFinite(value) || value < 0 || !record.endDateTime) {
       continue
     }
-    const existing = best[code]
-    const isNewer =
-      !existing ||
-      (record.endDateTime &&
-        new Date(record.endDateTime) > new Date(existing.measuredAt))
-    if (isNewer) {
-      best[code] = { value, measuredAt: record.endDateTime ?? null }
+    if (!grouped[code]) {
+      grouped[code] = []
     }
+    grouped[code].push({ value, endDateTime: record.endDateTime })
   }
-  return best
+  for (const readings of Object.values(grouped)) {
+    readings.sort((a, b) => new Date(a.endDateTime) - new Date(b.endDateTime))
+  }
+  return grouped
 }
 
 /**
- * Fetches all pages of today's measurements for a single station from Ricardo
+ * Selects the readings to average for one pollutant according to its DAQI
+ * averaging window. Falls back to the single most recent reading when fewer
+ * readings exist than the target window.
+ *
+ * @param {string} code - Pollutant code (e.g. 'NO2', 'PM10', 'O3').
+ * @param {Array<{ value: number, endDateTime: string }>} readings - Sorted oldest-first.
+ * @param {Date} now
+ * @returns {Array<{ value: number, endDateTime: string }>}
+ */
+function selectAveragingWindow(code, readings, now) {
+  if (code === 'O3') {
+    return readings.slice(-O3_AVERAGING_HOURS)
+  }
+  if (code === 'PM10' || code === 'PM25') {
+    const cutoff = new Date(now.getTime() - PM_AVERAGING_HOURS * 60 * 60 * 1000)
+    const withinWindow = readings.filter(
+      (r) => new Date(r.endDateTime) >= cutoff
+    )
+    return withinWindow.length ? withinWindow : readings.slice(-1)
+  }
+  return readings.slice(-1)
+}
+
+/**
+ * Computes rolling-average pollutant values from a flat array of hourly
+ * measurement records, applying the averaging period required by the official
+ * DAQI methodology for each pollutant:
+ *
+ *   NO2  — most recent hourly reading (hourly mean is correct for DAQI)
+ *   SO2  — most recent hourly reading (15-min mean unavailable from Ricardo)
+ *   O3   — mean of the most recent 8 hourly readings (8-hour running mean)
+ *   PM10 — mean of all readings within the last 24 hours (24-hour running mean)
+ *   PM25 — mean of all readings within the last 24 hours (24-hour running mean)
+ *
+ * If fewer readings exist than the target window the mean of all available
+ * readings is used.
+ *
+ * @param {Array<object>} records - Raw hourly measurement records from the API.
+ * @returns {{ [code: string]: { value: number, measuredAt: string } }}
+ */
+function computeRollingAverages(records) {
+  const now = new Date()
+  const grouped = groupRecordsByPollutant(records)
+  const result = {}
+
+  for (const [code, readings] of Object.entries(grouped)) {
+    const usedReadings = selectAveragingWindow(code, readings, now)
+    if (!usedReadings.length) {
+      continue
+    }
+    const mean =
+      usedReadings.reduce((sum, r) => sum + r.value, 0) / usedReadings.length
+    const mostRecent = usedReadings[usedReadings.length - 1]
+    result[code] = { value: mean, measuredAt: mostRecent.endDateTime }
+  }
+
+  return result
+}
+
+/**
+ * Fetches all pollutant measurements for a single station over the data fetch
+ * window, computes rolling averages per DAQI methodology, and returns a
+ * station DAQI result. Returns null if no index can be calculated.
+ *
+ * @param {string} siteId
+ * @param {string} baseUrl
+ * @param {Record<string, string>} headers
+ * @param {{ startDateTime: string, endDateTime: string }} dateRange
+ * @returns {Promise<{ localSiteID: string, daqiIndex: number, measuredAt: string|null, updatedAt: Date, pollutants: { [code: string]: { value: number, measuredAt: string } } }|null>}
+ */
+async function fetchStationDaqi(siteId, baseUrl, headers, dateRange) {
+  const records = await fetchAllRecordsForStation(
+    baseUrl,
+    headers,
+    siteId,
+    dateRange.startDateTime,
+    dateRange.endDateTime
+  )
+  if (!records.length) {
+    return null
+  }
+
+  const averagedPollutants = computeRollingAverages(records)
+
+  const pollutantValues = {}
+  let latestMeasuredAt = null
+
+  for (const [code, { value, measuredAt }] of Object.entries(
+    averagedPollutants
+  )) {
+    pollutantValues[code] = value
+    if (
+      measuredAt &&
+      (!latestMeasuredAt || new Date(measuredAt) > new Date(latestMeasuredAt))
+    ) {
+      latestMeasuredAt = measuredAt
+    }
+  }
+
+  const daqiIndex = calculateDaqiIndex(pollutantValues)
+  if (daqiIndex === null) {
+    return null
+  }
+
+  return {
+    localSiteID: siteId,
+    daqiIndex,
+    measuredAt: latestMeasuredAt,
+    updatedAt: new Date(),
+    pollutants: averagedPollutants
+  }
+}
+
+/**
+ * Fetches all pages of measurements for a single station from Ricardo
  * (no pollutant-name filter — one call per page returns all pollutants).
  *
- * @returns {Promise<Array<object>>} All measurement records for the station today.
+ * @param {string} baseUrl - Ricardo pollutant_measurement_datas endpoint URL.
+ * @param {Record<string, string>} headers - Auth headers.
+ * @param {string} siteId - Ricardo station ID (e.g. 'UKA00651').
+ * @param {string} startDateTime - Range start in 'YYYY-MM-DD HH:mm:ss' format.
+ * @param {string} endDateTime - Range end in 'YYYY-MM-DD HH:mm:ss' format.
+ * @returns {Promise<Array<object>>} All measurement records for the station.
  */
 async function fetchAllRecordsForStation(
   baseUrl,
@@ -150,149 +270,6 @@ async function fetchAllRecordsForStation(
 }
 
 /**
- * Fetches the most recent value for one pollutant using a specific data-type
- * (averaging period). Returns null if no records are available.
- */
-async function fetchLatestAveragedValue(
-  baseUrl,
-  headers,
-  siteId,
-  startDateTime,
-  endDateTime,
-  pollutantCode,
-  dataType
-) {
-  const url = `${baseUrl}station-id=${siteId}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&pollutant-name=${pollutantCode}&data-type=${dataType}&page=1`
-  const [statusCode, data] = await catchProxyFetchError(url, {
-    method: 'GET',
-    headers
-  })
-  if (statusCode !== HTTP_STATUS_OK || !Array.isArray(data?.member)) {
-    return null
-  }
-  const validRecords = data.member.filter((record) => {
-    const numericValue = Number(record.value)
-    return Number.isFinite(numericValue) && numericValue >= 0
-  })
-  if (!validRecords.length) {
-    return null
-  }
-  const mostRecent = validRecords.reduce((latest, record) =>
-    !latest || new Date(record.endDateTime) > new Date(latest.endDateTime)
-      ? record
-      : latest
-  )
-  return {
-    value: Number(mostRecent.value),
-    measuredAt: mostRecent.endDateTime ?? null
-  }
-}
-
-function buildHourlyReadings(records) {
-  const pollutantValues = {}
-  const pollutants = {}
-  let latestMeasuredAt = null
-
-  for (const [pollutantCode, { value, measuredAt }] of Object.entries(
-    extractLatestPerPollutant(records)
-  )) {
-    pollutantValues[pollutantCode] = value
-    pollutants[pollutantCode] = { value, measuredAt }
-    if (
-      measuredAt &&
-      (!latestMeasuredAt || new Date(measuredAt) > new Date(latestMeasuredAt))
-    ) {
-      latestMeasuredAt = measuredAt
-    }
-  }
-
-  return { pollutantValues, pollutants, latestMeasuredAt }
-}
-
-async function applyAveragedReadings(
-  pollutantValues,
-  pollutants,
-  latestMeasuredAt,
-  baseUrl,
-  headers,
-  siteId,
-  dateRange
-) {
-  let updatedMeasuredAt = latestMeasuredAt
-
-  for (const [pollutantCode, { ricardoDataType }] of Object.entries(
-    DAQI_AVERAGING_WINDOWS
-  )) {
-    const averagedReading = await fetchLatestAveragedValue(
-      baseUrl,
-      headers,
-      siteId,
-      dateRange.startDateTime,
-      dateRange.endDateTime,
-      pollutantCode,
-      ricardoDataType
-    )
-    if (averagedReading) {
-      pollutantValues[pollutantCode] = averagedReading.value
-      pollutants[pollutantCode] = averagedReading
-      if (
-        averagedReading.measuredAt &&
-        (!updatedMeasuredAt ||
-          new Date(averagedReading.measuredAt) > new Date(updatedMeasuredAt))
-      ) {
-        updatedMeasuredAt = averagedReading.measuredAt
-      }
-    }
-  }
-
-  return updatedMeasuredAt
-}
-
-/**
- * Fetches all pollutant measurements for a single station, extracts the most
- * recent value per DAQI pollutant, and returns a station DAQI result.
- * Returns null if no DAQI index can be calculated.
- */
-async function fetchStationDaqi(siteId, baseUrl, headers, dateRange) {
-  const records = await fetchAllRecordsForStation(
-    baseUrl,
-    headers,
-    siteId,
-    dateRange.startDateTime,
-    dateRange.endDateTime
-  )
-  if (!records.length) {
-    return null
-  }
-
-  const { pollutantValues, pollutants, latestMeasuredAt } =
-    buildHourlyReadings(records)
-
-  const measuredAt = await applyAveragedReadings(
-    pollutantValues,
-    pollutants,
-    latestMeasuredAt,
-    baseUrl,
-    headers,
-    siteId,
-    dateRange
-  )
-
-  const daqiIndex = calculateDaqiIndex(pollutantValues)
-  if (daqiIndex === null) {
-    return null
-  }
-
-  return {
-    localSiteID: siteId,
-    daqiIndex,
-    measuredAt,
-    updatedAt: new Date(),
-    pollutants
-  }
-}
-
-/**
  * Fetches the latest AURN measurements for all provided station IDs and
  * returns an array of per-station DAQI objects ready for upsert.
  *
@@ -300,7 +277,7 @@ async function fetchStationDaqi(siteId, baseUrl, headers, dateRange) {
  * one call per pollutant per station.
  *
  * @param {string[]} stationIds
- * @returns {Promise<Array<{ localSiteID: string, daqiIndex: number, measuredAt: string|null, updatedAt: Date, pollutants: { [code: string]: { value: number, measuredAt: string|null } } }>>}
+ * @returns {Promise<Array<{ localSiteID: string, daqiIndex: number, measuredAt: string|null, updatedAt: Date, pollutants: { [code: string]: { value: number, measuredAt: string } } }>>}
  */
 async function fetchAurnMeasurements(stationIds) {
   const accessToken = await fetchOAuthToken(catchProxyFetchError, logger)
@@ -313,7 +290,7 @@ async function fetchAurnMeasurements(stationIds) {
     'Content-Type': 'application/json'
   }
   const baseUrl = config.get('ricardoApiSiteIdUrl')
-  const dateRange = todayDateRange()
+  const dateRange = dataFetchRange()
 
   logger.info(
     `AURN: fetching measurements for ${stationIds.length} stations (batch size ${STATION_BATCH_SIZE})`
