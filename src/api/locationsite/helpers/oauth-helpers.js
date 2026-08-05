@@ -27,7 +27,7 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
     )
 
     logger.info(`OAuth response status: ${statusCodeToken}`)
-    logger.info(`OAuth response data: ${JSON.stringify(dataToken)}`)
+    logger.info('OAuth token successfully fetched from Ricardo API')
 
     if (statusCodeToken !== HTTP_OK) {
       throw new Error(
