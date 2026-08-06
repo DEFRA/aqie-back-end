@@ -226,6 +226,12 @@ const config = convict({
     default: '0 */6 * * *',
     env: 'MONITORING_STATIONS_SCHEDULE'
   },
+  aurnSchedule: {
+    doc: 'How often to refresh AURN measurements and recalculate DAQI per station (cron format)',
+    format: String,
+    default: '*/30 * * * *',
+    env: 'AURN_SCHEDULE'
+  },
   alertNotifucationUrl: {
     doc: 'URL to the Notify API service',
     format: String,
