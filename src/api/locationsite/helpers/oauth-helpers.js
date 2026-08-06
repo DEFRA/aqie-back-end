@@ -30,15 +30,11 @@ async function fetchOAuthToken(catchProxyFetchError, logger) {
     logger.info('OAuth token successfully fetched from Ricardo API')
 
     if (statusCodeToken !== HTTP_OK) {
-      throw new Error(
-        `Error fetching OAuth token: HTTP ${statusCodeToken} - ${JSON.stringify(dataToken)}`
-      )
+      throw new Error(`Error fetching OAuth token: HTTP ${statusCodeToken}`)
     }
 
     if (!dataToken?.token) {
-      throw new Error(
-        `Invalid OAuth response: missing token field in ${JSON.stringify(dataToken)}`
-      )
+      throw new Error('Invalid OAuth response: missing token field')
     }
 
     const accessToken = dataToken.token

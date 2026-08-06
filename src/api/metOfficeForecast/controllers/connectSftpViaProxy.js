@@ -53,7 +53,6 @@ export async function connectSftpThroughProxy() {
 
   return new Promise((resolve, reject) => {
     logger.info(`inside Promise`)
-    logger.info(`privateKey:: ${privateKey}`)
     const req = proxyModule.request(proxyOptions)
     logger.info(`REQUEST:: ${JSON.stringify(req)}`)
     req.on('connect', (res, socket) => {

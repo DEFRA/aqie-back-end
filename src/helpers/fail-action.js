@@ -1,4 +1,4 @@
-function failAction(request, h, error) {
+function failAction(request, error) {
   request.logger.error(error, error.message)
 
   throw error

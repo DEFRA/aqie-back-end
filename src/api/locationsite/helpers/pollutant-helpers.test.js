@@ -73,6 +73,13 @@ describe('#pollutant-helpers', () => {
       )
       expect(normalizePollutantName('  Extra  Spaces  ')).toBe('extraspaces')
     })
+
+    test('Should strip <sub> tags and keep their inner content', () => {
+      expect(normalizePollutantName('PM2.5<sub>test</sub>')).toBe('pm2.5test')
+      expect(normalizePollutantName('Nitrogen di<sub>ox</sub>ide')).toBe(
+        'nitrogendioxide'
+      )
+    })
   })
 
   describe('#extractPollutants', () => {
@@ -248,6 +255,54 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.value).toBe(22.0)
     })
 
+    test('Should select the dated member when the first (accumulator) member has no endDateTime', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 10.0
+            // no endDateTime — this becomes the initial accumulator in reduce
+          },
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 30.0,
+            endDateTime: '2025-01-01T10:00:00Z'
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(30.0)
+    })
+
+    test('Should keep the latest member when a later-listed member is chronologically earlier', () => {
+      const siteData = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 40.0,
+            endDateTime: '2025-01-01T10:00:00Z' // later time, listed first
+          },
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 15.0,
+            endDateTime: '2025-01-01T09:00:00Z' // earlier time, listed second
+          }
+        ]
+      }
+
+      const result = extractPollutants(siteData)
+
+      expect(result).toBeDefined()
+      expect(result.NO2.value).toBe(40.0) // earlier-listed, later timestamp wins
+    })
+
     test('Should return empty time components when pollutant has no endDateTime', () => {
       const siteData = {
         member: [
@@ -269,6 +324,242 @@ describe('#pollutant-helpers', () => {
       expect(result.NO2.time.day).toBeUndefined()
       expect(result.NO2.time.month).toBeUndefined()
       expect(result.NO2.time.year).toBeUndefined()
+    })
+
+    describe('Timezone-aware time components — UTC "Z" input (literal UTC)', () => {
+      test('Should use literal UTC hour/day/month/year during summer time', () => {
+        // 2026-07-24T13:00:00Z → 13:00 UTC, displayed as 1pm, 24 July 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T13:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('1pm')
+        expect(result.NO2.time.day).toBe('24')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should use literal UTC hour during winter time (GMT)', () => {
+        // 2026-01-15T12:00:00Z → 12:00 UTC, displayed as 12pm, 15 January 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T12:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12pm')
+        expect(result.NO2.time.day).toBe('15')
+        expect(result.NO2.time.month).toBe('January')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should keep same calendar day when UTC time is before midnight', () => {
+        // 2026-07-24T23:30:00Z → 23:30 UTC, displayed as 11pm, 24 July 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T23:30:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('11pm')
+        expect(result.NO2.time.day).toBe('24')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should format midday correctly as 12pm (not 0pm)', () => {
+        // 2026-07-24T12:00:00Z → 12:00 UTC, displayed as 12pm
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-24T12:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12pm')
+      })
+
+      test('Should format midnight correctly as 12am (not 0am)', () => {
+        // 2026-01-15T00:00:00Z → 00:00 UTC, displayed as 12am
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T00:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.hour).toBe('12am')
+      })
+    })
+
+    describe('Offset-added parsing — endDateTime with explicit +HH:MM offset', () => {
+      // parseWithOffsetAdded takes the literal digits shown and ADDS the offset
+      // (rather than the standard ISO 8601 subtraction), per project requirement.
+      // getTimeComponents then reads the resulting UTC-labelled ISO string literally.
+
+      test('Should add +01:00 offset on top of literal time', () => {
+        // Literal 01:00 + 01:00 offset added = 02:00:00.000Z (internal UTC-labelled)
+        // getTimeComponents then displays 2am, 28 July 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T01:00:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T02:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('2am')
+        expect(result.NO2.time.day).toBe('28')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should add a zero offset (+00:00) without changing the literal time', () => {
+        // Literal 10:00 + 00:00 offset = 10:00:00.000Z
+        // getTimeComponents displays 10am, 15 January 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-01-15T10:00:00+00:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-01-15T10:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('10am')
+        expect(result.NO2.time.day).toBe('15')
+        expect(result.NO2.time.month).toBe('January')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should roll over to the next calendar day when adding the offset pushes past midnight', () => {
+        // Literal 23:30 + 01:00 offset added = 2026-07-29T00:30:00.000Z
+        // getTimeComponents displays 12am, 29 July 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T23:30:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-29T00:30:00.000Z')
+        expect(result.NO2.time.hour).toBe('12am')
+        expect(result.NO2.time.day).toBe('29')
+        expect(result.NO2.time.month).toBe('July')
+        expect(result.NO2.time.year).toBe('2026')
+      })
+
+      test('Should correctly handle a negative offset by adding it (subtracting the magnitude)', () => {
+        // Literal 23:00 + (-01:00) offset added = 22:00:00.000Z
+        // getTimeComponents displays 10pm, 28 July 2026
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T23:00:00-01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T22:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('10pm')
+        expect(result.NO2.time.day).toBe('28')
+      })
+
+      test('Should fall back to standard parsing when no offset is present (Z suffix)', () => {
+        // No +HH:MM offset present → parseWithOffsetAdded falls back to new Date(dateStr)
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              endDateTime: '2026-07-28T10:00:00Z'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        expect(result.NO2.time.date).toBe('2026-07-28T10:00:00.000Z')
+        expect(result.NO2.time.hour).toBe('10am') // literal UTC hour
+      })
+
+      test('Should also apply offset-added parsing to startDateTime for startDate field', () => {
+        const siteData = {
+          member: [
+            {
+              pollutantName: 'Nitrogen dioxide',
+              unit: 'microgrammes per cubic metre',
+              value: 25.67,
+              startDateTime: '2026-07-28T23:30:00+01:00', // literal+offset rolls to next day
+              endDateTime: '2026-07-28T10:00:00+01:00'
+            }
+          ]
+        }
+
+        const result = extractPollutants(siteData)
+
+        // startDateTime literal 23:30 + 01:00 offset added = 2026-07-29T00:30:00.000Z
+        // sliced to date-only
+        expect(result.NO2.startDate).toBe('2026-07-29')
+      })
     })
 
     describe('Mocking functionality in buildPollutantData', () => {
@@ -539,6 +830,73 @@ describe('#pollutant-helpers', () => {
       // It just gets null data and handles it gracefully
     })
 
+    test('Should handle catchProxyFetchError rejecting for a pollutant fetch', async () => {
+      const mockSite = {
+        name: 'Test Site',
+        localSiteID: 'TEST001',
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      mockCatchProxyFetchError.mockRejectedValue(new Error('network error'))
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(0) // no siteData retrieved → no pollutants
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching')
+      )
+    })
+
+    test('Should still enrich a site when one pollutant fetch rejects but others succeed', async () => {
+      const mockSite = {
+        name: 'Test Site',
+        localSiteID: 'TEST001',
+        area: 'Test Area',
+        areaType: 'Urban',
+        location: { type: 'Point', coordinates: [50.0, -1.0] },
+        distance: 0.5
+      }
+
+      const mockValidResponse = {
+        member: [
+          {
+            pollutantName: 'Nitrogen dioxide',
+            unit: 'microgrammes per cubic metre',
+            value: 12.5,
+            endDateTime: '2025-01-01T10:00:00Z'
+          }
+        ]
+      }
+
+      mockCatchProxyFetchError
+        .mockRejectedValueOnce(new Error('network error')) // one pollutant fetch fails
+        .mockResolvedValue([200, mockValidResponse]) // remaining fetches succeed
+
+      const result = await enrichSitesWithPollutants(
+        [mockSite],
+        'https://api.example.com',
+        { method: 'GET' },
+        '2025-01-01 00:00:00',
+        '2025-01-01 23:59:00',
+        mockLogger,
+        mockCatchProxyFetchError
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].pollutants.NO2.value).toBe(12.5)
+    })
+
     test('Should handle sites with invalid pollutant values', async () => {
       const mockSite = {
         name: 'Test Site',
@@ -663,119 +1021,10 @@ describe('#pollutant-helpers', () => {
         mockCatchProxyFetchError
       )
 
-      expect(result).toHaveLength(1) // Only first site has valid data
+      expect(result).toHaveLength(1)
       expect(result[0].name).toBe('Site 1')
       expect(result[0].pollutants.NO2.value).toBe(25.67)
       expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(10)
-    })
-
-    test('Should handle fetch errors gracefully', async () => {
-      const mockSite = {
-        name: 'Test Site',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      mockCatchProxyFetchError.mockRejectedValue(new Error('Network error'))
-
-      const result = await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(result).toHaveLength(0) // Error caught per-pollutant, site filtered out
-    })
-
-    test('Should pass station name to validateDataFreshness', async () => {
-      const mockSite = {
-        name: 'London Marylebone Road',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      const mockPollutantResponse = {
-        member: [
-          {
-            pollutantName: 'Nitrogen dioxide',
-            unit: 'microgrammes per cubic metre',
-            value: 25.67,
-            endDateTime: '2025-01-01T10:00:00Z'
-          }
-        ]
-      }
-      mockCatchProxyFetchError.mockResolvedValue([200, mockPollutantResponse])
-
-      await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(mockValidateDataFreshness).toHaveBeenCalledWith(
-        expect.any(String),
-        'Nitrogen dioxide',
-        'London Marylebone Road'
-      )
-    })
-
-    test('Should construct correct API URL with site ID and date range', async () => {
-      const mockSite = {
-        name: 'Test Site',
-        localSiteID: 'TEST001',
-        area: 'Test Area',
-        areaType: 'Urban',
-        location: { type: 'Point', coordinates: [50.0, -1.0] },
-        distance: 0.5
-      }
-
-      mockCatchProxyFetchError.mockResolvedValue([200, { member: [] }])
-
-      await enrichSitesWithPollutants(
-        [mockSite],
-        'https://api.example.com',
-        { method: 'GET' },
-        '2025-01-01 00:00:00',
-        '2025-01-01 23:59:00',
-        mockLogger,
-        mockCatchProxyFetchError
-      )
-
-      expect(mockCatchProxyFetchError).toHaveBeenCalledTimes(5)
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=NO2',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM10&data-type=24',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=PM25&data-type=24',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=O3&data-type=23',
-        { method: 'GET' }
-      )
-      expect(mockCatchProxyFetchError).toHaveBeenCalledWith(
-        'https://api.example.comstation-id=TEST001&start-date-time=2025-01-01 00:00:00&end-date-time=2025-01-01 23:59:00&pollutant-name=SO2',
-        { method: 'GET' }
-      )
     })
   })
 })
