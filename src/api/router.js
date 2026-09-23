@@ -1,5 +1,3 @@
-import { forecasts } from './forecast/index.js'
-import { measurements } from './pollutants/index.js'
 import { health } from './health/index.js'
 import { config } from '../config/index.js'
 import {
@@ -16,8 +14,6 @@ const router = {
     name: 'Router',
     register: async (server) => {
       await server.register([
-        forecasts,
-        measurements,
         health,
         metOfficeForecastRead,
         metOfficeForecastList,
