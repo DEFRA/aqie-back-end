@@ -143,8 +143,6 @@ npm run
 | Endpoint                      | Description                                                                                                                                      |
 | :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET: /health`                | Health check                                                                                                                                     |
-| `GET: /forecasts`             | Returns air quality forecasts stored in MongoDB (populated by cron 5–10am)                                                                       |
-| `GET: /measurements`          | Returns pollutant measurements stored in MongoDB                                                                                                 |
 | `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request. |
 | `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                           |
 | `GET: /aurnData`              | Returns per-station observed DAQI index calculated from latest AURN measurements (refreshed every 30 minutes by a background scheduler)          |
@@ -160,16 +158,6 @@ npm run
 ```bash
 # Health check
 curl http://localhost:3001/health
-
-# Air quality forecasts — reads from MongoDB, returns empty until populated by the cron job (runs 5–10am)
-# To populate immediately, set FORECAST_SCHEDULE=* * * * * in your .env and restart the service.
-# Remember to revert it afterwards so it doesn't hammer the upstream API every minute.
-curl http://localhost:3001/forecasts
-
-# Pollutant measurements — reads from MongoDB, returns empty until populated by the cron job (runs hourly)
-# To populate immediately, set POLLUTANTS_SCHEDULE=* * * * * in your .env and restart the service.
-# Remember to revert it afterwards so it doesn't hammer the upstream API every minute.
-curl http://localhost:3001/measurements
 
 # Monitoring stations — reads from MongoDB cache, populated on startup and refreshed every 6 hours
 # Returns immediately with no Ricardo API calls
