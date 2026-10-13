@@ -20,7 +20,9 @@ const RESOLUTION = 'hourly'
 // Ricardo accepts only the siteId form (UKA00315); localSiteId (MY1) 422s.
 const SITE_ID_PATTERN = /^[A-Za-z]{2,4}\d{3,8}$/
 
-const CACHE_TTL_MS = 15 * 60 * 1000
+const MS_PER_MINUTE = 60000
+const CACHE_TTL_MINUTES = 15
+const CACHE_TTL_MS = CACHE_TTL_MINUTES * MS_PER_MINUTE
 const CACHE_MAX_ENTRIES = 500
 
 // Readings for a completed hour never change, so responses are safe to cache.
