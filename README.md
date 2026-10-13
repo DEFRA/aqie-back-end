@@ -19,6 +19,11 @@ Core delivery platform Node.js Backend Template.
 - [Calling API endpoints](#calling-api-endpoints)
   - [curl](#curl)
   - [Postman](#postman)
+- [Monitoring station history](#monitoring-station-history)
+  - [Query parameters](#query-parameters)
+  - [Response](#response)
+  - [Error responses](#error-responses)
+  - [Upstream quirks handled by this endpoint](#upstream-quirks-handled-by-this-endpoint)
 - [Verifying AURN data accuracy](#verifying-aurn-data-accuracy)
 - [Licence](#licence)
   - [About the licence](#about-the-licence)
@@ -140,14 +145,15 @@ npm run
 
 ## API endpoints
 
-| Endpoint                      | Description                                                                                                                                      |
-| :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET: /health`                | Health check                                                                                                                                     |
-| `GET: /monitoringStations`    | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request. |
-| `GET: /monitoringStationInfo` | Returns monitoring station data via Ricardo API (requires credentials)                                                                           |
-| `GET: /aurnData`              | Returns per-station observed DAQI index calculated from latest AURN measurements (refreshed every 30 minutes by a background scheduler)          |
-| `GET: /sftp/files`            | Lists files available on the Met Office SFTP server (requires SSH key)                                                                           |
-| `GET: /sftp/file/{filename}`  | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                     |
+| Endpoint                         | Description                                                                                                                                      |
+| :------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET: /health`                   | Health check                                                                                                                                     |
+| `GET: /monitoringStations`       | Returns cached monitoring station metadata from MongoDB (populated on startup, refreshed every 6 hours). Zero Ricardo API calls on each request. |
+| `GET: /monitoringStationInfo`    | Returns monitoring station data via Ricardo API (requires credentials)                                                                           |
+| `GET: /monitoringStationHistory` | Returns an hourly pollutant time series for a single station over the last 24 hours or 7 days via the Ricardo API (requires credentials)         |
+| `GET: /aurnData`                 | Returns per-station observed DAQI index calculated from latest AURN measurements (refreshed every 30 minutes by a background scheduler)          |
+| `GET: /sftp/files`               | Lists files available on the Met Office SFTP server (requires SSH key)                                                                           |
+| `GET: /sftp/file/{filename}`     | Downloads a specific file from the Met Office SFTP server (requires SSH key)                                                                     |
 
 ## Calling API endpoints
 
@@ -171,12 +177,86 @@ curl http://localhost:3001/aurnData
 # Monitoring station info via Ricardo API (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
 curl http://localhost:3001/monitoringStationInfo
 
+# Hourly pollutant history for one station (requires RICARDO_API_EMAIL + RICARDO_API_PASSWORD in .env)
+curl "http://localhost:3001/monitoringStationHistory?siteId=UKA00315&period=7d"
+
 # List files on Met Office SFTP (requires SSH_PRIVATE_KEY in .env)
 curl http://localhost:3001/sftp/files
 
 # Download a specific file from SFTP
 curl http://localhost:3001/sftp/file/<filename>
 ```
+
+## Monitoring station history
+
+`GET /monitoringStationHistory` returns an hourly time series per pollutant for
+a single monitoring station. `/monitoringStationInfo` cannot be used for this:
+it reduces each series down to the single newest reading.
+
+### Query parameters
+
+| Param    | Required | Values                            | Default | Notes                              |
+| :------- | :------- | :-------------------------------- | :------ | :--------------------------------- |
+| `siteId` | yes      | Ricardo `siteId`, e.g. `UKA00315` | —       | Not the `localSiteId` form (`MY1`) |
+| `period` | no       | `24h`, `7d`                       | `24h`   | Anything else returns `400`        |
+
+### Response
+
+```json
+{
+  "siteId": "UKA00315",
+  "period": "7d",
+  "resolution": "hourly",
+  "from": "2026-09-23T12:00:00.000Z",
+  "to": "2026-09-30T11:00:00.000Z",
+  "truncated": false,
+  "pollutants": {
+    "NO2": [{ "time": "2026-09-23T12:00:00.000Z", "value": 32.1 }],
+    "PM25": [{ "time": "2026-09-23T12:00:00.000Z", "value": null }]
+  }
+}
+```
+
+- Pollutant keys are `PM25`, `PM10`, `NO2`, `O3` and `SO2`.
+- `value: null` means the instrument produced no reading for that hour. The
+  point is kept so consumers can calculate data capture.
+- `from` / `to` bound the trimmed window. `to` is anchored on the most recent
+  reading rather than on the current time, so a station that has stopped
+  publishing shows a gap instead of a window of empty hours. Both are `null`
+  when the station returned no readings at all.
+- `truncated: true` means at least one pollutant hit the upstream 10,000 row
+  cap, so its series is incomplete. The cap cannot be paginated past.
+- Expect roughly 24 points per pollutant for `24h` and 168 for `7d`.
+- Responses are cached in memory for 15 minutes per `siteId` + `period`.
+
+### Error responses
+
+| Status | When                                                  |
+| :----- | :---------------------------------------------------- |
+| `400`  | Missing or malformed `siteId`, or an unknown `period` |
+| `502`  | Ricardo unreachable, or returned a non-2xx            |
+
+Upstream failure is never reported as `200` with an empty series — "no data"
+and "the call failed" are deliberately distinguishable.
+
+### Upstream quirks handled by this endpoint
+
+These all fail silently upstream, returning `200` with plausible but wrong data:
+
+- Dates are sent as `start-date` / `end-date` (`YYYY-MM-DD`). The
+  `start-date-time` / `end-date-time` forms used elsewhere in this repo are not
+  in the Ricardo OpenAPI spec and are ignored, degrading the request to the
+  `latest-measurement` default.
+- PM10 and PM2.5 are requested as `GE10` and `PM25`; their display names are
+  rejected with `422`.
+- Rows are attributed to the pollutant code that was requested, because
+  returned names are HTML-encoded, e.g. `PM<sub>10</sub> particulate matter`.
+- SO2 mixes 15-minute and hourly rows and `data-type` cannot separate them, so
+  rows are filtered on their own interval (`endDateTime - startDateTime`).
+- `-9999` and `-99` are no-reading sentinels, not values; averaging them
+  produces figures around −400 µg/m³. Any negative value becomes `null`.
+- Because the API takes whole dates, a one-day request returns ~33 hours. The
+  series is trimmed to the exact requested window.
 
 ## Verifying AURN data accuracy
 
