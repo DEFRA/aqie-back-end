@@ -1,5 +1,9 @@
 import { config } from '../../../config/index.js'
-import { HTTP_OK } from '../../pollutants/helpers/common/constants.js'
+import {
+  HTTP_OK,
+  MINUTES_PER_HOUR,
+  MS_PER_MINUTE
+} from '../../pollutants/helpers/common/constants.js'
 
 // Ricardo rejects PM10 and PM2.5 under their display names.
 const REQUEST_CODE = {
@@ -15,9 +19,7 @@ const PERIOD_DAYS = { '24h': 1, '7d': 7 }
 /** Upstream silently caps a response at this many rows; it cannot be paginated past. */
 const ROW_CAP = 10000
 
-const HOUR_MINUTES = 60
-const MS_PER_MINUTE = 60000
-const MS_PER_HOUR = HOUR_MINUTES * MS_PER_MINUTE
+const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE
 
 // HOURS_IN_DAY in the constants module is 12 (12-hour clock formatting).
 const HOURS_PER_DAY = 24
@@ -28,7 +30,7 @@ const toYmd = (date) => date.toISOString().slice(0, 10)
 // does not separate them, so the interval does.
 function isHourlyRow(row) {
   const ms = Date.parse(row?.endDateTime) - Date.parse(row?.startDateTime)
-  return ms / MS_PER_MINUTE === HOUR_MINUTES
+  return ms / MS_PER_MINUTE === MINUTES_PER_HOUR
 }
 
 // -9999 and -99 mark hours with no reading; averaging them goes far negative.

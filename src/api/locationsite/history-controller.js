@@ -9,7 +9,8 @@ import {
 import {
   HTTP_OK,
   HTTP_BAD_REQUEST,
-  HTTP_BAD_GATEWAY
+  HTTP_BAD_GATEWAY,
+  MS_PER_MINUTE
 } from '../pollutants/helpers/common/constants.js'
 
 const logger = createLogger()
@@ -20,7 +21,6 @@ const RESOLUTION = 'hourly'
 // Ricardo accepts only the siteId form (UKA00315); localSiteId (MY1) 422s.
 const SITE_ID_PATTERN = /^[A-Za-z]{2,4}\d{3,8}$/
 
-const MS_PER_MINUTE = 60000
 const CACHE_TTL_MINUTES = 15
 const CACHE_TTL_MS = CACHE_TTL_MINUTES * MS_PER_MINUTE
 const CACHE_MAX_ENTRIES = 500
