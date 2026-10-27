@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import { createLogger } from '../../helpers/logging/logger.js'
 import { catchProxyFetchError } from './helpers/catch-proxy-fetch-error.js'
+import { buildHistorySummary } from './helpers/build-history-summary.js'
 import { refreshOAuthToken, fetchOAuthToken } from './helpers/oauth-helpers.js'
 import {
   fetchPollutantHistory,
@@ -17,6 +18,10 @@ const logger = createLogger()
 
 const DEFAULT_PERIOD = '24h'
 const RESOLUTION = 'hourly'
+
+// Every `time` in the response is the end of its averaging period, so a
+// reading for 09:00-10:00 is stamped 10:00.
+const TIME_BASIS = 'end'
 
 // Ricardo accepts only the siteId form (UKA00315); localSiteId (MY1) 422s.
 const SITE_ID_PATTERN = /^[A-Za-z]{2,4}\d{3,8}$/
@@ -102,10 +107,14 @@ const monitoringStationHistoryController = {
       siteId,
       period,
       resolution: RESOLUTION,
+      timeBasis: TIME_BASIS,
       from: result.from,
       to: result.to,
       truncated: result.truncated,
-      pollutants: result.pollutants
+      pollutants: result.pollutants,
+      leadIn: result.leadIn,
+      fifteenMinute: result.fifteenMinute,
+      summary: buildHistorySummary({ period, ...result })
     }
 
     historyCache.set(cacheKey, payload)

@@ -207,27 +207,147 @@ it reduces each series down to the single newest reading.
   "siteId": "UKA00315",
   "period": "7d",
   "resolution": "hourly",
+  "timeBasis": "end",
   "from": "2026-09-23T12:00:00.000Z",
   "to": "2026-09-30T11:00:00.000Z",
   "truncated": false,
   "pollutants": {
     "NO2": [{ "time": "2026-09-23T12:00:00.000Z", "value": 32.1 }],
     "PM25": [{ "time": "2026-09-23T12:00:00.000Z", "value": null }]
+  },
+  "leadIn": {
+    "PM25": [{ "time": "2026-09-22T12:00:00.000Z", "value": 10.66 }]
+  },
+  "fifteenMinute": {
+    "SO2": [{ "time": "2026-09-23T11:15:00.000Z", "value": 2.39481 }]
+  },
+  "summary": {
+    "daqiIndex": 2,
+    "measuredAt": "2026-09-30T11:00:00.000Z",
+    "pollutants": {
+      "PM25": {
+        "periodAverage": 10.4625,
+        "dataCapture": {
+          "validHours": 160,
+          "expectedHours": 168,
+          "capturePercentage": 95
+        },
+        "hourlyExceedances": null,
+        "dailyExceedances": null,
+        "dailyMeans": [{ "time": "2026-09-24T00:00:00.000Z", "value": 9.8 }],
+        "rollingMean": {
+          "windowHours": 24,
+          "series": [{ "time": "2026-09-23T12:00:00.000Z", "value": 10.1 }]
+        },
+        "daqi": {
+          "concentration": 10.4,
+          "index": 1,
+          "measuredAt": "2026-09-30T11:00:00.000Z",
+          "averagingPeriod": "24-hour mean"
+        }
+      }
+    }
   }
 }
 ```
 
 - Pollutant keys are `PM25`, `PM10`, `NO2`, `O3` and `SO2`.
+- Every `time` is the **end** of its averaging period (`timeBasis: "end"`): the
+  reading for 09:00–10:00 is stamped `10:00`.
 - `value: null` means the instrument produced no reading for that hour. The
-  point is kept so consumers can calculate data capture.
+  point is kept so data capture can be counted against it.
 - `from` / `to` bound the trimmed window. `to` is anchored on the most recent
   reading rather than on the current time, so a station that has stopped
   publishing shows a gap instead of a window of empty hours. Both are `null`
   when the station returned no readings at all.
+- `leadIn` holds the 24 hourly readings immediately before `from`, per
+  pollutant, so rolling and daily means are valid from the first hour of the
+  window.
+- `fifteenMinute.SO2` holds SO₂'s 15-minute means from 45 minutes before `from`
+  (so the first hour has all four quarters). `pollutants.SO2` and `leadIn.SO2`
+  are hourly means derived from these (at least 3 valid of 4); the feed's own
+  hourly SO₂ rows are used only when there are no 15-minute rows.
 - `truncated: true` means at least one pollutant hit the upstream 10,000 row
   cap, so its series is incomplete. The cap cannot be paginated past.
 - Expect roughly 24 points per pollutant for `24h` and 168 for `7d`.
 - Responses are cached in memory for 15 minutes per `siteId` + `period`.
+
+### Data capture and averaging rules
+
+All averages, capture figures, rolling means and DAQI values come from
+`src/common/helpers/averaging.js`, which the map DAQI (`/aurnData`) also uses.
+Consumers should display these values and not recalculate them.
+
+- A mean is only calculated with at least 75% data capture, otherwise it is
+  `null` (never a partial-window estimate):
+  hourly mean 3 of 4 fifteen-minute means; 8-hour mean 6 of 8 hourly means;
+  daily (and 24-hour) mean 18 of 24 hourly means; `summary...periodAverage` 75% of the
+  window's hours (126 of 168 for `7d`).
+- Missing hours count as invalid, not as a shorter window.
+- Values are never rounded in the response, and intermediate means stay
+  unrounded. Rounding happens once, immediately before a DAQI band or
+  legal-limit comparison; display rounding is for the consumer to do.
+- DAQI concentrations: NO₂ 1-hour mean, PM2.5/PM10 24-hour mean, O₃ 8-hour mean
+  and SO₂ latest 15-minute mean. SO₂ has no DAQI value when no 15-minute data
+  is available.
+- `daqi` is evaluated at each pollutant's newest valid reading, and
+  `measuredAt` says when that was.
+
+### Example requests
+
+These assume the service is running locally (see [Calling API endpoints](#calling-api-endpoints))
+and use [`jq`](https://jqlang.org/) to pick out parts of the response. Replace
+`UKA00315` with any Ricardo `siteId`.
+
+```bash
+BASE="http://localhost:3001/monitoringStationHistory?siteId=UKA00315"
+
+# Everything the endpoint returns, top level only
+curl -s "$BASE&period=24h" | jq 'keys'
+# ["fifteenMinute","from","leadIn","period","pollutants","resolution",
+#  "siteId","summary","timeBasis","to","truncated"]
+
+# 7-day average and data capture per pollutant. `periodAverage` is null when fewer than
+# 75% of the window's hours (126 of 168) are valid; `dataCapture` is still reported.
+curl -s "$BASE&period=7d" | jq '.summary.pollutants | map_values({periodAverage, dataCapture})'
+
+# Only the pollutants whose average was withheld for low data capture
+curl -s "$BASE&period=7d" | jq '.summary.pollutants
+  | to_entries[]
+  | select(.value.periodAverage == null and .value.dataCapture.validHours > 0)
+  | {pollutant: .key, dataCapture: .value.dataCapture}'
+
+# The DAQI concentration, index and averaging period for each pollutant, plus the
+# overall index. Concentrations are unrounded; the index is banded on the rounded value.
+curl -s "$BASE&period=24h" | jq '{
+  daqiIndex: .summary.daqiIndex,
+  measuredAt: .summary.measuredAt,
+  pollutants: (.summary.pollutants | map_values(.daqi | {concentration, index, averagingPeriod}))
+}'
+
+# Lead-in: the 24 hourly readings immediately before `from` (times are period ends).
+# They let the first hours of the window have a full 24-hour or 8-hour mean.
+curl -s "$BASE&period=24h" | jq '{from, leadInPM25: (.leadIn.PM25 | {count: length, first: .[0], last: .[-1]})}'
+
+# SO2 15-minute means: 96 points for 24h, starting 45 minutes before `from` so the
+# first hour has all four quarters
+curl -s "$BASE&period=24h" | jq '{from, fifteenMinute: (.fifteenMinute.SO2 | {count: length, first: .[0], last: .[-1]})}'
+
+# PM2.5 24-hour rolling mean, one value per hour of the window (null where fewer
+# than 18 of the last 24 hours are valid). O3 uses an 8-hour mean (`windowHours: 8`).
+curl -s "$BASE&period=24h" | jq '.summary.pollutants.PM25.rollingMean | {windowHours, first: .series[0], last: .series[-1]}'
+
+# Daily means (one per UTC day, stamped at the end of the day) and the number of
+# days over the PM10 daily limit. A day with fewer than 18 valid hours is null.
+curl -s "$BASE&period=7d" | jq '.summary.pollutants.PM10 | {dailyExceedances, dailyMeans: [.dailyMeans[] | {time, value}]}'
+
+# Hours with no valid reading stay in the series as null values
+curl -s "$BASE&period=7d" | jq '[.pollutants.NO2[] | select(.value == null)] | length'
+```
+
+Hours missing from the series (for example the upstream clock-change rows described
+under [Upstream quirks](#upstream-quirks-handled-by-this-endpoint)) show up as a
+`validHours` count below `expectedHours` in `dataCapture`.
 
 ### Error responses
 
@@ -255,6 +375,11 @@ These all fail silently upstream, returning `200` with plausible but wrong data:
   rows are filtered on their own interval (`endDateTime - startDateTime`).
 - `-9999` and `-99` are no-reading sentinels, not values; averaging them
   produces figures around −400 µg/m³. Any negative value becomes `null`.
+- At the autumn BST→GMT clock change, rows can start at `+01:00` and end at
+  `+00:00`, giving a 2-hour "hourly" row (or a 75-minute "15-minute" row). These
+  are not usable means, so they are treated as missing data and lower capture. A
+  warning naming the station, pollutant and example rows is logged once per
+  pollutant per request (search the logs for "not 60 or 15 minutes long").
 - Because the API takes whole dates, a one-day request returns ~33 hours. The
   series is trimmed to the exact requested window.
 
