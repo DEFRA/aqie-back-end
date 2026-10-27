@@ -3,17 +3,23 @@ import { createLogger } from '../../helpers/logging/logger.js'
 import { catchProxyFetchError } from '../locationsite/helpers/catch-proxy-fetch-error.js'
 import { fetchOAuthToken } from '../locationsite/helpers/oauth-helpers.js'
 import { calculateDaqiIndex } from './helpers/daqi-calculator.js'
+import {
+  DAQI_AVERAGING,
+  HOUR_MS,
+  QUARTER_HOURS_MS,
+  daqiConcentration,
+  intervalMinutes,
+  toSeriesIndex
+} from '../../common/helpers/averaging.js'
 
 const logger = createLogger()
 
 /** Maximum pages to fetch per station to guard against runaway pagination. */
 const MAX_PAGES_PER_STATION = 10
 
-/** Hours of data used for the O3 8-hour running mean. */
-const O3_AVERAGING_HOURS = 8
-
-/** Hours of data used for the PM10 and PM2.5 24-hour running mean. */
-const PM_AVERAGING_HOURS = 24
+const MS_PER_MINUTE = 60 * 1000
+const HOUR_MINUTES = HOUR_MS / MS_PER_MINUTE
+const QUARTER_HOUR_MINUTES = QUARTER_HOURS_MS / MS_PER_MINUTE
 
 /** Number of stations processed concurrently per scheduler batch. */
 const STATION_BATCH_SIZE = 5
@@ -92,93 +98,79 @@ function dataFetchRange() {
 }
 
 /**
- * Groups valid hourly records by pollutant code, sorted oldest-first.
+ * Groups records by pollutant code and interval. Only 60-minute rows feed the
+ * hourly series and only 15-minute rows feed the 15-minute series; a row of
+ * any other (or unknown) length is ignored. Invalid readings (the -9999 and
+ * -99 sentinels) are kept as gaps so they count against data capture.
  *
  * @param {Array<object>} records
- * @returns {{ [code: string]: Array<{ value: number, endDateTime: string }> }}
+ * @returns {{ [code: string]: { hourly: Array<{ time: string, value: number|null }>, quarters: Array<{ time: string, value: number|null }> } }}
  */
 function groupRecordsByPollutant(records) {
   const grouped = {}
   for (const record of records) {
     const code = pollutantNameToCode(record.pollutantName ?? '')
-    const value = Number(record.value)
-    if (!code || !Number.isFinite(value) || value < 0 || !record.endDateTime) {
+    if (!code || !record.endDateTime) {
       continue
     }
-    if (!grouped[code]) {
-      grouped[code] = []
+    const minutes = intervalMinutes(record)
+    let target
+    if (minutes === HOUR_MINUTES) {
+      target = 'hourly'
+    } else if (minutes === QUARTER_HOUR_MINUTES) {
+      target = 'quarters'
+    } else {
+      continue
     }
-    grouped[code].push({ value, endDateTime: record.endDateTime })
-  }
-  for (const readings of Object.values(grouped)) {
-    readings.sort((a, b) => new Date(a.endDateTime) - new Date(b.endDateTime))
+    grouped[code] ??= { hourly: [], quarters: [] }
+    grouped[code][target].push({
+      time: record.endDateTime,
+      value: Number(record.value)
+    })
   }
   return grouped
 }
 
 /**
- * Selects the readings to average for one pollutant according to its DAQI
- * averaging window. Falls back to the single most recent reading when fewer
- * readings exist than the target window.
+ * Computes the unrounded concentration each pollutant contributes to the DAQI,
+ * using the shared averaging rules (75% data capture, no fallback to partial
+ * windows):
  *
- * @param {string} code - Pollutant code (e.g. 'NO2', 'PM10', 'O3').
- * @param {Array<{ value: number, endDateTime: string }>} readings - Sorted oldest-first.
- * @param {Date} now
- * @returns {Array<{ value: number, endDateTime: string }>}
- */
-function selectAveragingWindow(code, readings, now) {
-  if (code === 'O3') {
-    return readings.slice(-O3_AVERAGING_HOURS)
-  }
-  if (code === 'PM10' || code === 'PM25') {
-    const cutoff = new Date(now.getTime() - PM_AVERAGING_HOURS * 60 * 60 * 1000)
-    const withinWindow = readings.filter(
-      (r) => new Date(r.endDateTime) >= cutoff
-    )
-    return withinWindow.length ? withinWindow : readings.slice(-1)
-  }
-  return readings.slice(-1)
-}
-
-/**
- * Computes rolling-average pollutant values from a flat array of hourly
- * measurement records, applying the averaging period required by the official
- * DAQI methodology for each pollutant:
+ *   NO2  — latest hourly mean
+ *   SO2  — latest 15-minute mean (omitted when no 15-minute data is available)
+ *   O3   — 8-hour running mean, at least 6 valid hours of 8
+ *   PM10 — 24-hour running mean, at least 18 valid hours of 24
+ *   PM25 — 24-hour running mean, at least 18 valid hours of 24
  *
- *   NO2  — most recent hourly reading (hourly mean is correct for DAQI)
- *   SO2  — most recent hourly reading (15-min mean unavailable from Ricardo)
- *   O3   — mean of the most recent 8 hourly readings (8-hour running mean)
- *   PM10 — mean of all readings within the last 24 hours (24-hour running mean)
- *   PM25 — mean of all readings within the last 24 hours (24-hour running mean)
+ * A pollutant that fails its capture rule is omitted, not estimated. Each
+ * pollutant is evaluated at its own newest valid reading.
  *
- * If fewer readings exist than the target window the mean of all available
- * readings is used.
- *
- * @param {Array<object>} records - Raw hourly measurement records from the API.
+ * @param {Array<object>} records - Raw measurement records from the API.
  * @returns {{ [code: string]: { value: number, measuredAt: string } }}
  */
-function computeRollingAverages(records) {
-  const now = new Date()
-  const grouped = groupRecordsByPollutant(records)
+function computeDaqiConcentrations(records) {
   const result = {}
-
-  for (const [code, readings] of Object.entries(grouped)) {
-    const usedReadings = selectAveragingWindow(code, readings, now)
-    if (!usedReadings.length) {
+  for (const [code, series] of Object.entries(
+    groupRecordsByPollutant(records)
+  )) {
+    if (!DAQI_AVERAGING[code]) {
       continue
     }
-    const mean =
-      usedReadings.reduce((sum, r) => sum + r.value, 0) / usedReadings.length
-    const mostRecent = usedReadings[usedReadings.length - 1]
-    result[code] = { value: mean, measuredAt: mostRecent.endDateTime }
+    const concentration = daqiConcentration(code, {
+      hourIndex: toSeriesIndex(series.hourly),
+      quarterIndex: toSeriesIndex(series.quarters)
+    })
+    if (concentration) {
+      result[code] = concentration
+    }
   }
-
   return result
 }
 
 /**
  * Fetches all pollutant measurements for a single station over the data fetch
- * window, computes rolling averages per DAQI methodology, and returns a
+ * window, computes the DAQI concentrations (applying the 75% data-capture
+ * rule), and returns a
  * station DAQI result. Returns null if no index can be calculated.
  *
  * @param {string} siteId
@@ -199,7 +191,7 @@ async function fetchStationDaqi(siteId, baseUrl, headers, dateRange) {
     return null
   }
 
-  const averagedPollutants = computeRollingAverages(records)
+  const averagedPollutants = computeDaqiConcentrations(records)
 
   const pollutantValues = {}
   let latestMeasuredAt = null
