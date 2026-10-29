@@ -5,6 +5,7 @@ import {
   MS_PER_MINUTE
 } from '../../pollutants/helpers/common/constants.js'
 import {
+  QUARTERS_PER_HOUR,
   QUARTER_HOURS_MS,
   deriveHourlyFromQuarters,
   intervalMinutes
@@ -48,7 +49,8 @@ const QUARTER_HOUR_CODE = 'SO2'
 
 // A reading for the hour ending at `from` needs the quarters ending 45, 30 and
 // 15 minutes earlier, so the 15-minute series starts this far before `from`.
-const FIFTEEN_MINUTE_LEAD_MS = 3 * QUARTER_HOURS_MS
+const QUARTERS_BEFORE_FIRST_HOUR = 3
+const FIFTEEN_MINUTE_LEAD_MS = QUARTERS_BEFORE_FIRST_HOUR * QUARTER_HOURS_MS
 
 const toYmd = (date) => date.toISOString().slice(0, 10)
 
@@ -59,7 +61,7 @@ function isHourlyRow(row) {
 }
 
 function isQuarterHourRow(row) {
-  return intervalMinutes(row) === MINUTES_PER_HOUR / 4
+  return intervalMinutes(row) === MINUTES_PER_HOUR / QUARTERS_PER_HOUR
 }
 
 const MAX_LOGGED_ROWS = 3
@@ -168,6 +170,15 @@ function emptySeries() {
   return Object.fromEntries(Object.keys(REQUEST_CODE).map((code) => [code, []]))
 }
 
+/** One upstream call per pollutant, made in parallel. */
+function fetchAllPollutants(args) {
+  return Promise.all(
+    Object.keys(REQUEST_CODE).map((code) =>
+      fetchOnePollutant({ code, ...args })
+    )
+  )
+}
+
 /**
  * The hourly series for a pollutant. SO2 hourly means are derived from its
  * 15-minute means (at least 3 valid of 4) when the feed supplies them; the
@@ -177,6 +188,58 @@ function hourlySeriesFor(result) {
   return result.quarters.length > 0
     ? deriveHourlyFromQuarters(result.quarters)
     : result.hourly
+}
+
+/** The request reaches back `days` plus padding so the whole window is covered. */
+function requestStart(requestedTo, days) {
+  return new Date(
+    requestedTo.getTime() -
+      (days + REQUEST_PADDING_DAYS) * HOURS_PER_DAY * MS_PER_HOUR
+  )
+}
+
+/** Time of the newest reading across all pollutants, or null if there are none. */
+function newestReadingMs(hourlyByCode) {
+  const times = Object.values(hourlyByCode)
+    .flat()
+    .map((point) => Date.parse(point.time))
+  return times.length > 0 ? Math.max(...times) : null
+}
+
+/**
+ * The window's first and last hour stamps. Anchored on the newest reading, not
+ * on now, so a station that has stopped publishing shows a gap rather than a
+ * window of empty hours.
+ */
+function windowBounds(newestMs, period) {
+  // A reading stamped exactly at midnight closes the previous day, so rounding
+  // down to midnight keeps that day and drops the unfinished one.
+  const completeDays = COMPLETE_DAY_PERIODS.has(period)
+  const toMs = completeDays ? Math.floor(newestMs / DAY_MS) * DAY_MS : newestMs
+  // `- 1` so a 24-hour window holds 24 hourly points inclusive, not 25.
+  const fromMs = toMs - (PERIOD_DAYS[period] * HOURS_PER_DAY - 1) * MS_PER_HOUR
+  return { fromMs, toMs, completeDays }
+}
+
+function pointsWithin(points, fromMs, toMs) {
+  return points.filter((point) => {
+    const ms = Date.parse(point.time)
+    return ms >= fromMs && ms <= toMs
+  })
+}
+
+/** SO2's 15-minute means; the series ends at `toMs` only for complete-day windows. */
+function fifteenMinuteSeries(results, { fromMs, toMs, completeDays }) {
+  const quarters =
+    results.find((result) => result.code === QUARTER_HOUR_CODE)?.quarters ?? []
+  const lastMs = completeDays ? toMs : Infinity
+  return {
+    [QUARTER_HOUR_CODE]: pointsWithin(
+      quarters,
+      fromMs - FIFTEEN_MINUTE_LEAD_MS,
+      lastMs
+    )
+  }
 }
 
 /**
@@ -209,10 +272,7 @@ async function fetchPollutantHistory({
 
   const days = PERIOD_DAYS[period]
   const requestedTo = new Date()
-  const requestedFrom = new Date(
-    requestedTo.getTime() -
-      (days + REQUEST_PADDING_DAYS) * HOURS_PER_DAY * MS_PER_HOUR
-  )
+  const requestedFrom = requestStart(requestedTo, days)
   const options = {
     method: 'GET',
     headers: {
@@ -221,19 +281,14 @@ async function fetchPollutantHistory({
     }
   }
 
-  const results = await Promise.all(
-    Object.keys(REQUEST_CODE).map((code) =>
-      fetchOnePollutant({
-        code,
-        siteId,
-        from: requestedFrom,
-        to: requestedTo,
-        options,
-        catchProxyFetchError,
-        logger
-      })
-    )
-  )
+  const results = await fetchAllPollutants({
+    siteId,
+    from: requestedFrom,
+    to: requestedTo,
+    options,
+    catchProxyFetchError,
+    logger
+  })
 
   if (results.some((result) => result.failed)) {
     return { upstreamError: true }
@@ -244,18 +299,7 @@ async function fetchPollutantHistory({
     results.map((result) => [result.code, hourlySeriesFor(result)])
   )
 
-  // Anchor on the newest reading, not on now, so a station that has stopped
-  // publishing shows a gap rather than a window of empty hours.
-  let newestMs = null
-  for (const points of Object.values(hourlyByCode)) {
-    for (const point of points) {
-      const ms = Date.parse(point.time)
-      if (newestMs === null || ms > newestMs) {
-        newestMs = ms
-      }
-    }
-  }
-
+  const newestMs = newestReadingMs(hourlyByCode)
   if (newestMs === null) {
     return {
       from: null,
@@ -266,38 +310,20 @@ async function fetchPollutantHistory({
     }
   }
 
-  // A reading stamped exactly at midnight closes the previous day, so rounding
-  // down to midnight keeps that day and drops the unfinished one.
-  const completeDays = COMPLETE_DAY_PERIODS.has(period)
-  const toMs = completeDays ? Math.floor(newestMs / DAY_MS) * DAY_MS : newestMs
-  // `- 1` so a 24-hour window holds 24 hourly points inclusive, not 25.
-  const fromMs = toMs - (days * HOURS_PER_DAY - 1) * MS_PER_HOUR
-
-  const pollutants = {}
-  for (const [code, points] of Object.entries(hourlyByCode)) {
-    pollutants[code] = points.filter((point) => {
-      const ms = Date.parse(point.time)
-      return ms >= fromMs && ms <= toMs
-    })
-  }
-
-  const quarters =
-    results.find((result) => result.code === QUARTER_HOUR_CODE)?.quarters ?? []
-  const fifteenMinute = {
-    [QUARTER_HOUR_CODE]: quarters.filter((point) => {
-      const ms = Date.parse(point.time)
-      return (
-        ms >= fromMs - FIFTEEN_MINUTE_LEAD_MS && (!completeDays || ms <= toMs)
-      )
-    })
-  }
+  const bounds = windowBounds(newestMs, period)
+  const pollutants = Object.fromEntries(
+    Object.entries(hourlyByCode).map(([code, points]) => [
+      code,
+      pointsWithin(points, bounds.fromMs, bounds.toMs)
+    ])
+  )
 
   return {
-    from: new Date(fromMs).toISOString(),
-    to: new Date(toMs).toISOString(),
+    from: new Date(bounds.fromMs).toISOString(),
+    to: new Date(bounds.toMs).toISOString(),
     truncated,
     pollutants,
-    fifteenMinute
+    fifteenMinute: fifteenMinuteSeries(results, bounds)
   }
 }
 

@@ -97,6 +97,29 @@ function dataFetchRange() {
   }
 }
 
+/** Which series a record belongs to, by its length in minutes. */
+const SERIES_BY_INTERVAL = {
+  [HOUR_MINUTES]: 'hourly',
+  [QUARTER_HOUR_MINUTES]: 'quarters'
+}
+
+/**
+ * The pollutant, series and reading a record contributes, or null when it is
+ * not a DAQI-relevant pollutant or is not 60 or 15 minutes long.
+ */
+function classifyRecord(record) {
+  const code = pollutantNameToCode(record.pollutantName ?? '')
+  const series = SERIES_BY_INTERVAL[intervalMinutes(record)]
+  if (!code || !series || !record.endDateTime) {
+    return null
+  }
+  return {
+    code,
+    series,
+    point: { time: record.endDateTime, value: Number(record.value) }
+  }
+}
+
 /**
  * Groups records by pollutant code and interval. Only 60-minute rows feed the
  * hourly series and only 15-minute rows feed the 15-minute series; a row of
@@ -108,25 +131,11 @@ function dataFetchRange() {
  */
 function groupRecordsByPollutant(records) {
   const grouped = {}
-  for (const record of records) {
-    const code = pollutantNameToCode(record.pollutantName ?? '')
-    if (!code || !record.endDateTime) {
-      continue
-    }
-    const minutes = intervalMinutes(record)
-    let target
-    if (minutes === HOUR_MINUTES) {
-      target = 'hourly'
-    } else if (minutes === QUARTER_HOUR_MINUTES) {
-      target = 'quarters'
-    } else {
-      continue
-    }
+  for (const { code, series, point } of records
+    .map(classifyRecord)
+    .filter(Boolean)) {
     grouped[code] ??= { hourly: [], quarters: [] }
-    grouped[code][target].push({
-      time: record.endDateTime,
-      value: Number(record.value)
-    })
+    grouped[code][series].push(point)
   }
   return grouped
 }
@@ -150,12 +159,10 @@ function groupRecordsByPollutant(records) {
  */
 function computeDaqiConcentrations(records) {
   const result = {}
-  for (const [code, series] of Object.entries(
-    groupRecordsByPollutant(records)
-  )) {
-    if (!DAQI_AVERAGING[code]) {
-      continue
-    }
+  const daqiSeries = Object.entries(groupRecordsByPollutant(records)).filter(
+    ([code]) => DAQI_AVERAGING[code]
+  )
+  for (const [code, series] of daqiSeries) {
     const concentration = daqiConcentration(code, {
       hourIndex: toSeriesIndex(series.hourly),
       quarterIndex: toSeriesIndex(series.quarters)
@@ -250,11 +257,12 @@ async function fetchAllRecordsForStation(
       method: 'GET',
       headers
     })
-    if (statusCode !== HTTP_STATUS_OK || !Array.isArray(data?.member)) {
-      break
+    // A failed or malformed page stops the paging via the loop condition.
+    const pageOk = statusCode === HTTP_STATUS_OK && Array.isArray(data?.member)
+    if (pageOk) {
+      records.push(...data.member)
     }
-    records.push(...data.member)
-    hasMore = Boolean(data.view?.next) && data.member.length > 0
+    hasMore = pageOk && Boolean(data.view?.next) && data.member.length > 0
     page++
   }
 

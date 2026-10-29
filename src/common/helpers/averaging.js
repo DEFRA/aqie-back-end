@@ -218,6 +218,7 @@ export {
   HOURS_PER_DAY,
   HOUR_MS,
   MIN_CAPTURE_RATIO,
+  QUARTERS_PER_HOUR,
   QUARTER_HOURS_MS,
   dailyMean,
   daqiConcentration,
