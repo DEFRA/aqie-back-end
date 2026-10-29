@@ -178,26 +178,26 @@ function daqiConcentration(code, series, upToMs = Infinity) {
   }
 
   if (code === 'SO2') {
-    const latest = latestValid(series.quarterIndex ?? new Map(), upToMs)
-    return latest && toResult(latest.value, latest.ms)
+    const latestQuarter = latestValid(series.quarterIndex ?? new Map(), upToMs)
+    return latestQuarter && toResult(latestQuarter.value, latestQuarter.ms)
   }
 
   const hourIndex = series.hourIndex ?? new Map()
-  const latest = latestValid(hourIndex, upToMs)
-  if (!latest) {
+  const latestHour = latestValid(hourIndex, upToMs)
+  if (!latestHour) {
     return null
   }
   if (!averaging.rule) {
-    return toResult(latest.value, latest.ms)
+    return toResult(latestHour.value, latestHour.ms)
   }
 
   const value = rollingMean(
     hourIndex,
-    latest.ms,
+    latestHour.ms,
     averaging.hours,
     CAPTURE_RULES[averaging.rule].min
   )
-  return value === null ? null : toResult(value, latest.ms)
+  return value === null ? null : toResult(value, latestHour.ms)
 }
 
 function toResult(value, ms) {
