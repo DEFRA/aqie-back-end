@@ -208,41 +208,35 @@ it reduces each series down to the single newest reading.
   "period": "7d",
   "resolution": "hourly",
   "timeBasis": "end",
-  "from": "2026-09-23T12:00:00.000Z",
-  "to": "2026-09-30T11:00:00.000Z",
+  "from": "2026-09-23T01:00:00.000Z",
+  "to": "2026-09-30T00:00:00.000Z",
   "truncated": false,
   "pollutants": {
-    "NO2": [{ "time": "2026-09-23T12:00:00.000Z", "value": 32.1 }],
-    "PM25": [{ "time": "2026-09-23T12:00:00.000Z", "value": null }]
-  },
-  "leadIn": {
-    "PM25": [{ "time": "2026-09-22T12:00:00.000Z", "value": 10.66 }]
+    "NO2": [{ "time": "2026-09-23T01:00:00.000Z", "value": 32.1 }],
+    "PM25": [{ "time": "2026-09-23T01:00:00.000Z", "value": null }]
   },
   "fifteenMinute": {
-    "SO2": [{ "time": "2026-09-23T11:15:00.000Z", "value": 2.39481 }]
+    "SO2": [{ "time": "2026-09-23T00:15:00.000Z", "value": 2.39481 }]
   },
   "summary": {
     "daqiIndex": 2,
-    "measuredAt": "2026-09-30T11:00:00.000Z",
+    "measuredAt": "2026-09-30T00:00:00.000Z",
     "pollutants": {
       "PM25": {
         "periodAverage": 10.4625,
         "dataCapture": {
           "validHours": 160,
           "expectedHours": 168,
-          "capturePercentage": 95
+          "capturePercentage": 95,
+          "isLowDataCapture": false
         },
         "hourlyExceedances": null,
         "dailyExceedances": null,
         "dailyMeans": [{ "time": "2026-09-24T00:00:00.000Z", "value": 9.8 }],
-        "rollingMean": {
-          "windowHours": 24,
-          "series": [{ "time": "2026-09-23T12:00:00.000Z", "value": 10.1 }]
-        },
         "daqi": {
           "concentration": 10.4,
           "index": 1,
-          "measuredAt": "2026-09-30T11:00:00.000Z",
+          "measuredAt": "2026-09-30T00:00:00.000Z",
           "averagingPeriod": "24-hour mean"
         }
       }
@@ -256,17 +250,20 @@ it reduces each series down to the single newest reading.
   reading for 09:00–10:00 is stamped `10:00`.
 - `value: null` means the instrument produced no reading for that hour. The
   point is kept so data capture can be counted against it.
-- `from` / `to` bound the trimmed window. `to` is anchored on the most recent
-  reading rather than on the current time, so a station that has stopped
-  publishing shows a gap instead of a window of empty hours. Both are `null`
-  when the station returned no readings at all.
-- `leadIn` holds the 24 hourly readings immediately before `from`, per
-  pollutant, so rolling and daily means are valid from the first hour of the
-  window.
+- `from` / `to` bound the window, and both are `null` when the station returned
+  no readings at all. They are the first and last hour stamps of the window:
+  - `24h`: the 24 hours ending at the station's **newest reading**, so a station
+    that has stopped publishing shows a gap instead of a window of empty hours.
+  - `7d`: **seven complete UTC days** ending at the most recent midnight at or
+    before the newest reading. The unfinished current day is not included, so
+    `from` is `01:00` on the first day and `to` is `00:00` after the last. Every
+    daily mean is a real calendar day made of hours inside the window, and the
+    168 hours counted for data capture are exactly the hours behind the seven
+    daily means.
 - `fifteenMinute.SO2` holds SO₂'s 15-minute means from 45 minutes before `from`
-  (so the first hour has all four quarters). `pollutants.SO2` and `leadIn.SO2`
-  are hourly means derived from these (at least 3 valid of 4); the feed's own
-  hourly SO₂ rows are used only when there are no 15-minute rows.
+  (so the first hour has all four quarters). `pollutants.SO2` is the hourly mean
+  derived from these (at least 3 valid of 4); the feed's own hourly SO₂ rows are
+  used only when there are no 15-minute rows.
 - `truncated: true` means at least one pollutant hit the upstream 10,000 row
   cap, so its series is incomplete. The cap cannot be paginated past.
 - Expect roughly 24 points per pollutant for `24h` and 168 for `7d`.
@@ -274,15 +271,21 @@ it reduces each series down to the single newest reading.
 
 ### Data capture and averaging rules
 
-All averages, capture figures, rolling means and DAQI values come from
+All averages, capture figures and DAQI values come from
 `src/common/helpers/averaging.js`, which the map DAQI (`/aurnData`) also uses.
 Consumers should display these values and not recalculate them.
 
 - A mean is only calculated with at least 75% data capture, otherwise it is
   `null` (never a partial-window estimate):
   hourly mean 3 of 4 fifteen-minute means; 8-hour mean 6 of 8 hourly means;
-  daily (and 24-hour) mean 18 of 24 hourly means; `summary...periodAverage` 75% of the
-  window's hours (126 of 168 for `7d`).
+  daily (and 24-hour) mean 18 of 24 hourly means. `summary...periodAverage`
+  also needs 75% of the window's hours to be valid (126 of 168 for `7d`).
+- `periodAverage` is the **7-day average** for `period=7d`, the mean of the seven
+  valid daily means (a day with fewer than 18 valid hours is left out), and the
+  **24-hour average** for `period=24h`, the mean of the window's valid hourly means.
+- `dataCapture.isLowDataCapture` is true exactly when `periodAverage` is
+  withheld, so a consumer can show the "Low data capture" tag and a `-` average
+  from one flag instead of repeating the 75% rule.
 - Missing hours count as invalid, not as a shorter window.
 - Values are never rounded in the response, and intermediate means stay
   unrounded. Rounding happens once, immediately before a DAQI band or
@@ -304,17 +307,22 @@ BASE="http://localhost:3001/monitoringStationHistory?siteId=UKA00315"
 
 # Everything the endpoint returns, top level only
 curl -s "$BASE&period=24h" | jq 'keys'
-# ["fifteenMinute","from","leadIn","period","pollutants","resolution",
+# ["fifteenMinute","from","period","pollutants","resolution",
 #  "siteId","summary","timeBasis","to","truncated"]
 
-# 7-day average and data capture per pollutant. `periodAverage` is null when fewer than
-# 75% of the window's hours (126 of 168) are valid; `dataCapture` is still reported.
+# The window. For 7d this is seven complete UTC days: `from` is 01:00 on the first
+# day and `to` is midnight at the end of the last (hour-ending stamps).
+curl -s "$BASE&period=7d" | jq '{from, to, hours: (.pollutants.NO2 | length)}'
+
+# 7-day average and data capture per pollutant. `periodAverage` (the mean of the valid
+# daily means) is null when fewer than 75% of the window's hours (126 of 168) are
+# valid; `dataCapture` is still reported.
 curl -s "$BASE&period=7d" | jq '.summary.pollutants | map_values({periodAverage, dataCapture})'
 
-# Only the pollutants whose average was withheld for low data capture
+# Only the pollutants flagged "Low data capture" (average withheld)
 curl -s "$BASE&period=7d" | jq '.summary.pollutants
   | to_entries[]
-  | select(.value.periodAverage == null and .value.dataCapture.validHours > 0)
+  | select(.value.dataCapture.isLowDataCapture and .value.dataCapture.validHours > 0)
   | {pollutant: .key, dataCapture: .value.dataCapture}'
 
 # The DAQI concentration, index and averaging period for each pollutant, plus the
@@ -325,17 +333,9 @@ curl -s "$BASE&period=24h" | jq '{
   pollutants: (.summary.pollutants | map_values(.daqi | {concentration, index, averagingPeriod}))
 }'
 
-# Lead-in: the 24 hourly readings immediately before `from` (times are period ends).
-# They let the first hours of the window have a full 24-hour or 8-hour mean.
-curl -s "$BASE&period=24h" | jq '{from, leadInPM25: (.leadIn.PM25 | {count: length, first: .[0], last: .[-1]})}'
-
 # SO2 15-minute means: 96 points for 24h, starting 45 minutes before `from` so the
 # first hour has all four quarters
 curl -s "$BASE&period=24h" | jq '{from, fifteenMinute: (.fifteenMinute.SO2 | {count: length, first: .[0], last: .[-1]})}'
-
-# PM2.5 24-hour rolling mean, one value per hour of the window (null where fewer
-# than 18 of the last 24 hours are valid). O3 uses an 8-hour mean (`windowHours: 8`).
-curl -s "$BASE&period=24h" | jq '.summary.pollutants.PM25.rollingMean | {windowHours, first: .series[0], last: .series[-1]}'
 
 # Daily means (one per UTC day, stamped at the end of the day) and the number of
 # days over the PM10 daily limit. A day with fewer than 18 valid hours is null.

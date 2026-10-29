@@ -9,11 +9,20 @@ const QUARTER_MS = 15 * 60 * 1000
 const TO_24H = Date.parse('2026-10-21T09:00:00Z')
 const FROM_24H = TO_24H - 23 * HOUR_MS
 
-// 7d window: ends 23:00 on the 26th, so it holds exactly seven UTC midnights.
-const TO_7D = Date.parse('2026-10-26T23:00:00Z')
+// 7d window: seven complete UTC days, 01:00 on the 20th to 00:00 on the 27th
+// (hour-ending stamps), so it holds exactly seven UTC midnights.
+const TO_7D = Date.parse('2026-10-27T00:00:00Z')
 const FROM_7D = TO_7D - 167 * HOUR_MS
 
 const iso = (ms) => new Date(ms).toISOString()
+
+// The first midnight in the 7d window; day k ends k days after it.
+const FIRST_DAY_END = FROM_7D - HOUR_MS + DAY_MS
+const dayIndex = (ms) =>
+  (Math.ceil(ms / DAY_MS) * DAY_MS - FIRST_DAY_END) / DAY_MS
+/** 1-24: which hour of its UTC day an hour-ending stamp is (00:00 is hour 24). */
+const hourPosition = (ms) =>
+  (ms / HOUR_MS) % 24 === 0 ? 24 : (ms / HOUR_MS) % 24
 
 /** Hourly points for `count` hours ending at `endMs`; a function or constant supplies values. */
 function hourly(endMs, count, value) {
@@ -49,7 +58,8 @@ describe('#buildHistorySummary', () => {
       expect(dataCapture).toEqual({
         validHours: 24,
         expectedHours: 24,
-        capturePercentage: 100
+        capturePercentage: 100,
+        isLowDataCapture: false
       })
       expect(periodAverage).toBeCloseTo(10.75, 10)
     })
@@ -137,38 +147,182 @@ describe('#buildHistorySummary', () => {
     })
   })
 
-  describe('rolling means and lead-in', () => {
-    it('gives the first window hours a 24-hour mean using lead-in', () => {
-      const leadIn = hourly(FROM_24H - HOUR_MS, 24, 10)
-      const points = hourly(TO_24H, 24, 30)
-      const { rollingMean } = window24h(
-        { ...NO_DATA, PM25: points },
-        { leadIn: { PM25: leadIn } }
-      ).pollutants.PM25
+  describe('7-day average is the mean of the valid daily means', () => {
+    // Day k (0-6) is the k-th complete UTC day in the window, ending at the
+    // k-th midnight. `days[k]` is { value, valid }: that many valid hours at
+    // that value.
+    function sevenDay(days) {
+      const all = hourly(TO_7D, 168, (_, ms) => {
+        const day = days[dayIndex(ms)]
+        return day && hourPosition(ms) <= day.valid ? day.value : null
+      })
+      return buildHistorySummary({
+        period: '7d',
+        from: iso(FROM_7D),
+        to: iso(TO_7D),
+        pollutants: { ...NO_DATA, O3: all }
+      }).pollutants.O3
+    }
 
-      expect(rollingMean.windowHours).toBe(24)
-      expect(rollingMean.series).toHaveLength(24)
-      // First window hour: 1 window value (30) + 23 lead-in values (10)
-      expect(rollingMean.series[0].value).toBeCloseTo((30 + 23 * 10) / 24, 10)
-      expect(rollingMean.series.at(-1).value).toBe(30)
+    const full = (value) => ({ value, valid: 24 })
+    const partial = (value, valid) => ({ value, valid })
+
+    it('averages the daily means, not the hourly values', () => {
+      // 4 days at 10 and 3 days of 18 valid hours at 100.
+      // Mean of daily means = (4*10 + 3*100) / 7; the mean of the hours is 42.4.
+      const result = sevenDay([
+        full(10),
+        full(10),
+        full(10),
+        full(10),
+        partial(100, 18),
+        partial(100, 18),
+        partial(100, 18)
+      ])
+      expect(result.dataCapture.validHours).toBe(150)
+      expect(result.dailyMeans.map((d) => d.value)).toEqual([
+        10, 10, 10, 10, 100, 100, 100
+      ])
+      expect(result.periodAverage).toBeCloseTo((4 * 10 + 3 * 100) / 7, 10)
+      expect(result.dataCapture.isLowDataCapture).toBe(false)
     })
 
-    it('has no rolling mean for the first hours without lead-in', () => {
-      const points = hourly(TO_24H, 24, 30)
-      const { rollingMean } = window24h({ ...NO_DATA, PM25: points }).pollutants
-        .PM25
-      expect(rollingMean.series[0].value).toBeNull()
-      expect(rollingMean.series[16].value).toBeNull() // 17 valid hours
-      expect(rollingMean.series[17].value).toBe(30) // 18 valid hours
+    it('leaves out a day with fewer than 18 valid hours while capture is still 75% or more', () => {
+      // Five full days at 10, two days of 17 valid hours at 100. 154 of the
+      // window's 168 hours are valid, but only the first five days have a
+      // valid daily mean.
+      const result = sevenDay([
+        full(10),
+        full(10),
+        full(10),
+        full(10),
+        full(10),
+        partial(100, 17),
+        partial(100, 17)
+      ])
+      expect(result.dataCapture.validHours).toBe(154)
+      expect(result.dailyMeans.map((d) => d.value)).toEqual([
+        10,
+        10,
+        10,
+        10,
+        10,
+        null,
+        null
+      ])
+      expect(result.periodAverage).toBe(10)
+      expect(result.dataCapture.isLowDataCapture).toBe(false)
     })
 
-    it('uses an 8-hour mean for O3 and none for NO2 or SO2', () => {
-      const summary = window24h({ ...NO_DATA, O3: hourly(TO_24H, 24, 50) })
-      expect(summary.pollutants.O3.rollingMean.windowHours).toBe(8)
-      expect(summary.pollutants.O3.rollingMean.series[5].value).toBe(50) // 6 valid
-      expect(summary.pollutants.O3.rollingMean.series[4].value).toBeNull()
-      expect(summary.pollutants.NO2.rollingMean).toBeNull()
-      expect(summary.pollutants.SO2.rollingMean).toBeNull()
+    it('withholds the average and flags low data capture below 75% of the window hours', () => {
+      const week = (lastDayValid) =>
+        sevenDay([
+          full(10),
+          full(10),
+          full(10),
+          full(10),
+          full(10),
+          partial(10, 6),
+          partial(10, lastDayValid)
+        ])
+
+      // 5 days x 24 + 6 + 0 = 126 (exactly 75%)
+      const atThreshold = week(0)
+      expect(atThreshold.dataCapture.validHours).toBe(126)
+      expect(atThreshold.dataCapture.capturePercentage).toBe(75)
+      expect(atThreshold.dataCapture.isLowDataCapture).toBe(false)
+      expect(atThreshold.periodAverage).toBe(10)
+
+      const belowThreshold = sevenDay([
+        full(10),
+        full(10),
+        full(10),
+        full(10),
+        full(10),
+        partial(10, 5)
+      ])
+      expect(belowThreshold.dataCapture.validHours).toBe(125)
+      expect(belowThreshold.periodAverage).toBeNull()
+      expect(belowThreshold.dataCapture.isLowDataCapture).toBe(true)
+    })
+
+    it('uses exactly the hours behind the seven daily means for capture', () => {
+      const result = sevenDay(Array.from({ length: 7 }, () => full(10)))
+      expect(result.dataCapture).toMatchObject({
+        validHours: 168,
+        expectedHours: 168,
+        capturePercentage: 100
+      })
+      expect(result.dailyMeans).toHaveLength(7)
+    })
+
+    it('keeps the daily means unrounded', () => {
+      const result = sevenDay([
+        full(10.4),
+        full(10.4),
+        full(10.4),
+        full(10.4),
+        full(10.4),
+        full(10.4),
+        full(10.9)
+      ])
+      expect(result.periodAverage).toBeCloseTo((6 * 10.4 + 10.9) / 7, 10)
+    })
+  })
+
+  describe('low data capture flag', () => {
+    it('is true exactly when the average is withheld, for a 24-hour window', () => {
+      const flag = (validCount) => {
+        const points = hourly(TO_24H, 24, (i) =>
+          i < 24 - validCount ? null : 20
+        )
+        const { dataCapture, periodAverage } = window24h({
+          ...NO_DATA,
+          NO2: points
+        }).pollutants.NO2
+        return [dataCapture.isLowDataCapture, periodAverage === null]
+      }
+      expect(flag(18)).toEqual([false, false])
+      expect(flag(17)).toEqual([true, true])
+    })
+
+    it('is true for a pollutant with no readings, independently of others', () => {
+      const summary = window24h({
+        ...NO_DATA,
+        NO2: hourly(TO_24H, 24, 20)
+      })
+      expect(summary.pollutants.NO2.dataCapture.isLowDataCapture).toBe(false)
+      expect(summary.pollutants.O3.dataCapture.isLowDataCapture).toBe(true)
+    })
+  })
+
+  describe('response contents', () => {
+    it('no longer returns a rolling-mean series; the DAQI value comes from the window alone', () => {
+      const summary = window24h({ ...NO_DATA, PM25: hourly(TO_24H, 24, 30) })
+      expect(summary.pollutants.PM25).not.toHaveProperty('rollingMean')
+      expect(summary.pollutants.PM25.daqi).toMatchObject({
+        concentration: 30,
+        averagingPeriod: '24-hour mean'
+      })
+    })
+
+    it('uses an 8-hour mean for O3 from the last 8 hours of the window', () => {
+      // Earlier hours are high, the last 8 are 50: the DAQI value is 50.
+      const points = hourly(TO_24H, 24, (i) => (i < 16 ? 200 : 50))
+      const { daqi } = window24h({ ...NO_DATA, O3: points }).pollutants.O3
+      expect(daqi).toMatchObject({
+        concentration: 50,
+        averagingPeriod: '8-hour mean'
+      })
+    })
+
+    it('PM2.5 DAQI concentration equals the 24-hour average when the newest hour is valid', () => {
+      const points = hourly(TO_24H, 24, (i) => 5 + i)
+      const { daqi, periodAverage } = window24h({
+        ...NO_DATA,
+        PM25: points
+      }).pollutants.PM25
+      expect(daqi.concentration).toBeCloseTo(periodAverage, 10)
     })
   })
 
@@ -191,21 +345,16 @@ describe('#buildHistorySummary', () => {
     })
 
     function pm10Week(dayValues, validPerDay = 24) {
-      // Day k ends at the k-th UTC midnight in the window. Its 24 hours begin
-      // in the lead-in for the first day, so the series spans 192 hours.
-      const all = hourly(TO_7D, 192, (_, ms) => {
-        const dayEnd = Math.ceil(ms / DAY_MS) * DAY_MS
-        const k = (dayEnd - FROM_7D) / DAY_MS
-        const hourOfDay = (ms / HOUR_MS) % 24
-        const position = hourOfDay === 0 ? 24 : hourOfDay
-        return position > validPerDay ? null : (dayValues[k] ?? null)
-      })
+      const all = hourly(TO_7D, 168, (_, ms) =>
+        hourPosition(ms) > validPerDay
+          ? null
+          : (dayValues[dayIndex(ms)] ?? null)
+      )
       return buildHistorySummary({
         period: '7d',
         from: iso(FROM_7D),
         to: iso(TO_7D),
-        pollutants: { ...NO_DATA, PM10: all.slice(24) },
-        leadIn: { PM10: all.slice(0, 24) }
+        pollutants: { ...NO_DATA, PM10: all }
       }).pollutants.PM10
     }
 

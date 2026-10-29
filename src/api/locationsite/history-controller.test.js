@@ -71,7 +71,6 @@ const historyResult = {
     O3: [],
     SO2: []
   },
-  leadIn: { NO2: [], PM25: [], PM10: [], O3: [], SO2: [] },
   fifteenMinute: { SO2: [] }
 }
 
@@ -100,7 +99,6 @@ describe('#monitoringStationHistoryController', () => {
       to: historyResult.to,
       truncated: false,
       pollutants: historyResult.pollutants,
-      leadIn: historyResult.leadIn,
       fifteenMinute: historyResult.fifteenMinute,
       summary: expect.objectContaining({
         daqiIndex: expect.anything(),

@@ -28,16 +28,19 @@ const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE
 
 // HOURS_IN_DAY in the constants module is 12 (12-hour clock formatting).
 const HOURS_PER_DAY = 24
+const DAY_MS = HOURS_PER_DAY * MS_PER_HOUR
 
 /**
- * Hourly readings returned before the window so the first hours of it have a
- * full 24-hour (PM) or 8-hour (O3) rolling mean and a full daily mean.
+ * Periods that cover whole UTC days. Their window ends at the most recent
+ * midnight, so every daily mean is a real calendar day made of hours inside
+ * the window and nothing before it is needed. The other periods end at the
+ * newest reading.
  */
-const LEAD_IN_HOURS = 24
+const COMPLETE_DAY_PERIODS = new Set(['7d'])
 
-// The request reaches back one day further than the lead-in needs. start-date
-// has day granularity, and the window is anchored on the newest reading, which
-// can be older than now.
+// The request reaches back further than the window needs. start-date has day
+// granularity, and a complete-day window can start up to a day before the
+// newest reading's 7 days, which itself can be older than now.
 const REQUEST_PADDING_DAYS = 2
 
 /** Only SO2 is averaged over 15 minutes (DAQI). */
@@ -177,17 +180,19 @@ function hourlySeriesFor(result) {
 }
 
 /**
- * Fetches an hourly time series per pollutant for a single station, the 24
- * hours of hourly readings before the window (`leadIn`) and SO2's 15-minute
- * series (`fifteenMinute`).
+ * Fetches an hourly time series per pollutant for a single station, plus SO2's
+ * 15-minute series (`fifteenMinute`).
  *
- * All times are the end of the averaging period. Invalid readings stay in the
- * series as `null` values so data capture can be counted against them.
+ * The window is the last 24 hours ending at the newest reading (`24h`) or the
+ * 7 complete UTC days ending at the most recent midnight (`7d`). All times are
+ * the end of the averaging period, so a complete-day window runs from 01:00 on
+ * its first day to 00:00 after its last. Invalid readings stay in the series as
+ * `null` values so data capture can be counted against them.
  *
  * Returns `{ upstreamError: true }` when any pollutant call fails, so the
  * caller can distinguish a failed call from a station with no data.
  *
- * @returns {Promise<{ upstreamError: true } | { from: string|null, to: string|null, truncated: boolean, pollutants: Record<string, Array<{ time: string, value: number|null }>>, leadIn: Record<string, Array<{ time: string, value: number|null }>>, fifteenMinute: Record<string, Array<{ time: string, value: number|null }>> }>}
+ * @returns {Promise<{ upstreamError: true } | { from: string|null, to: string|null, truncated: boolean, pollutants: Record<string, Array<{ time: string, value: number|null }>>, fifteenMinute: Record<string, Array<{ time: string, value: number|null }>> }>}
  */
 async function fetchPollutantHistory({
   siteId,
@@ -241,49 +246,50 @@ async function fetchPollutantHistory({
 
   // Anchor on the newest reading, not on now, so a station that has stopped
   // publishing shows a gap rather than a window of empty hours.
-  let toMs = null
+  let newestMs = null
   for (const points of Object.values(hourlyByCode)) {
     for (const point of points) {
       const ms = Date.parse(point.time)
-      if (toMs === null || ms > toMs) {
-        toMs = ms
+      if (newestMs === null || ms > newestMs) {
+        newestMs = ms
       }
     }
   }
 
-  if (toMs === null) {
+  if (newestMs === null) {
     return {
       from: null,
       to: null,
       truncated,
       pollutants: emptySeries(),
-      leadIn: emptySeries(),
       fifteenMinute: { [QUARTER_HOUR_CODE]: [] }
     }
   }
 
+  // A reading stamped exactly at midnight closes the previous day, so rounding
+  // down to midnight keeps that day and drops the unfinished one.
+  const completeDays = COMPLETE_DAY_PERIODS.has(period)
+  const toMs = completeDays ? Math.floor(newestMs / DAY_MS) * DAY_MS : newestMs
   // `- 1` so a 24-hour window holds 24 hourly points inclusive, not 25.
   const fromMs = toMs - (days * HOURS_PER_DAY - 1) * MS_PER_HOUR
-  const leadInFromMs = fromMs - LEAD_IN_HOURS * MS_PER_HOUR
 
   const pollutants = {}
-  const leadIn = {}
   for (const [code, points] of Object.entries(hourlyByCode)) {
-    pollutants[code] = points.filter(
-      (point) => Date.parse(point.time) >= fromMs
-    )
-    leadIn[code] = points.filter((point) => {
+    pollutants[code] = points.filter((point) => {
       const ms = Date.parse(point.time)
-      return ms >= leadInFromMs && ms < fromMs
+      return ms >= fromMs && ms <= toMs
     })
   }
 
   const quarters =
     results.find((result) => result.code === QUARTER_HOUR_CODE)?.quarters ?? []
   const fifteenMinute = {
-    [QUARTER_HOUR_CODE]: quarters.filter(
-      (point) => Date.parse(point.time) >= fromMs - FIFTEEN_MINUTE_LEAD_MS
-    )
+    [QUARTER_HOUR_CODE]: quarters.filter((point) => {
+      const ms = Date.parse(point.time)
+      return (
+        ms >= fromMs - FIFTEEN_MINUTE_LEAD_MS && (!completeDays || ms <= toMs)
+      )
+    })
   }
 
   return {
@@ -291,15 +297,8 @@ async function fetchPollutantHistory({
     to: new Date(toMs).toISOString(),
     truncated,
     pollutants,
-    leadIn,
     fifteenMinute
   }
 }
 
-export {
-  fetchPollutantHistory,
-  REQUEST_CODE,
-  PERIOD_DAYS,
-  ROW_CAP,
-  LEAD_IN_HOURS
-}
+export { fetchPollutantHistory, REQUEST_CODE, PERIOD_DAYS, ROW_CAP }

@@ -1,12 +1,10 @@
 import {
-  CAPTURE_RULES,
   DAQI_AVERAGING,
   HOUR_MS,
   HOURS_PER_DAY,
   MIN_CAPTURE_RATIO,
   dailyMean,
   daqiConcentration,
-  rollingMean,
   roundConcentration,
   toSeriesIndex
 } from '../../../common/helpers/averaging.js'
@@ -38,8 +36,16 @@ function windowHourEnds(from, to, expectedHours) {
 const exceeds = (value, limit) =>
   value !== null && roundConcentration(value) > limit
 
+const mean = (values) =>
+  values.reduce((sum, value) => sum + value, 0) / values.length
+
+// The 7-day average is the mean of the seven daily means (each needing 18 of
+// 24 valid hours). The 24-hour average is the mean of its hourly means.
+const DAILY_MEAN_PERIODS = new Set(['7d'])
+
 function summarisePollutant({
   code,
+  period,
   hourEnds,
   expectedHours,
   hourIndex,
@@ -48,12 +54,6 @@ function summarisePollutant({
   const windowValues = hourEnds.map((ms) => hourIndex.get(ms) ?? null)
   const validValues = windowValues.filter((value) => value !== null)
   const valid = validValues.length
-
-  // Gated on the share of the whole window, so missing hours count against it.
-  const periodAverage =
-    valid / expectedHours >= MIN_CAPTURE_RATIO
-      ? validValues.reduce((sum, value) => sum + value, 0) / valid
-      : null
 
   const hourlyLimit = HOURLY_LIMITS[code]
   const dailyLimit = DAILY_LIMITS[code]
@@ -65,22 +65,15 @@ function summarisePollutant({
       value: dailyMean(hourIndex, ms)
     }))
 
-  const averaging = DAQI_AVERAGING[code]
-  const rolling = averaging?.rule
-    ? {
-        windowHours: averaging.hours,
-        series: hourEnds.map((ms) => ({
-          time: new Date(ms).toISOString(),
-          value: rollingMean(
-            hourIndex,
-            ms,
-            averaging.hours,
-            CAPTURE_RULES[averaging.rule].min
-          )
-        }))
-      }
-    : null
+  // Gated on the share of the whole window, so missing hours count against it.
+  const meetsCapture = valid / expectedHours >= MIN_CAPTURE_RATIO
+  const averageInputs = DAILY_MEAN_PERIODS.has(period)
+    ? dailyMeans.map(({ value }) => value).filter((value) => value !== null)
+    : validValues
+  const periodAverage =
+    meetsCapture && averageInputs.length > 0 ? mean(averageInputs) : null
 
+  const averaging = DAQI_AVERAGING[code]
   const concentration = daqiConcentration(code, { hourIndex, quarterIndex })
 
   return {
@@ -88,7 +81,10 @@ function summarisePollutant({
     dataCapture: {
       validHours: valid,
       expectedHours,
-      capturePercentage: Math.round((PERCENT * valid) / expectedHours)
+      capturePercentage: Math.round((PERCENT * valid) / expectedHours),
+      // True exactly when the average is withheld, so the "Low data capture"
+      // tag and the "-" in the Average column always agree.
+      isLowDataCapture: periodAverage === null
     },
     hourlyExceedances:
       hourlyLimit === undefined
@@ -99,7 +95,6 @@ function summarisePollutant({
         ? null
         : dailyMeans.filter(({ value }) => exceeds(value, dailyLimit)).length,
     dailyMeans,
-    rollingMean: rolling,
     daqi: concentration && {
       concentration: concentration.value,
       index: daqiIndexForPollutant(code, concentration.value),
@@ -110,22 +105,27 @@ function summarisePollutant({
 }
 
 /**
- * Builds the data-capture, average, rolling-mean, exceedance and DAQI figures
+ * Builds the data-capture, average, daily-mean, exceedance and DAQI figures
  * for a station history response. Every figure follows the shared rules in
  * common/helpers/averaging.js: 75% data capture or the value is `null`, and
  * nothing is rounded except immediately before a comparison.
  *
- * `periodAverage` is the mean of the window's valid hourly means, provided at least
- * 75% of the window's hours are valid.
+ * `periodAverage` is the 7-day average for `7d` (the mean of the valid daily
+ * means) and the 24-hour average for `24h` (the mean of the window's valid
+ * hourly means). Either is `null` unless at least 75% of the window's hours are
+ * valid, and `dataCapture.isLowDataCapture` is true exactly then.
  *
- * @param {{ period: string, from: string|null, to: string|null, pollutants: Record<string, Array<{time: string, value: number|null}>>, leadIn?: Record<string, Array<{time: string, value: number|null}>>, fifteenMinute?: Record<string, Array<{time: string, value: number|null}>> }} history
+ * Everything is calculated from the window alone: a `7d` window is seven
+ * complete UTC days, and the DAQI concentrations (24-hour, 8-hour, 1-hour and
+ * 15-minute means) end at the window's newest reading.
+ *
+ * @param {{ period: string, from: string|null, to: string|null, pollutants: Record<string, Array<{time: string, value: number|null}>>, fifteenMinute?: Record<string, Array<{time: string, value: number|null}>> }} history
  */
 function buildHistorySummary({
   period,
   from,
   to,
   pollutants,
-  leadIn = {},
   fifteenMinute = {}
 }) {
   const expectedHours = PERIOD_DAYS[period] * HOURS_PER_DAY
@@ -138,9 +138,10 @@ function buildHistorySummary({
   for (const [code, windowPoints] of Object.entries(pollutants ?? {})) {
     byCode[code] = summarisePollutant({
       code,
+      period,
       hourEnds,
       expectedHours,
-      hourIndex: toSeriesIndex([...(leadIn[code] ?? []), ...windowPoints]),
+      hourIndex: toSeriesIndex(windowPoints),
       quarterIndex: toSeriesIndex(fifteenMinute[code])
     })
     const daqi = byCode[code].daqi

@@ -112,7 +112,6 @@ const monitoringStationHistoryController = {
       to: result.to,
       truncated: result.truncated,
       pollutants: result.pollutants,
-      leadIn: result.leadIn,
       fifteenMinute: result.fifteenMinute,
       summary: buildHistorySummary({ period, ...result })
     }

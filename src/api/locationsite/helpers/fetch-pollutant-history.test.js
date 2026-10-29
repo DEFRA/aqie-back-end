@@ -118,7 +118,7 @@ describe('#fetchPollutantHistory', () => {
     expect(url.searchParams.has('end-date-time')).toBe(false)
   })
 
-  it('requests the lead-in: 7d window plus 24h lead-in plus padding', async () => {
+  it('reaches back far enough to cover a complete-day window: period plus padding', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-30T00:30:00.000Z'))
     const catchProxyFetchError = fetchStub({})
@@ -181,7 +181,7 @@ describe('#fetchPollutantHistory', () => {
     expect(result.fifteenMinute).toEqual({ SO2: [] })
   })
 
-  it('returns the 24 hourly readings before the window as leadIn, with nulls kept', async () => {
+  it('does not return readings from before the window', async () => {
     const series = hourlySeries('2026-09-30T11:00:00.000Z', 60)
     series[30] = { ...series[30], value: -9999 }
     const catchProxyFetchError = fetchStub({ PM25: series })
@@ -192,13 +192,11 @@ describe('#fetchPollutantHistory', () => {
     })
 
     expect(result.from).toBe('2026-09-29T12:00:00.000Z')
-    expect(result.leadIn.PM25).toHaveLength(24)
-    expect(result.leadIn.PM25[0].time).toBe('2026-09-28T12:00:00.000Z')
-    expect(result.leadIn.PM25.at(-1).time).toBe('2026-09-29T11:00:00.000Z')
+    expect(result).not.toHaveProperty('leadIn')
     expect(result.pollutants.PM25).toHaveLength(24)
-    const lastLeadInNull = result.leadIn.PM25.filter((p) => p.value === null)
-    expect(lastLeadInNull.length).toBe(1)
-    expect(result.leadIn.NO2).toEqual([])
+    expect(result.pollutants.PM25.every((p) => p.time >= result.from)).toBe(
+      true
+    )
   })
 
   it('returns SO2 15-minute readings from 45 minutes before the window start', async () => {
@@ -415,9 +413,10 @@ describe('#fetchPollutantHistory', () => {
     expect(result.to).toBe('2026-09-30T11:00:00.000Z')
   })
 
-  it('trims a 7d window to 168 inclusive hourly points', async () => {
+  it('trims a 7d window to the 7 complete UTC days before the newest reading', async () => {
+    // Newest reading 2026-09-30T11:00Z: the unfinished day (30 Sep) is dropped.
     const catchProxyFetchError = fetchStub({
-      NO2: hourlySeries('2026-09-30T11:00:00.000Z', 178)
+      NO2: hourlySeries('2026-09-30T11:00:00.000Z', 200)
     })
 
     const result = await fetchPollutantHistory({
@@ -427,7 +426,68 @@ describe('#fetchPollutantHistory', () => {
     })
 
     expect(result.pollutants.NO2).toHaveLength(PERIOD_DAYS['7d'] * 24)
-    expect(result.from).toBe('2026-09-23T12:00:00.000Z')
+    // Hour-ending stamps: 01:00 on the first day to 00:00 after the last
+    expect(result.from).toBe('2026-09-23T01:00:00.000Z')
+    expect(result.to).toBe('2026-09-30T00:00:00.000Z')
+    expect(result.pollutants.NO2[0].time).toBe('2026-09-23T01:00:00.000Z')
+    expect(result.pollutants.NO2.at(-1).time).toBe('2026-09-30T00:00:00.000Z')
+  })
+
+  it('keeps a day that closes exactly at the newest reading (stamped midnight)', async () => {
+    const catchProxyFetchError = fetchStub({
+      NO2: hourlySeries('2026-09-30T00:00:00.000Z', 200)
+    })
+
+    const result = await fetchPollutantHistory({
+      ...baseArgs,
+      period: '7d',
+      catchProxyFetchError
+    })
+
+    expect(result.to).toBe('2026-09-30T00:00:00.000Z')
+    expect(result.pollutants.NO2).toHaveLength(168)
+  })
+
+  it('does not include readings after the last midnight in a 7d window', async () => {
+    const catchProxyFetchError = fetchStub({
+      NO2: hourlySeries('2026-09-30T11:00:00.000Z', 200),
+      SO2: [
+        quarterHourRow('2026-09-29T23:45:00.000Z', 1),
+        quarterHourRow('2026-09-30T00:00:00.000Z', 2),
+        quarterHourRow('2026-09-30T00:15:00.000Z', 3),
+        quarterHourRow('2026-09-30T11:00:00.000Z', 4)
+      ]
+    })
+
+    const result = await fetchPollutantHistory({
+      ...baseArgs,
+      period: '7d',
+      catchProxyFetchError
+    })
+
+    expect(
+      result.pollutants.NO2.every(
+        (p) => Date.parse(p.time) <= Date.parse('2026-09-30T00:00:00.000Z')
+      )
+    ).toBe(true)
+    expect(result.fifteenMinute.SO2.map((p) => p.value)).toEqual([1, 2])
+  })
+
+  it('anchors a 7d window on the newest reading even when it is old', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-30T11:30:00.000Z'))
+    const catchProxyFetchError = fetchStub({
+      NO2: hourlySeries('2026-09-20T05:00:00.000Z', 200)
+    })
+
+    const result = await fetchPollutantHistory({
+      ...baseArgs,
+      period: '7d',
+      catchProxyFetchError
+    })
+
+    expect(result.to).toBe('2026-09-20T00:00:00.000Z')
+    expect(result.from).toBe('2026-09-13T01:00:00.000Z')
   })
 
   it('returns empty series with null bounds when no readings exist', async () => {
@@ -442,7 +502,7 @@ describe('#fetchPollutantHistory', () => {
     expect(result.to).toBeNull()
     expect(result.truncated).toBe(false)
     expect(result.fifteenMinute).toEqual({ SO2: [] })
-    expect(Object.keys(result.leadIn)).toEqual(Object.keys(REQUEST_CODE))
+    expect(result).not.toHaveProperty('leadIn')
     expect(result.pollutants).toEqual({
       PM25: [],
       PM10: [],
