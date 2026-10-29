@@ -253,6 +253,7 @@ async function fetchAllRecordsForStation(
 
   while (hasMore && page <= MAX_PAGES_PER_STATION) {
     const url = `${baseUrl}station-id=${siteId}&start-date-time=${startDateTime}&end-date-time=${endDateTime}&page=${page}`
+    // Pages are fetched one at a time: each response says whether another exists.
     const [statusCode, data] = await catchProxyFetchError(url, {
       method: 'GET',
       headers
@@ -299,6 +300,8 @@ async function fetchAurnMeasurements(stationIds) {
   const results = []
   for (let i = 0; i < stationIds.length; i += STATION_BATCH_SIZE) {
     const batch = stationIds.slice(i, i + STATION_BATCH_SIZE)
+    // Batches run one after another so Ricardo never sees more than
+    // STATION_BATCH_SIZE requests at once; stations within a batch run in parallel.
     const batchResults = await Promise.all(
       batch.map((siteId) =>
         fetchStationDaqi(siteId, baseUrl, headers, dateRange)
