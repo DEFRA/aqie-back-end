@@ -112,6 +112,25 @@ describe('daqiIndexForPollutant', () => {
     })
   })
 
+  describe('rounding before banding', () => {
+    it('rounds 67.49 down to 67, which is band 1', () => {
+      expect(daqiIndexForPollutant('NO2', 67.49)).toBe(1)
+    })
+
+    it('rounds 67.5 up to 68, which is band 2', () => {
+      expect(daqiIndexForPollutant('NO2', 67.5)).toBe(2)
+    })
+
+    it('treats 16.4 as 16 for PM10 band 1 and 16.5 as 17 for band 2', () => {
+      expect(daqiIndexForPollutant('PM10', 16.4)).toBe(1)
+      expect(daqiIndexForPollutant('PM10', 16.5)).toBe(2)
+    })
+
+    it('treats a fractional value below 0.5 as 0, band 1', () => {
+      expect(daqiIndexForPollutant('O3', 0.4)).toBe(1)
+    })
+  })
+
   it('covers all 10 bands — the breakpoints array has exactly 9 thresholds per pollutant', () => {
     for (const thresholds of Object.values(DAQI_BREAKPOINTS)) {
       expect(thresholds).toHaveLength(9)

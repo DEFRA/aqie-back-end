@@ -1,13 +1,16 @@
+import { roundConcentration } from '../../../common/helpers/averaging.js'
+
 /**
  * DAQI breakpoint thresholds per pollutant.
  * Each array contains the upper µg/m³ limit for bands 1–9; band 10 is anything above band 9.
  * Source: https://uk-air.defra.gov.uk/air-pollution/daqi?view=more-info
  *
- * Averaging periods used by the Ricardo API (via data-type param):
- *   NO2  — hourly mean
- *   PM10 — 24-hour running mean (data-type=24)
- *   PM25 — 24-hour running mean (data-type=24)
- *   O3   — 8-hour running mean  (data-type=23)
+ * Averaging periods (calculated by common/helpers/averaging.js, which also
+ * applies the 75% data-capture rule before any value reaches this file):
+ *   NO2  — 1-hour mean
+ *   PM10 — 24-hour running mean
+ *   PM25 — 24-hour running mean
+ *   O3   — 8-hour running mean
  *   SO2  — 15-minute mean
  */
 /** The highest possible DAQI index value. */
@@ -47,7 +50,8 @@ const DAQI_BREAKPOINTS = {
  * Returns the DAQI index (1–10) for a single pollutant concentration.
  *
  * @param {string} pollutantCode - One of 'NO2', 'PM10', 'PM25', 'O3', 'SO2'.
- * @param {number} value - Concentration in µg/m³.
+ * @param {number} value - Unrounded concentration in µg/m³. It is rounded to a
+ *   whole number here, immediately before the band comparison, and not earlier.
  * @returns {number|null} DAQI index 1–10, or null if the pollutant is unknown or value is invalid.
  */
 function daqiIndexForPollutant(pollutantCode, value) {
@@ -55,8 +59,9 @@ function daqiIndexForPollutant(pollutantCode, value) {
   if (!thresholds || value == null || !Number.isFinite(value) || value < 0) {
     return null
   }
+  const rounded = roundConcentration(value)
   for (let i = 0; i < thresholds.length; i++) {
-    if (value <= thresholds[i]) {
+    if (rounded <= thresholds[i]) {
       return i + DAQI_BAND_OFFSET
     }
   }

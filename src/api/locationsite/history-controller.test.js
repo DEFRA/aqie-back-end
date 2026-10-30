@@ -70,7 +70,8 @@ const historyResult = {
     PM10: [],
     O3: [],
     SO2: []
-  }
+  },
+  fifteenMinute: { SO2: [] }
 }
 
 describe('#monitoringStationHistoryController', () => {
@@ -93,10 +94,20 @@ describe('#monitoringStationHistoryController', () => {
       siteId: 'UKA00315',
       period: '7d',
       resolution: 'hourly',
+      timeBasis: 'end',
       from: historyResult.from,
       to: historyResult.to,
       truncated: false,
-      pollutants: historyResult.pollutants
+      pollutants: historyResult.pollutants,
+      fifteenMinute: historyResult.fifteenMinute,
+      summary: expect.objectContaining({
+        daqiIndex: expect.anything(),
+        pollutants: expect.objectContaining({
+          NO2: expect.objectContaining({
+            dataCapture: expect.objectContaining({ expectedHours: 168 })
+          })
+        })
+      })
     })
   })
 
