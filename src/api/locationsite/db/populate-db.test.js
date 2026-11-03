@@ -16,7 +16,7 @@ describe('populateMonitoringStationsDb plugin', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockServer = { db: {} }
+    mockServer = { db: {}, events: { once: vi.fn() } }
   })
 
   test('plugin has correct name', () => {
@@ -25,21 +25,34 @@ describe('populateMonitoringStationsDb plugin', () => {
     )
   })
 
-  test('calls populateMonitoringStationsApi with server on register', async () => {
-    mockPopulateApi.mockResolvedValue(undefined)
-
+  test('does not populate while registering, so the server can start listening', async () => {
     await populateMonitoringStationsDb.plugin.register(mockServer)
+
+    expect(mockServer.events.once).toHaveBeenCalledWith(
+      'start',
+      expect.any(Function)
+    )
+    expect(mockPopulateApi).not.toHaveBeenCalled()
+  })
+
+  test('calls populateMonitoringStationsApi with server once the server has started', async () => {
+    mockPopulateApi.mockResolvedValue(undefined)
+    await populateMonitoringStationsDb.plugin.register(mockServer)
+
+    const onStart = mockServer.events.once.mock.calls[0][1]
+    onStart()
 
     expect(mockPopulateApi).toHaveBeenCalledWith(mockServer)
   })
 
-  test('logs error and does not throw when populateMonitoringStationsApi throws', async () => {
-    mockPopulateApi.mockRejectedValue(new Error('startup failure'))
+  test('logs error and leaves no unhandled rejection when populateMonitoringStationsApi rejects', async () => {
+    const error = new Error('startup failure')
+    mockPopulateApi.mockRejectedValue(error)
+    await populateMonitoringStationsDb.plugin.register(mockServer)
 
-    await expect(
-      populateMonitoringStationsDb.plugin.register(mockServer)
-    ).resolves.not.toThrow()
+    const onStart = mockServer.events.once.mock.calls[0][1]
+    onStart()
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.any(Error))
+    await vi.waitFor(() => expect(mockLogger.error).toHaveBeenCalledWith(error))
   })
 })

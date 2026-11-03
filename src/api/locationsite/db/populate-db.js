@@ -7,11 +7,13 @@ const populateMonitoringStationsDb = {
   plugin: {
     name: 'Populate Monitoring Stations Db',
     register: async (server) => {
-      try {
-        await populateMonitoringStationsApi(server)
-      } catch (error) {
-        logger.error(error)
-      }
+      // Populate once the server is listening: awaiting the Ricardo/postcodes calls here
+      // would delay server.start() and CDP's /health check would fail in the meantime.
+      server.events.once('start', () => {
+        populateMonitoringStationsApi(server).catch((error) => {
+          logger.error(error)
+        })
+      })
     }
   }
 }

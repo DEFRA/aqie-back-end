@@ -12,6 +12,7 @@ import { populateMonitoringStationsDb } from './locationsite/db/populate-db.js'
 import { aurnScheduler } from './aurn/aurn-scheduler.js'
 import { secureContext } from '../helpers/secure-context/index.js'
 import { setupProxy } from '../common/helpers/proxy/setup-proxy.js'
+import { pulse } from '../common/helpers/pulse.js'
 import { createLogger } from '../helpers/logging/logger.js'
 
 import yar from '@hapi/yar'
@@ -49,6 +50,10 @@ async function createServer() {
       stripTrailingSlash: true
     }
   })
+
+  // Stops the server and exits on SIGTERM/SIGINT. Node is PID 1 in the container, so
+  // without a handler SIGTERM is ignored. Registered first to cover a slow start-up too.
+  await server.register(pulse)
 
   // Register yar session plugin
   await server.register({

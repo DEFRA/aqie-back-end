@@ -78,6 +78,10 @@ describe('#startServer', () => {
         'Access your backend on http://localhost:3098'
       )
     })
+
+    test('Should register hapi-pulse so SIGTERM/SIGINT stop the server', () => {
+      expect(server.registrations).toHaveProperty('hapi-pulse')
+    })
   })
   describe('When server start fails', () => {
     beforeAll(() => {
