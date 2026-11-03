@@ -1,5 +1,6 @@
 import { createLogger } from '../../../helpers/logging/logger.js'
 import { config } from '../../../config/index.js'
+import { proxyFetch } from '../../../common/helpers/proxy/proxy.js'
 
 const logger = createLogger()
 const FETCH_TIMEOUT_MS = 5000
@@ -14,7 +15,7 @@ async function getLocalAuthorityForCoords(lat, lng) {
   url.searchParams.set('wideSearch', 'true')
 
   try {
-    const response = await fetch(url, {
+    const response = await proxyFetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     })
     if (!response.ok) {

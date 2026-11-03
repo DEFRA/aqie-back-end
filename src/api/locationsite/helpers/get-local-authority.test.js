@@ -6,6 +6,10 @@ vi.mock('../../../helpers/logging/logger.js', () => ({
   createLogger: () => ({ warn: vi.fn(), info: vi.fn(), error: vi.fn() })
 }))
 
+vi.mock('../../../common/helpers/proxy/proxy.js', () => ({
+  proxyFetch: (...args) => globalThis.fetch(...args)
+}))
+
 vi.mock('../../../config/index.js', () => ({
   config: { get: vi.fn() }
 }))
