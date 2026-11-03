@@ -33,7 +33,7 @@ describe('forecastScheduler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockServer = { db: {} }
+    mockServer = { db: {}, events: { once: vi.fn() } }
     mockFetchForecast.mockResolvedValue([{ name: 'Site A' }])
     mockSaveForecasts.mockResolvedValue(undefined)
     mockUnlock.mockResolvedValue(undefined)
@@ -49,6 +49,52 @@ describe('forecastScheduler', () => {
     expect(mockSchedule).toHaveBeenCalledWith('0 5 * * *', expect.any(Function))
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.stringContaining('starting forecasts Scheduler')
+    )
+  })
+
+  test('does not fetch forecasts while registering, so the server can start listening', async () => {
+    mockLock.mockResolvedValue(true)
+
+    await forecastScheduler.plugin.register(mockServer)
+
+    expect(mockServer.events.once).toHaveBeenCalledWith(
+      'start',
+      expect.any(Function)
+    )
+    expect(mockLock).not.toHaveBeenCalled()
+    expect(mockFetchForecast).not.toHaveBeenCalled()
+  })
+
+  test('fetches and saves forecasts once the server has started', async () => {
+    mockLock.mockResolvedValue(true)
+    await forecastScheduler.plugin.register(mockServer)
+
+    const onStart = mockServer.events.once.mock.calls[0][1]
+    onStart()
+
+    await vi.waitFor(() =>
+      expect(mockUnlock).toHaveBeenCalledWith(mockServer.db, 'forecasts')
+    )
+    expect(mockFetchForecast).toHaveBeenCalled()
+    expect(mockSaveForecasts).toHaveBeenCalledWith(
+      mockServer,
+      expect.any(Array)
+    )
+  })
+
+  test('logs instead of leaving an unhandled rejection when the initial fetch fails', async () => {
+    const error = new Error('db down')
+    mockLock.mockRejectedValue(error)
+    await forecastScheduler.plugin.register(mockServer)
+
+    const onStart = mockServer.events.once.mock.calls[0][1]
+    onStart()
+
+    await vi.waitFor(() =>
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error running initial forecasts fetch',
+        error
+      )
     )
   })
 

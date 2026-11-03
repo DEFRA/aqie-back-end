@@ -2,8 +2,10 @@ import { vi, describe, test, expect } from 'vitest'
 
 import { pulse } from './pulse.js'
 
+const mockLogger = vi.hoisted(() => ({ info: vi.fn() }))
+
 vi.mock('./logging/logger.js', () => ({
-  createLogger: vi.fn().mockReturnValue({ info: vi.fn() })
+  createLogger: vi.fn().mockReturnValue(mockLogger)
 }))
 vi.mock('hapi-pulse', () => ({ default: {} }))
 
@@ -17,5 +19,15 @@ describe('pulse', () => {
     expect(pulse.options).toHaveProperty('logger')
     expect(pulse.options).toHaveProperty('timeout')
     expect(typeof pulse.options.timeout).toBe('number')
+  })
+
+  test('logs when shutdown starts and when the server has stopped', async () => {
+    await pulse.options.preServerStop()
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Shutdown signal received, stopping server'
+    )
+
+    await pulse.options.postServerStop()
+    expect(mockLogger.info).toHaveBeenCalledWith('Server stopped, exiting')
   })
 })

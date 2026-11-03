@@ -12,8 +12,13 @@ const forecastScheduler = {
   plugin: {
     name: 'Forecast Scheduler',
     register: async (server) => {
-      // Start the scheduler
-      await fetchAndSaveForecasts(server)
+      // Run the initial fetch once the server is listening. Awaiting it here would delay
+      // server.start(), so CDP's /health check fails and the container gets replaced.
+      server.events.once('start', () => {
+        fetchAndSaveForecasts(server).catch((err) => {
+          logger.error('Error running initial forecasts fetch', err)
+        })
+      })
       logger.info('starting forecasts Scheduler')
       schedule(config.get('forecastSchedule'), async () => {
         await fetchAndSaveForecasts(server)
