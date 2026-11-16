@@ -29,19 +29,10 @@ const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE
 
 // HOURS_IN_DAY in the constants module is 12 (12-hour clock formatting).
 const HOURS_PER_DAY = 24
-const DAY_MS = HOURS_PER_DAY * MS_PER_HOUR
-
-/**
- * Periods that cover whole UTC days. Their window ends at the most recent
- * midnight, so every daily mean is a real calendar day made of hours inside
- * the window and nothing before it is needed. The other periods end at the
- * newest reading.
- */
-const COMPLETE_DAY_PERIODS = new Set(['7d'])
 
 // The request reaches back further than the window needs. start-date has day
-// granularity, and a complete-day window can start up to a day before the
-// newest reading's 7 days, which itself can be older than now.
+// granularity, and the window ends at the newest reading, which can be older
+// than now.
 const REQUEST_PADDING_DAYS = 2
 
 /** Only SO2 is averaged over 15 minutes (DAQI). */
@@ -212,13 +203,11 @@ function newestReadingMs(hourlyByCode) {
  * window of empty hours.
  */
 function windowBounds(newestMs, period) {
-  // A reading stamped exactly at midnight closes the previous day, so rounding
-  // down to midnight keeps that day and drops the unfinished one.
-  const completeDays = COMPLETE_DAY_PERIODS.has(period)
-  const toMs = completeDays ? Math.floor(newestMs / DAY_MS) * DAY_MS : newestMs
-  // `- 1` so a 24-hour window holds 24 hourly points inclusive, not 25.
-  const fromMs = toMs - (PERIOD_DAYS[period] * HOURS_PER_DAY - 1) * MS_PER_HOUR
-  return { fromMs, toMs, completeDays }
+  // `- 1` so a 24-hour window holds 24 hourly points inclusive, not 25, and a
+  // 7-day window 168, not 169.
+  const fromMs =
+    newestMs - (PERIOD_DAYS[period] * HOURS_PER_DAY - 1) * MS_PER_HOUR
+  return { fromMs, toMs: newestMs }
 }
 
 function pointsWithin(points, fromMs, toMs) {
@@ -228,16 +217,15 @@ function pointsWithin(points, fromMs, toMs) {
   })
 }
 
-/** SO2's 15-minute means; the series ends at `toMs` only for complete-day windows. */
-function fifteenMinuteSeries(results, { fromMs, toMs, completeDays }) {
+/** SO2's 15-minute means, not cut off at the window's last hour. */
+function fifteenMinuteSeries(results, { fromMs }) {
   const quarters =
     results.find((result) => result.code === QUARTER_HOUR_CODE)?.quarters ?? []
-  const lastMs = completeDays ? toMs : Infinity
   return {
     [QUARTER_HOUR_CODE]: pointsWithin(
       quarters,
       fromMs - FIFTEEN_MINUTE_LEAD_MS,
-      lastMs
+      Infinity
     )
   }
 }
@@ -246,11 +234,11 @@ function fifteenMinuteSeries(results, { fromMs, toMs, completeDays }) {
  * Fetches an hourly time series per pollutant for a single station, plus SO2's
  * 15-minute series (`fifteenMinute`).
  *
- * The window is the last 24 hours ending at the newest reading (`24h`) or the
- * 7 complete UTC days ending at the most recent midnight (`7d`). All times are
- * the end of the averaging period, so a complete-day window runs from 01:00 on
- * its first day to 00:00 after its last. Invalid readings stay in the series as
- * `null` values so data capture can be counted against them.
+ * The window is the newest reading and the hours before it: 24 hourly points
+ * for `24h` and 168 for `7d`. All times are the end of the averaging period, so
+ * with the newest reading stamped 10:00, the window starts at 11:00 a day
+ * earlier (`24h`) or seven days earlier (`7d`). Invalid readings stay in the
+ * series as `null` values so data capture can be counted against them.
  *
  * Returns `{ upstreamError: true }` when any pollutant call fails, so the
  * caller can distinguish a failed call from a station with no data.

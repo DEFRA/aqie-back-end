@@ -208,19 +208,19 @@ it reduces each series down to the single newest reading.
   "period": "7d",
   "resolution": "hourly",
   "timeBasis": "end",
-  "from": "2026-09-23T01:00:00.000Z",
-  "to": "2026-09-30T00:00:00.000Z",
+  "from": "2026-09-23T11:00:00.000Z",
+  "to": "2026-09-30T10:00:00.000Z",
   "truncated": false,
   "pollutants": {
-    "NO2": [{ "time": "2026-09-23T01:00:00.000Z", "value": 32.1 }],
-    "PM25": [{ "time": "2026-09-23T01:00:00.000Z", "value": null }]
+    "NO2": [{ "time": "2026-09-23T11:00:00.000Z", "value": 32.1 }],
+    "PM25": [{ "time": "2026-09-23T11:00:00.000Z", "value": null }]
   },
   "fifteenMinute": {
-    "SO2": [{ "time": "2026-09-23T00:15:00.000Z", "value": 2.39481 }]
+    "SO2": [{ "time": "2026-09-23T10:15:00.000Z", "value": 2.39481 }]
   },
   "summary": {
     "daqiIndex": 2,
-    "measuredAt": "2026-09-30T00:00:00.000Z",
+    "measuredAt": "2026-09-30T10:00:00.000Z",
     "pollutants": {
       "PM25": {
         "periodAverage": 10.4625,
@@ -236,7 +236,7 @@ it reduces each series down to the single newest reading.
         "daqi": {
           "concentration": 10.4,
           "index": 1,
-          "measuredAt": "2026-09-30T00:00:00.000Z",
+          "measuredAt": "2026-09-30T10:00:00.000Z",
           "averagingPeriod": "24-hour mean"
         }
       }
@@ -251,15 +251,13 @@ it reduces each series down to the single newest reading.
 - `value: null` means the instrument produced no reading for that hour. The
   point is kept so data capture can be counted against it.
 - `from` / `to` bound the window, and both are `null` when the station returned
-  no readings at all. They are the first and last hour stamps of the window:
-  - `24h`: the 24 hours ending at the station's **newest reading**, so a station
-    that has stopped publishing shows a gap instead of a window of empty hours.
-  - `7d`: **seven complete UTC days** ending at the most recent midnight at or
-    before the newest reading. The unfinished current day is not included, so
-    `from` is `01:00` on the first day and `to` is `00:00` after the last. Every
-    daily mean is a real calendar day made of hours inside the window, and the
-    168 hours counted for data capture are exactly the hours behind the seven
-    daily means.
+  no readings at all. They are the first and last hour stamps of the window. The
+  window always ends at the station's **newest reading**, so a station that has
+  stopped publishing shows a gap instead of a window of empty hours:
+  - `24h`: the newest reading and the 23 hours before it, 24 hourly points.
+  - `7d`: the newest reading and the 167 hours before it, 168 hourly points. It
+    is not cut back to midnight, so with the newest reading stamped `10:00` on
+    13 November, `from` is `11:00` on 6 November.
 - `fifteenMinute.SO2` holds SO₂'s 15-minute means from 45 minutes before `from`
   (so the first hour has all four quarters). `pollutants.SO2` is the hourly mean
   derived from these (at least 3 valid of 4); the feed's own hourly SO₂ rows are
@@ -280,9 +278,14 @@ Consumers should display these values and not recalculate them.
   hourly mean 3 of 4 fifteen-minute means; 8-hour mean 6 of 8 hourly means;
   daily (and 24-hour) mean 18 of 24 hourly means. `summary...periodAverage`
   also needs 75% of the window's hours to be valid (126 of 168 for `7d`).
-- `periodAverage` is the **7-day average** for `period=7d`, the mean of the seven
+- `periodAverage` is the **7-day average** for `period=7d`, the mean of the
   valid daily means (a day with fewer than 18 valid hours is left out), and the
-  **24-hour average** for `period=24h`, the mean of the window's valid hourly means.
+  **24-hour average** for `period=24h`, the mean of the window's valid hourly
+  means. A `7d` window usually ends mid-day, so it has a daily mean for each UTC
+  day that ends inside it: the unfinished current day has none, and the first
+  day, which starts before the window, has one only if at least 18 of its hours
+  are in the window. That is usually six daily means. Data capture still counts
+  all 168 hours.
 - `dataCapture.isLowDataCapture` is true exactly when `periodAverage` is
   withheld, so a consumer can show the "Low data capture" tag and a `-` average
   from one flag instead of repeating the 75% rule.
@@ -310,8 +313,8 @@ curl -s "$BASE&period=24h" | jq 'keys'
 # ["fifteenMinute","from","period","pollutants","resolution",
 #  "siteId","summary","timeBasis","to","truncated"]
 
-# The window. For 7d this is seven complete UTC days: `from` is 01:00 on the first
-# day and `to` is midnight at the end of the last (hour-ending stamps).
+# The window: the newest reading and the 23 (24h) or 167 (7d) hours before it, so
+# 24 or 168 hours (hour-ending stamps).
 curl -s "$BASE&period=7d" | jq '{from, to, hours: (.pollutants.NO2 | length)}'
 
 # 7-day average and data capture per pollutant. `periodAverage` (the mean of the valid
@@ -337,8 +340,9 @@ curl -s "$BASE&period=24h" | jq '{
 # first hour has all four quarters
 curl -s "$BASE&period=24h" | jq '{from, fifteenMinute: (.fifteenMinute.SO2 | {count: length, first: .[0], last: .[-1]})}'
 
-# Daily means (one per UTC day, stamped at the end of the day) and the number of
-# days over the PM10 daily limit. A day with fewer than 18 valid hours is null.
+# Daily means (one per UTC day that ends inside the window, stamped at the end of
+# the day) and the number of days over the PM10 daily limit. A day with fewer than
+# 18 valid hours is null, as the first day usually is: it starts before the window.
 curl -s "$BASE&period=7d" | jq '.summary.pollutants.PM10 | {dailyExceedances, dailyMeans: [.dailyMeans[] | {time, value}]}'
 
 # Hours with no valid reading stay in the series as null values

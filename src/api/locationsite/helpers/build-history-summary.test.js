@@ -9,8 +9,8 @@ const QUARTER_MS = 15 * 60 * 1000
 const TO_24H = Date.parse('2026-10-21T09:00:00Z')
 const FROM_24H = TO_24H - 23 * HOUR_MS
 
-// 7d window: seven complete UTC days, 01:00 on the 20th to 00:00 on the 27th
-// (hour-ending stamps), so it holds exactly seven UTC midnights.
+// 7d window whose newest reading is stamped midnight: seven complete UTC days,
+// 01:00 on the 20th to 00:00 on the 27th (hour-ending stamps).
 const TO_7D = Date.parse('2026-10-27T00:00:00Z')
 const FROM_7D = TO_7D - 167 * HOUR_MS
 
@@ -267,6 +267,73 @@ describe('#buildHistorySummary', () => {
         full(10.9)
       ])
       expect(result.periodAverage).toBeCloseTo((6 * 10.4 + 10.9) / 7, 10)
+    })
+  })
+
+  describe('a 7d window that ends mid-day', () => {
+    // The newest reading is usually mid-day, so the window starts mid-day too:
+    // the 27th is unfinished and the 20th is mostly before the window.
+    const DAY_VALUES = {
+      '2026-10-20': 500,
+      '2026-10-21': 10,
+      '2026-10-22': 20,
+      '2026-10-23': 30,
+      '2026-10-24': 40,
+      '2026-10-25': 50,
+      '2026-10-26': 60,
+      '2026-10-27': 1000
+    }
+    // The UTC day an hour-ending stamp is in: 00:00 closes the day before.
+    const utcDay = (ms) =>
+      iso(Math.ceil(ms / DAY_MS) * DAY_MS - DAY_MS).slice(0, 10)
+
+    function week(newestStamp) {
+      const to = Date.parse(newestStamp)
+      return buildHistorySummary({
+        period: '7d',
+        from: iso(to - 167 * HOUR_MS),
+        to: iso(to),
+        pollutants: {
+          ...NO_DATA,
+          PM10: hourly(to, 168, (_, ms) => DAY_VALUES[utcDay(ms)])
+        }
+      }).pollutants.PM10
+    }
+
+    it('has no daily mean for the unfinished day, or for a first day mostly before the window', () => {
+      // Only 14 hours of the 20th are in the window, fewer than a day needs.
+      const result = week('2026-10-27T10:00:00Z')
+
+      expect(result.dailyMeans.map((d) => d.value)).toEqual([
+        null,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60
+      ])
+      expect(result.periodAverage).toBe(35)
+      expect(result.dailyExceedances).toBe(1)
+    })
+
+    it('counts every hour of the window towards data capture', () => {
+      expect(week('2026-10-27T10:00:00Z').dataCapture).toEqual({
+        validHours: 168,
+        expectedHours: 168,
+        capturePercentage: 100,
+        isLowDataCapture: false
+      })
+    })
+
+    it('has a daily mean for the first day when 18 or more of its hours are in the window', () => {
+      // 21 hours of the 20th are in the window.
+      const result = week('2026-10-27T03:00:00Z')
+
+      expect(result.dailyMeans.map((d) => d.value)).toEqual([
+        500, 10, 20, 30, 40, 50, 60
+      ])
+      expect(result.periodAverage).toBeCloseTo((500 + 210) / 7, 10)
     })
   })
 
