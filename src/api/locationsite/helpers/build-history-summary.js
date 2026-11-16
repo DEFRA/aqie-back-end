@@ -39,8 +39,9 @@ const exceeds = (value, limit) =>
 const mean = (values) =>
   values.reduce((sum, value) => sum + value, 0) / values.length
 
-// The 7-day average is the mean of the seven daily means (each needing 18 of
-// 24 valid hours). The 24-hour average is the mean of its hourly means.
+// The 7-day average is the mean of the valid daily means, one for each UTC day
+// that ends inside the window (each needing 18 of 24 valid hours). The 24-hour
+// average is the mean of its hourly means.
 const DAILY_MEAN_PERIODS = new Set(['7d'])
 
 function summarisePollutant({
@@ -115,9 +116,12 @@ function summarisePollutant({
  * hourly means). Either is `null` unless at least 75% of the window's hours are
  * valid, and `dataCapture.isLowDataCapture` is true exactly then.
  *
- * Everything is calculated from the window alone: a `7d` window is seven
- * complete UTC days, and the DAQI concentrations (24-hour, 8-hour, 1-hour and
- * 15-minute means) end at the window's newest reading.
+ * Everything is calculated from the window alone, which ends at the newest
+ * reading, so the DAQI concentrations (24-hour, 8-hour, 1-hour and 15-minute
+ * means) end there too. A `7d` window usually ends mid-day, so the current,
+ * unfinished day has no daily mean, and the first day, which starts before the
+ * window, has one only if at least 18 of its hours are in the window with valid
+ * readings. Data capture still counts all 168 hours.
  *
  * @param {{ period: string, from: string|null, to: string|null, pollutants: Record<string, Array<{time: string, value: number|null}>>, fifteenMinute?: Record<string, Array<{time: string, value: number|null}>> }} history
  */

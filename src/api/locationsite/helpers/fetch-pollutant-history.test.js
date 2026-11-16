@@ -118,7 +118,7 @@ describe('#fetchPollutantHistory', () => {
     expect(url.searchParams.has('end-date-time')).toBe(false)
   })
 
-  it('reaches back far enough to cover a complete-day window: period plus padding', async () => {
+  it('reaches back further than the period: period plus padding', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-30T00:30:00.000Z'))
     const catchProxyFetchError = fetchStub({})
@@ -413,10 +413,11 @@ describe('#fetchPollutantHistory', () => {
     expect(result.to).toBe('2026-09-30T11:00:00.000Z')
   })
 
-  it('trims a 7d window to the 7 complete UTC days before the newest reading', async () => {
-    // Newest reading 2026-09-30T11:00Z: the unfinished day (30 Sep) is dropped.
+  it('trims a 7d window to 168 inclusive hourly points ending at the newest reading', async () => {
+    // Newest reading 10:00 on 13 Nov: the window starts at 11:00 on 6 Nov and
+    // keeps the unfinished day rather than stopping at the last midnight.
     const catchProxyFetchError = fetchStub({
-      NO2: hourlySeries('2026-09-30T11:00:00.000Z', 200)
+      NO2: hourlySeries('2026-11-13T10:00:00.000Z', 200)
     })
 
     const result = await fetchPollutantHistory({
@@ -426,14 +427,13 @@ describe('#fetchPollutantHistory', () => {
     })
 
     expect(result.pollutants.NO2).toHaveLength(PERIOD_DAYS['7d'] * 24)
-    // Hour-ending stamps: 01:00 on the first day to 00:00 after the last
-    expect(result.from).toBe('2026-09-23T01:00:00.000Z')
-    expect(result.to).toBe('2026-09-30T00:00:00.000Z')
-    expect(result.pollutants.NO2[0].time).toBe('2026-09-23T01:00:00.000Z')
-    expect(result.pollutants.NO2.at(-1).time).toBe('2026-09-30T00:00:00.000Z')
+    expect(result.from).toBe('2026-11-06T11:00:00.000Z')
+    expect(result.to).toBe('2026-11-13T10:00:00.000Z')
+    expect(result.pollutants.NO2[0].time).toBe('2026-11-06T11:00:00.000Z')
+    expect(result.pollutants.NO2.at(-1).time).toBe('2026-11-13T10:00:00.000Z')
   })
 
-  it('keeps a day that closes exactly at the newest reading (stamped midnight)', async () => {
+  it('still gives a 7d window of 168 points when the newest reading is stamped midnight', async () => {
     const catchProxyFetchError = fetchStub({
       NO2: hourlySeries('2026-09-30T00:00:00.000Z', 200)
     })
@@ -448,14 +448,15 @@ describe('#fetchPollutantHistory', () => {
     expect(result.pollutants.NO2).toHaveLength(168)
   })
 
-  it('does not include readings after the last midnight in a 7d window', async () => {
+  it('includes the readings after the last midnight in a 7d window, SO2 15-minute means too', async () => {
     const catchProxyFetchError = fetchStub({
       NO2: hourlySeries('2026-09-30T11:00:00.000Z', 200),
       SO2: [
         quarterHourRow('2026-09-29T23:45:00.000Z', 1),
         quarterHourRow('2026-09-30T00:00:00.000Z', 2),
         quarterHourRow('2026-09-30T00:15:00.000Z', 3),
-        quarterHourRow('2026-09-30T11:00:00.000Z', 4)
+        quarterHourRow('2026-09-30T11:00:00.000Z', 4),
+        quarterHourRow('2026-09-30T11:15:00.000Z', 5)
       ]
     })
 
@@ -465,12 +466,11 @@ describe('#fetchPollutantHistory', () => {
       catchProxyFetchError
     })
 
-    expect(
-      result.pollutants.NO2.every(
-        (p) => Date.parse(p.time) <= Date.parse('2026-09-30T00:00:00.000Z')
-      )
-    ).toBe(true)
-    expect(result.fifteenMinute.SO2.map((p) => p.value)).toEqual([1, 2])
+    expect(result.to).toBe('2026-09-30T11:00:00.000Z')
+    expect(result.pollutants.NO2.at(-1).time).toBe('2026-09-30T11:00:00.000Z')
+    expect(result.fifteenMinute.SO2.map((p) => p.value)).toEqual([
+      1, 2, 3, 4, 5
+    ])
   })
 
   it('anchors a 7d window on the newest reading even when it is old', async () => {
@@ -486,8 +486,8 @@ describe('#fetchPollutantHistory', () => {
       catchProxyFetchError
     })
 
-    expect(result.to).toBe('2026-09-20T00:00:00.000Z')
-    expect(result.from).toBe('2026-09-13T01:00:00.000Z')
+    expect(result.to).toBe('2026-09-20T05:00:00.000Z')
+    expect(result.from).toBe('2026-09-13T06:00:00.000Z')
   })
 
   it('returns empty series with null bounds when no readings exist', async () => {
